@@ -1214,6 +1214,22 @@ Jceiled s t δ = Jceiled s t β := by
   simp
   apply Λceiled_gap s t δ β leftBound rightBound
 
+lemma Jceiled_gap' (s t δ β: ℝ) [PosReal s] [PosReal t] (rightBound: β < δnext s t δ):
+Jceiled s t δ ≥ Jceiled s t β := by
+  by_cases inBetween: δ ≤ β
+  · apply ge_of_eq
+    exact Jceiled_gap s t δ β inBetween rightBound
+  · simp at inBetween
+    apply Jceiled_mono
+    exact le_of_lt inBetween
+
+lemma Jceiled_gap'' (s t δ β: ℝ) [PosReal s] [PosReal t] (jump: Jceiled s t δ < Jceiled s t β):
+δnext s t δ ≤ β := by
+  contrapose jump with le
+  simp; simp at le
+  apply Jceiled_gap'
+  exact le
+
 lemma Jceiled_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
 Jceiled s t δ = 0 := by
   unfold Jceiled
@@ -1963,7 +1979,47 @@ dE s t w < δₖ s t k - t := by
   rw [km1e]
 
   unfold dE
-  sorry
+  rcases kₙ_exist s t w low with ⟨l, leq⟩
+  rw [leq]
+  simp
+  unfold kₙ at leq
+  unfold kceiled at leq
+  apply Finset.mem_of_max at leq
+  simp at leq
+  by_cases Leq0: l = 0
+  · rw [Leq0]
+    rw [δ₀]
+    have low': w ≥ (1:ℝ) := by exact low
+    have Jceiled_lt: 1 + ↑(Jceiled s t (δₖ s t K - t)) > (1:ℝ) := by
+      apply gt_of_gt_of_ge
+      · exact high
+      · exact low'
+    simp at Jceiled_lt
+    have nonneg: (δₖ s t K - t) ≥ 0 := by
+      contrapose Jceiled_lt with Jceiled_zero
+      simp
+      apply Jceiled_neg
+      exact lt_of_not_ge Jceiled_zero
+    apply lt_of_le_of_lt nonneg
+    simp
+    rw [δₖ]
+    exact δnext_larger s t (δₖ s t K)
+  · let L := l - 1
+    have lm1e: l = L + 1 := by exact Eq.symm (Nat.succ_pred_eq_of_ne_zero Leq0)
+    rw [nₖ_accum] at leq
+    rw [lm1e] at leq
+    simp at leq
+    have Jceiled_lt: (1:ℝ) + Jceiled s t (δₖ s t L) < 1 + Jceiled s t (δₖ s t K - t) := by
+      apply lt_of_le_of_lt leq high
+    simp at Jceiled_lt
+    apply Jceiled_gap'' at Jceiled_lt
+    rw [lm1e]
+    rw [δₖ]
+    apply lt_of_le_of_lt Jceiled_lt
+    simp
+    rw [δₖ]
+    exact δnext_larger s t (δₖ s t K)
+
 
 lemma w_gt (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
 (low: w ≥ wₖ s t (k + 1)):
