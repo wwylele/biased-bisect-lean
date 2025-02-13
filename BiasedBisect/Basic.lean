@@ -100,6 +100,16 @@ def Δceiled(s t ceil: ℝ) :=
 def Λceiled(s t ceil: ℝ) :=
   {(p, q): ℕ × ℕ | p * s + q * t ≤ ceil}
 
+
+lemma Λceiled_symm (s t δ: ℝ) (p q: ℕ) (h: (p, q) ∈ Λceiled s t δ):
+(q, p) ∈ Λceiled t s δ := by
+  unfold Λceiled
+  unfold Λceiled at h
+  simp at h
+  simp
+  rw [add_comm]
+  exact h
+
 /-
 As an important example, the subset ceiled by 0 only includes the point (0, 0)
 -/
@@ -1117,6 +1127,36 @@ noncomputable
 def Jceiled (s t: ℝ) [PosReal s] [PosReal t] (δ: ℝ): ℕ :=
   ∑pq ∈ (Λceiled s t δ).toFinset, Jₚ pq
 
+lemma Jceiled_symm (s t δ: ℝ) [PosReal s] [PosReal t]:
+Jceiled s t δ = Jceiled t s δ := by
+  let map: (ℕ × ℕ) → (ℕ × ℕ)
+  | (p, q) => (q, p)
+  apply Finset.sum_of_injOn map
+  · unfold Set.InjOn
+    intro a _ b _
+    unfold map
+    simp
+    exact fun a_1 a_2 ↦ Prod.ext a_2 a_1
+  · unfold Set.MapsTo
+    rintro ⟨p, q⟩ mem
+    simp at mem
+    unfold map
+    simp
+    exact Λceiled_symm s t δ p q mem
+  · rintro ⟨p, q⟩ mem nmem
+    absurd nmem
+    simp
+    simp at mem
+    use q,p
+    constructor
+    · exact Λceiled_symm t s δ p q mem
+    · unfold map
+      simp
+  · unfold map
+    simp
+    intro a b mem
+    exact Jₚ_symm a b
+
 /-
 Jceiled is weakly increasing with regards to δ.
 As δ grows, Λceiled can either remain unchanged for include new points.
@@ -1246,6 +1286,29 @@ The shifting can make some line nolonger passing any lattice points, resulting a
 noncomputable
 def Jtₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
   fun k ↦ Jline s t ((δₖ s t k) - t)
+
+noncomputable
+def Jsₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
+  fun k ↦ Jline s t ((δₖ s t k) - s)
+
+def Jstₖ_symm (s t: ℝ) (k: ℕ)[PosReal s] [PosReal t]:
+Jsₖ s t k = Jtₖ t s k := by
+  unfold Jsₖ
+  unfold Jtₖ
+  rw [Jline_symm]
+  congr 2
+  exact δₖ_symm s t k
+
+lemma Jstₖ_rec (s t: ℝ) (k: ℕ) (k0: k ≥ 1) [PosReal s] [PosReal t]:
+Jₖ s t k = Jsₖ s t k + Jtₖ s t k := by
+  unfold Jₖ
+  unfold Jsₖ
+  unfold Jtₖ
+  apply Jline_rec s t (δₖ s t k)
+  apply ne_of_gt
+  rw [← δ₀ s t]
+  apply (StrictMono.lt_iff_lt (δₖ_mono s t)).mpr
+  exact k0
 
 /-
 Now we can define the sequence nₖ as partial sums of Jₖ.
@@ -1386,6 +1449,25 @@ noncomputable
 def wₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ
 | 0 => 1
 | Nat.succ k => (wₖ s t k) + (Jtₖ s t k)
+
+noncomputable
+def wₖ' (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ
+| 0 => 1
+| Nat.succ k => (wₖ' s t k) + (Jsₖ s t k)
+
+lemma wₖ'_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
+wₖ s t k = wₖ' t s k := by
+  induction k with
+  | zero =>
+    unfold wₖ
+    unfold wₖ'
+    rfl
+  | succ k prev =>
+    unfold wₖ
+    unfold wₖ'
+    congr 1
+    symm
+    apply Jstₖ_symm
 
 /-
 Similarly, wₖ can be alternatively expressed using Jceiled.
@@ -1532,6 +1614,13 @@ wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
           apply lt_add_of_sub_right_lt
           apply δnext_larger
 
+lemma wₖ'_accum (s t: ℝ) (k: ℕ)  [PosReal s] [PosReal t]:
+wₖ' s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - s) := by
+  rw [← wₖ'_symm]
+  rw [Jceiled_symm]
+  rw [δₖ_symm]
+  exact wₖ_accum t s k
+
 /-
 w₁ = 1 is the real starting point of this sequence
 -/
@@ -1660,6 +1749,73 @@ instance wₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (wₖ s t) := by
     exact version1 k a
   intro k l
   apply version2
+
+lemma wₖ_is_nₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: ∃k', wₖ s t k = nₖ s t k' := by
+  by_cases k0 : k = 0
+  · use 0
+    rw [k0]
+    unfold wₖ
+    unfold nₖ
+    rfl
+  · let K := k - 1
+    have km1e: k = K + 1 := by exact Eq.symm (Nat.succ_pred_eq_of_ne_zero k0)
+    rw [km1e]
+    rw [wₖ_accum]
+    simp
+    have Δceiled_fintype: Fintype (Δceiled s t (δₖ s t K - t)) := by
+      exact Fintype.ofFinite ↑(Δceiled s t (δₖ s t K - t))
+    by_cases ge0: δₖ s t K - t ≥ 0
+    · have zeroIn: 0 ∈ Δceiled s t (δₖ s t K - t) := by
+        unfold Δceiled
+        constructor
+        · exact δ0 s t
+        · exact ge0
+      have nonEmpty: Set.Nonempty (Δceiled s t (δₖ s t K - t)) := by
+        refine Set.nonempty_of_mem zeroIn
+      have nonEmpty': Finset.Nonempty (Δceiled s t (δₖ s t K - t)).toFinset := by
+        exact Set.Aesop.toFinset_nonempty_of_nonempty nonEmpty
+      rcases Finset.max_of_nonempty nonEmpty' with ⟨max: ℝ, maxEq⟩
+      have mem: max ∈ (Δceiled s t (δₖ s t K - t)).toFinset := by
+        exact Finset.mem_of_max maxEq
+      have mem': max ∈ (Δceiled s t (δₖ s t K - t)) := by
+        exact Set.mem_toFinset.mp mem
+      have mem'': max ∈ Δ s t := by
+        apply Set.mem_of_mem_of_subset mem'
+        unfold Δceiled
+        exact Set.inter_subset_left
+      rcases δₖ_surjΔ s t max mem'' with ⟨k', k'eq⟩
+      use k' + 1
+      rw [nₖ_accum]
+      simp
+      rw [k'eq]
+      unfold Jceiled
+      congr 1
+      simp
+      apply subset_antisymm_iff.mpr
+      constructor
+      · unfold Λceiled
+        simp
+        intro p q mem
+        apply Finset.le_max_of_eq ?_ maxEq
+        simp
+        unfold Δceiled
+        constructor
+        · unfold Δ; unfold is_δ
+          simp
+        · simp
+          exact mem
+      · unfold Λceiled
+        simp
+        intro p q mem
+        unfold Δceiled at mem'
+        have memle: max ∈ {δ | δ ≤ δₖ s t K - t} := by exact Set.mem_of_mem_inter_right mem'
+        simp at memle
+        apply le_trans mem memle
+    · use 0
+      unfold nₖ
+      simp
+      apply Jceiled_neg
+      exact lt_of_not_ge ge0
 
 
 /-
@@ -1821,11 +1977,19 @@ lemma dE_symm (s t n: ℝ) [PosReal s] [PosReal t]: dE s t n = dE t s n := by
   rw [δₖ_symm]
 
 /-
-If we take a w between wₖ and wₖ₊₁ and plug it in dE,
-it should give a constant output that's equal to δₖ - t
+The following three lemma show the nice property of wₖ:
+The domain [1, ∞) is divided by (wₖ k) and (wₖ (k + 1)) into three regions:
+ - dE( [1,          wₖ k      ) ) < δₖ - t
+ - dE( [wₖ k,       wₖ (k + 1)) ) = δₖ - t
+ - dE( [wₖ (k + 1), ∞         ) ) > δₖ - t
+
+In other words, wₖ captures exactly where dE = δₖ - t (while nₖ captures where dE = δₖ)
+
+Note that because 1 ≤ wₖ k ≤ wₖ (k + 1) are week inequalities,
+the intervals listed above can degenerate
 -/
-lemma w_inv (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
-(low: w ≥  wₖ s t k) (r: w < wₖ s t (k + 1)):
+lemma w_eq (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
+(low: w ≥ wₖ s t k) (r: w < wₖ s t (k + 1)):
 dE s t w = δₖ s t k - t := by
   have no_δ_between (k': ℕ) (δ: ℝ) (lower: δ > δₖ s t k' - t) (upper: δ < δₖ s t (k' + 1) - t):
   δ ∉ Δ s t := by
@@ -2021,10 +2185,39 @@ dE s t w < δₖ s t k - t := by
     exact δnext_larger s t (δₖ s t K)
 
 
-lemma w_gt (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
+lemma w_gt (s t w: ℝ) (k: ℕ) [PosReal s] [PosReal t]
 (low: w ≥ wₖ s t (k + 1)):
 dE s t w > δₖ s t k - t := by
-  sorry
+  have w1: w ≥ 1 := by
+    apply ge_trans low
+    simp
+    exact wₖ_min' s t (k + 1)
+  unfold dE
+  rcases kₙ_exist s t w w1 with ⟨l, leq⟩
+  rw [leq]
+  simp
+  unfold kₙ at leq
+  unfold kceiled at leq
+  have l_greater: nₖ s t (l + 1) > w := by
+    by_contra le
+    simp at le
+    have what: l + 1 ≤ l := by
+      apply Finset.le_max_of_eq ?_ leq
+      simp
+      exact le
+    simp at what
+
+  have tr: nₖ s t (l + 1) > wₖ s t (k + 1)  := by
+    rify
+    apply gt_of_gt_of_ge
+    · exact l_greater
+    · exact low
+
+  rw [wₖ_accum] at tr
+  rw [nₖ_accum] at tr
+  simp at tr
+  exact Monotone.reflect_lt (Jceiled_mono s t) tr
+
 
 /-
 Similarly, the strategy function w is defined by finding wₖ after clamping to the nearest k
@@ -2137,14 +2330,14 @@ theorem dD_zero (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
     rw [nₖ1]
     exact h
   have k1rel: dE s t w = δₖ s t kl - t := by
-    apply w_inv s t w
+    apply w_eq s t w
     · exact kl1
     · exact le_of_lt lw
     · exact rw
   have k2rel: dE s t (n - w) = δₖ s t kl - s := by
     rw [δₖ_symm]
     rw [dE_symm]
-    apply w_inv t s (n - w)
+    apply w_eq t s (n - w)
     · exact kl1
     · rw [← wₖ_symm] at rnw
       simp at rnw
@@ -2207,10 +2400,6 @@ def Eₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℝ
 | 0 => 1
 | Nat.succ k => (Eₖ s t k) + (Jₖ s t k) * (δₖ s t k + s + t)
 
-lemma Eₖ_rec (s t: ℝ) (k: ℕ) (kh: k ≥ 2) [PosReal s] [PosReal t]:
-  Eₖ s t k = Eₖ s t (wₖ s t k) + Eₖ s t (nₖ s t k - wₖ s t k) +
-             s *    (wₖ s t k) + t *    (nₖ s t k - wₖ s t k) := by sorry
-
 
 noncomputable
 def E (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
@@ -2218,5 +2407,36 @@ def E (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
   | some k => Eₖ s t k + (n - nₖ s t k) * (δₖ s t k + s + t)
   | none => 0
 
+lemma Ew_accum (s t: ℝ) (k: ℕ) (k1: k ≥ 1) [PosReal s] [PosReal t]:
+E s t (wₖ s t k) + (Jline s t (δₖ s t k - t)) * (δₖ s t k + s) = E s t (wₖ s t (k + 1)) := by
+  sorry
+
 lemma E_integral (s t n: ℝ) [PosReal s] [PosReal t]:
-  E s t n = ∫ x in (1: ℝ)..n, dE s t x := by sorry
+E s t n = ∫ x in (1: ℝ)..n, dE s t x := by sorry
+
+lemma Eₖ_rec (s t: ℝ) (k: ℕ) (kh: k ≥ 2) [PosReal s] [PosReal t]:
+∀k: ℕ, 2 ≤ k →
+Eₖ s t k = E s t (wₖ s t k) + E s t (nₖ s t k - wₖ s t k) +
+           t *   (wₖ s t k) + s *   (nₖ s t k - wₖ s t k) := by
+  apply Nat.le_induction
+  · sorry
+  · intro k kge2 prev
+    unfold Eₖ
+    rw [prev]
+    rw [wₖ]
+    rw [nₖ]
+    push_cast
+    rw [mul_add t]
+    rw [mul_sub s]; rw [mul_sub s]; rw [mul_add s]; rw [mul_add s]
+    rw [add_sub]
+    rw [← add_assoc]
+    rw [add_sub]
+    rw [← add_assoc]
+    rw [← sub_sub]
+    rw [← add_sub_right_comm]; rw [sub_right_comm]
+    simp
+    rw [add_right_comm]; nth_rw 5 [add_right_comm]; nth_rw 1 [add_sub_right_comm]
+    simp
+    rw [add_right_comm]; nth_rw 5 [add_right_comm]; nth_rw 4 [add_right_comm]; nth_rw 1 [add_sub_right_comm]
+    simp
+    sorry
