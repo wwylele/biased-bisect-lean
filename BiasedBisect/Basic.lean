@@ -148,6 +148,9 @@ lemma Λceiled₀ (s t: ℝ) [PosReal s] [PosReal t]: Λceiled s t 0 = {(0, 0)} 
     rw [q0]
     simp
 
+/-
+And if the ceiling is negative, Λceiled is the empty set.
+-/
 lemma Λceiled_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
 Λceiled s t δ = ∅ := by
   unfold Λceiled
@@ -421,8 +424,8 @@ lemma δnext_larger (s t floor: ℝ)  [PosReal s] [PosReal t]: δnext s t floor 
 
 /-
 δnext also effectively gives the "gap" between the input δ and the next δ'.
-There is no additional lattice point between this gap, which means Λceiled is inert
-for any bound given between the gap
+There is no additional lattice point between this gap,
+which means Λceiled is inert for any bound given between the gap
 -/
 lemma Λceiled_gap (s t δ β: ℝ) [PosReal s] [PosReal t] (leftBound: δ ≤ β) (rightBound: β < δnext s t δ):
 Λceiled s t δ = Λceiled s t β := by
@@ -479,7 +482,7 @@ lemma δₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (δₖ s t) := b
   apply mono
 
 /-
-δₖ covers all elements in Δ
+δₖ covers all elements in Δ. In fact, δₖ is a bijection between Δ and ℕ
 -/
 def δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: ∃k, δₖ s t k = δ := by
   apply Set.WellFoundedOn.induction (Δ_WF s t) mem
@@ -640,6 +643,9 @@ lemma Λline_symm (s t δ: ℝ) (p q: ℕ) (h: (p, q) ∈ Λline s t δ):
   rw [δₚ_symm t s q p]
   exact h
 
+/-
+If the line is negative, it won't cover any lattice points
+-/
 lemma Λline_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
 Λline s t δ = ∅ := by
   unfold Λline
@@ -1076,9 +1082,9 @@ lemma Jline₀ (s t: ℝ) [PosReal s] [PosReal t]: Jline s t 0 = 1 := by
     rfl
 
 /-
-For all elements of Δ, J is nonzero
+For all elements of Δ, Jline is nonzero
 -/
-lemma J_nonzero (s t δ: ℝ) [PosReal s] [PosReal t] (δinΩ: δ ∈ Δ s t):
+lemma Jline_nonzero (s t δ: ℝ) [PosReal s] [PosReal t] (δinΩ: δ ∈ Δ s t):
 Jline s t δ > 0 := by
   apply Nat.lt_of_succ_le
   simp
@@ -1095,7 +1101,7 @@ Jline s t δ > 0 := by
 
 /-
 Since we have defined the sequence δₖ for all elements in Δ,
-we can map them to a sequence Jₖ
+we can map them to a sequence Jₖ by Jline
 -/
 noncomputable
 def Jₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
@@ -1111,13 +1117,52 @@ lemma Jₖ_symm (s t: ℝ) [PosReal s] [PosReal t]: Jₖ s t = Jₖ t s := by
   rw [Jline_symm]
 
 lemma Jₖ_nonzero (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: Jₖ s t k > 0 := by
-  apply J_nonzero
+  apply Jline_nonzero
   apply δₖ_in_Δ
 
 example (s t: ℝ) [PosReal s] [PosReal t]: Jₖ s t 0 = 1 := by
   unfold Jₖ
   unfold δₖ
   apply Jline₀
+
+/-
+We also define a pair of sequence Jsₖ and Jtₖ similar to Jₖ,
+but the line is shifted by s or t.
+The shifting can make some line no longer pass any lattice points,
+so some Jsₖ and Jtₖ are zero
+-/
+noncomputable
+def Jsₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
+  fun k ↦ Jline s t ((δₖ s t k) - s)
+
+noncomputable
+def Jtₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
+  fun k ↦ Jline s t ((δₖ s t k) - t)
+
+/-
+Jsₖ and Jtₖ are symmetric to each other
+-/
+def Jstₖ_symm (s t: ℝ) (k: ℕ)[PosReal s] [PosReal t]:
+Jsₖ s t k = Jtₖ t s k := by
+  unfold Jsₖ
+  unfold Jtₖ
+  rw [Jline_symm]
+  congr 2
+  exact δₖ_symm s t k
+
+/-
+Derived from Jline recurrence formula, Jₖ can be decomposed into Jsₖ and Jtₖ
+-/
+lemma Jstₖ_rec (s t: ℝ) (k: ℕ) (k0: k ≥ 1) [PosReal s] [PosReal t]:
+Jₖ s t k = Jsₖ s t k + Jtₖ s t k := by
+  unfold Jₖ
+  unfold Jsₖ
+  unfold Jtₖ
+  apply Jline_rec s t (δₖ s t k)
+  apply ne_of_gt
+  rw [← δ₀ s t]
+  apply (StrictMono.lt_iff_lt (δₖ_mono s t)).mpr
+  exact k0
 
 /-
 Just like Jline for Λline, we can define Jceiled for Λceiled
@@ -1127,6 +1172,9 @@ noncomputable
 def Jceiled (s t: ℝ) [PosReal s] [PosReal t] (δ: ℝ): ℕ :=
   ∑pq ∈ (Λceiled s t δ).toFinset, Jₚ pq
 
+/-
+Jceiled is symmetric
+-/
 lemma Jceiled_symm (s t δ: ℝ) [PosReal s] [PosReal t]:
 Jceiled s t δ = Jceiled t s δ := by
   let map: (ℕ × ℕ) → (ℕ × ℕ)
@@ -1246,6 +1294,9 @@ Jceiled s t δ + Jline s t (δnext s t δ) = Jceiled s t (δnext s t δ) := by
 
 /-
 Since there are gaps between δ, Jceiled stops growing when inside these gaps
+We can also derive a few variants of this lemma:
+ - As long as β is less than δnext(δ), Jceiled(β) is no larger than Jceiled(δ)
+ - or the contrapose: if Jceiled(β) is larger than Jceiled(δ), β must have passed δnext(δ)
 -/
 lemma Jceiled_gap (s t δ β: ℝ) [PosReal s] [PosReal t] (leftBound: δ ≤ β) (rightBound: β < δnext s t δ):
 Jceiled s t δ = Jceiled s t β := by
@@ -1280,41 +1331,12 @@ Jceiled s t δ = 0 := by
   exact rfl
 
 /-
-We also define a similar sequence Jtₖ whose definition is like Jₖ but the line is shifted
-The shifting can make some line nolonger passing any lattice points, resulting a 0 in Jtₖ
--/
-noncomputable
-def Jtₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
-  fun k ↦ Jline s t ((δₖ s t k) - t)
-
-noncomputable
-def Jsₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
-  fun k ↦ Jline s t ((δₖ s t k) - s)
-
-def Jstₖ_symm (s t: ℝ) (k: ℕ)[PosReal s] [PosReal t]:
-Jsₖ s t k = Jtₖ t s k := by
-  unfold Jsₖ
-  unfold Jtₖ
-  rw [Jline_symm]
-  congr 2
-  exact δₖ_symm s t k
-
-lemma Jstₖ_rec (s t: ℝ) (k: ℕ) (k0: k ≥ 1) [PosReal s] [PosReal t]:
-Jₖ s t k = Jsₖ s t k + Jtₖ s t k := by
-  unfold Jₖ
-  unfold Jsₖ
-  unfold Jtₖ
-  apply Jline_rec s t (δₖ s t k)
-  apply ne_of_gt
-  rw [← δ₀ s t]
-  apply (StrictMono.lt_iff_lt (δₖ_mono s t)).mpr
-  exact k0
-
-/-
 Now we can define the sequence nₖ as partial sums of Jₖ.
 
 The first element n₀ starts at 1 for reasons we will see later.
 This essentially comes from the defect of binomial coefficient at (0, 0).
+
+nₖ will be the n-coordinate of the vertices of several piecewise functions we will introduce
 -/
 noncomputable
 def nₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ
@@ -1375,11 +1397,14 @@ lemma nₖ_symm (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t = nₖ t s := by
     simp
     rw [Jₖ_symm]
 
-lemma nₖ0 (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t 0 = 1 := by
+/-
+The first two elements of nₖ are always 1 and 2
+-/
+lemma n₀ (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t 0 = 1 := by
   unfold nₖ
   rfl
 
-lemma nₖ1 (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t 1 = 2 := by
+lemma n₁ (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t 1 = 2 := by
   unfold nₖ
   unfold nₖ
   unfold Jₖ
@@ -1440,10 +1465,13 @@ lemma nₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (nₖ s t) := by
   exact v2 k l kl
 
 /-
-Just as we used Jₖ to define nₖ, we also use Jtₖ to define another partial sum sequence wₖ.
+Just as we used Jₖ to define nₖ, we also use Jsₖ and Jtₖ to define
+partial sum sequences wₖ' and wₖ, respectively.
+(The reason wₖ corresponds to t is mostly historical)
 
 The starting point w₀ = 1 is an artifact, as we will see it doesn't follow
-nice properties we will soon see. The real starting point of this sequence w₁ = 1
+nice properties we will soon see.
+The real starting point of this sequence is w₁ = 1.
 -/
 noncomputable
 def wₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ
@@ -1455,6 +1483,9 @@ def wₖ' (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ
 | 0 => 1
 | Nat.succ k => (wₖ' s t k) + (Jsₖ s t k)
 
+/-
+wₖ and wₖ' are symmetric to each other
+-/
 lemma wₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 wₖ s t k = wₖ' t s k := by
   induction k with
@@ -1470,9 +1501,9 @@ wₖ s t k = wₖ' t s k := by
     apply Jstₖ_symm
 
 /-
-Similarly, wₖ can be alternatively expressed using Jceiled.
+Similarly, wₖ and wₖ' can be alternatively expressed using Jceiled.
 However, this proof is much less trivial than the one for nₖ,
-because some Jtₖ can be 0 as they don't pass any lattice points.
+because some Jsₖ and Jtₖ can be 0 as they don't pass any lattice points.
 -/
 lemma wₖ_accum (s t: ℝ) (k: ℕ)  [PosReal s] [PosReal t]:
 wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
@@ -1622,7 +1653,7 @@ wₖ' s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - s) := by
   exact wₖ_accum t s k
 
 /-
-w₁ = 1 is the real starting point of this sequence
+w₁ = w₁' = 1 is the real starting point of this sequence
 -/
 lemma w₁ (s t: ℝ) [PosReal s] [PosReal t]: wₖ s t 1 = 1 := by
   unfold wₖ
@@ -1667,13 +1698,17 @@ lemma w₁' (s t: ℝ) [PosReal s] [PosReal t]: wₖ' s t 1 = 1 := by
   exact w₁ t s
 
 /-
-Symmetry of wₖ: by swapping s and t, w becomes n - w
+Recurrence formula of wₖ: by swapping s and t, w becomes n - w
 This is the first property that shows w₀ doesn't follow the pattern.
 A more sensible definition of w₀ that follows the Symmetry can be
  - w₀ = 1/2 when s = t
  - w₀ = c if s > t else 1 - c
 But these definitions doesn't add much value to our further arguments,
 so we will just leave w₀ semantically undefined.
+
+(The equivalent formula "wₖ s t k + wₖ' s t k = nₖ s t k" might be more
+suitable to be *the* recurrence formula. This is stated this way for
+historical reasons)
 -/
 lemma wₖ_rec (s t: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]:
 wₖ s t k + wₖ t s k = nₖ s t k := by
@@ -1730,6 +1765,7 @@ lemma wₖ_max (s t: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]: wₖ s
 
 /-
 wₖ is also increasing but only weakly.
+(The same is true for wₖ' but we omit the proof)
 -/
 lemma wₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (wₖ s t) := by
   have version1 (k a: ℕ): wₖ s t k ≤ wₖ s t (a + k) := by
@@ -1754,6 +1790,13 @@ lemma wₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (wₖ s t) := by
   intro k l
   apply version2
 
+/-
+Here is a pretty important property of wₖ and wₖ':
+Elements of wₖ and wₖ' sequence all come from nₖ.
+This means wₖ and wₖ' effectively sets up mapping from nₖ to itself.
+It can be showed that this mapping is weakly monotone and contracting,
+and we will prove a weaker version of this later
+-/
 lemma wₖ_is_nₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: ∃k', wₖ s t k = nₖ s t k' := by
   by_cases k0 : k = 0
   · use 0
@@ -1767,7 +1810,7 @@ lemma wₖ_is_nₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: ∃k', wₖ s t 
     rw [wₖ_accum]
     simp
     have Δceiled_fintype: Fintype (Δceiled s t (δₖ s t K - t)) := by
-      exact Fintype.ofFinite ↑(Δceiled s t (δₖ s t K - t))
+      exact Fintype.ofFinite (Δceiled s t (δₖ s t K - t))
     by_cases ge0: δₖ s t K - t ≥ 0
     · have zeroIn: 0 ∈ Δceiled s t (δₖ s t K - t) := by
         unfold Δceiled
@@ -1829,7 +1872,7 @@ lemma wₖ'_is_nₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: ∃k', wₖ' s 
 /-
 With sequence δₖ, nₖ, and wₖ introduced, we will construct the following functions:
 
-First, the "cost derivative" function dE(n): [1, ∞) → ℝ
+First, the "cost differential" function dE(n): [1, ∞) → ℝ
 
     ↑ dE(n)
     |
@@ -1850,7 +1893,7 @@ First, the "cost derivative" function dE(n): [1, ∞) → ℝ
 
 The function is defined like a stair case.
 By convension, each interval is defined with left point closed:
-dE: [nₖ, nₖ₊₁) = δₖ
+dE( [nₖ, nₖ₊₁) ) = δₖ
 
 Second, the "strategy" function w(n): [2, ∞) → P(ℝ).
 
@@ -1943,6 +1986,19 @@ We can always find such k for n ≥ 1.
 noncomputable
 def kₙ (s t n: ℝ) [PosReal s] [PosReal t] := (kceiled s t n).toFinset.max
 
+/-
+And obviously, it is also symmetrical
+-/
+lemma kₙ_symm (s t n: ℝ) [PosReal s] [PosReal t]: kₙ s t n = kₙ t s n := by
+  unfold kₙ
+  congr 1
+  simp
+  rw [kceiled_symm]
+
+/-
+kₙ and nₖ are basically inverse functions to each other.
+One can recover the k by composing kₙ and nₖ .
+-/
 lemma kₙ_inv (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 kₙ s t (nₖ s t k) = some k := by
   unfold kₙ
@@ -1968,6 +2024,9 @@ kₙ s t n = some k := by
     apply (StrictMono.lt_iff_lt (nₖ_mono s t)).mp
     exact nlt
 
+/-
+k₁ = 0 is the first non-empty kₙ. This corresponds to the fact n₀ = 1
+-/
 lemma k₁ (s t: ℝ) [PosReal s] [PosReal t]:
 kₙ s t 1 = some 0 := by
   have n0: nₖ s t 0 = 1 := by rfl
@@ -1976,6 +2035,9 @@ kₙ s t 1 = some 0 := by
   rw [← k1]
   simp
 
+/-
+Any n ≥ 1 should give a valid k
+-/
 lemma kₙ_exist (s t n: ℝ) (np: n ≥ 1) [PosReal s] [PosReal t]:
 ∃k, kₙ s t n = some k := by
   unfold kₙ
@@ -1988,6 +2050,9 @@ lemma kₙ_exist (s t n: ℝ) (np: n ≥ 1) [PosReal s] [PosReal t]:
   rify
   exact np
 
+/-
+Mean while, n < 1 never gives a valid k
+-/
 lemma kₙ_not_exist (s t n: ℝ) (np: n < 1) [PosReal s] [PosReal t]: kₙ s t n = none := by
   unfold kₙ
   have empty: (kceiled s t n).toFinset = ∅ := by
@@ -2006,16 +2071,7 @@ lemma kₙ_not_exist (s t n: ℝ) (np: n < 1) [PosReal s] [PosReal t]: kₙ s t 
   rfl
 
 /-
-And obviously, it is also symmetrical
--/
-lemma kₙ_symm (s t n: ℝ) [PosReal s] [PosReal t]: kₙ s t n = kₙ t s n := by
-  unfold kₙ
-  congr 1
-  simp
-  rw [kceiled_symm]
-
-/-
-Now the cost derivative function is defined by clamping to the nearest k and find δₖ
+Now the cost differential function is defined by clamping to the nearest k and find δₖ
 -/
 noncomputable
 def dE (s t: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun n ↦
@@ -2033,6 +2089,9 @@ lemma dE_symm (s t n: ℝ) [PosReal s] [PosReal t]: dE s t n = dE t s n := by
   ext
   rw [δₖ_symm]
 
+/-
+... and weakly increasing
+-/
 lemma dE_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (dE s t) := by
   unfold Monotone
   intro m n mnle
@@ -2080,8 +2139,8 @@ lemma dE_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (dE s t) := by
     apply le_trans km mnle
 
 /-
-The following three lemma show the nice property of wₖ:
-The domain [1, ∞) is divided by (wₖ k) and (wₖ (k + 1)) into three regions:
+The following three lemma show the nice property of wₖ when applied to dE:
+The domain n ∈ [1, ∞) is divided by (wₖ k) and (wₖ (k + 1)) into three regions:
  - dE( [1,          wₖ k      ) ) < δₖ - t
  - dE( [wₖ k,       wₖ (k + 1)) ) = δₖ - t
  - dE( [wₖ (k + 1), ∞         ) ) > δₖ - t
@@ -2090,6 +2149,8 @@ In other words, wₖ captures exactly where dE = δₖ - t (while nₖ captures 
 
 Note that because 1 ≤ wₖ k ≤ wₖ (k + 1) are week inequalities,
 the intervals listed above can degenerate
+
+There are similar properties with wₖ' and δₖ - s, but the proof is omitted
 -/
 lemma w_eq (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
 (low: w ≥ wₖ s t k) (r: w < wₖ s t (k + 1)):
@@ -2257,7 +2318,7 @@ dE s t w < δₖ s t k - t := by
   · rw [Leq0]
     rw [δ₀]
     have low': w ≥ (1:ℝ) := by exact low
-    have Jceiled_lt: 1 + ↑(Jceiled s t (δₖ s t K - t)) > (1:ℝ) := by
+    have Jceiled_lt: 1 + (Jceiled s t (δₖ s t K - t)) > (1:ℝ) := by
       apply gt_of_gt_of_ge
       · exact high
       · exact low'
@@ -2294,7 +2355,8 @@ dE s t w > δₖ s t k - t := by
   have w1: w ≥ 1 := by
     apply ge_trans low
     simp
-    exact wₖ_min' s t (k + 1)
+    apply wₖ_min s t (k + 1)
+    simp
   unfold dE
   rcases kₙ_exist s t w w1 with ⟨l, leq⟩
   rw [leq]
@@ -2321,7 +2383,10 @@ dE s t w > δₖ s t k - t := by
   simp at tr
   exact Monotone.reflect_lt (Jceiled_mono s t) tr
 
-
+/-
+As a corollary, we show that wₖ is not only a monotone mapping from nₖ to itself,
+but also under the mapping, wₖ(k) and wₖ(k + 1) are either same, or two nₖ(k') next to each other.
+-/
 lemma wₖ_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
 (keq: wₖ s t k = nₖ s t k') (wne: wₖ s t k ≠ wₖ s t (k + 1)): wₖ s t (k + 1) = nₖ s t (k' + 1) := by
   by_cases k0: k = 0
@@ -2377,6 +2442,9 @@ lemma wₖ_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
       simp at deLeft
     exact Nat.eq_of_le_of_lt_succ k_mono k'notp2
 
+/-
+By symmetry, the same holds for wₖ'
+-/
 lemma wₖ'_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
 (keq: wₖ' s t k = nₖ s t k') (wne: wₖ' s t k ≠ wₖ' s t (k + 1)): wₖ' s t (k + 1) = nₖ s t (k' + 1) := by
   rw [← wₖ_symm] at keq
@@ -2389,7 +2457,7 @@ lemma wₖ'_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
 
 
 /-
-Similarly, the strategy function w is defined by finding wₖ after clamping to the nearest k
+The strategy function w is defined by finding wₖ after clamping to the nearest k
 The parallelogram is formed by taking certain min and max
 -/
 noncomputable
@@ -2404,6 +2472,9 @@ def wₘₐₓ (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
   | some k => min (wₖ s t (k + 1)) ((wₖ s t k) + n - (nₖ s t k))
   | none => 0
 
+/-
+Derived from wₖ_rec, we have "recurrence formula" between wₘᵢₙ and wₘₐₓ.
+-/
 lemma wₘₘ_rec (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 wₘᵢₙ s t n + wₘₐₓ t s n = n := by
   unfold wₘᵢₙ wₘₐₓ
@@ -2415,7 +2486,7 @@ wₘᵢₙ s t n + wₘₐₓ t s n = n := by
       simp
       unfold kceiled
       simp
-      rw [nₖ1]
+      rw [n₁]
       exact n2
     apply Finset.le_max_of_eq mem keq
   rw [keq]
@@ -2441,6 +2512,63 @@ wₘᵢₙ s t n + wₘₐₓ t s n = n := by
   rw [max_comm]
   simp
 
+/-
+Just like wₖ, w(n) is bounded within [1, n - 1]
+-/
+lemma wₘᵢₙ_min (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘᵢₙ s t n ≥ 1 := by
+  unfold wₘᵢₙ
+  have h1: n ≥ 1 := by linarith
+  rcases kₙ_exist s t n h1 with ⟨k, kexist⟩
+  rw [kexist]
+  simp
+  unfold kₙ at kexist
+  left
+  apply wₖ_min s t k
+  have mem: 1 ∈ (kceiled s t n).toFinset := by
+    simp
+    unfold kceiled
+    simp
+    rw [n₁]
+    exact h
+  apply Finset.le_max_of_eq mem kexist
+
+lemma wₘₐₓ_max (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘₐₓ s t n ≤ n - 1 := by
+  unfold wₘₐₓ
+  have h1: n ≥ 1 := by linarith
+  rcases kₙ_exist s t n h1 with ⟨k, kexist⟩
+  have k1: k ≥ 1 := by
+    have mem: 1 ∈ (kceiled s t n).toFinset := by
+      simp
+      unfold kceiled
+      simp
+      rw [n₁]
+      exact h
+    apply Finset.le_max_of_eq mem kexist
+  rw [kexist]
+  simp
+  right
+  rw [add_comm]
+  rw [add_comm_sub]
+  apply add_le_add
+  · trivial
+  · have h2: wₖ s t k ≤ nₖ s t k - 1 := by
+      apply wₖ_max s t k
+      exact k1
+    have nh : nₖ s t k > 1 := by
+      rw [← n₀ s t]
+      have h: StrictMono (nₖ s t) := by exact nₖ_mono s t
+      apply h
+      exact k1
+    have lift: nₖ s t k - (1: ℝ) = ↑(nₖ s t k - 1) := by
+      refine Eq.symm (Nat.cast_pred ?_)
+      exact Nat.zero_lt_of_lt nh
+    rw [lift]
+    exact Nat.cast_le.mpr h2
+
+/-
+We also define a third kind of w function wₗᵢ,
+which is the diagonals of parallelograms formed by wₘᵢₙ and wₘₐₓ
+-/
 noncomputable
 def wₗᵢ (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
   match kₙ s t n with
@@ -2449,6 +2577,24 @@ def wₗᵢ (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
     (1 - a) * (wₖ s t k) + a * (wₖ s t (k + 1))
   | none => 0
 
+/-
+We also define the dual version wₗᵢ'
+We could have done the same for wₘᵢₙ and wₘₐₓ,
+but we omitted them as they don't add much value
+-/
+noncomputable
+def wₗᵢ' (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
+  match kₙ s t n with
+  | some k =>
+    let a := (n - nₖ s t k) / (nₖ s t (k + 1) - nₖ s t k)
+    (1 - a) * (wₖ' s t k) + a * (wₖ' s t (k + 1))
+  | none => 0
+
+/-
+wₗᵢ as the diagnonal, is always between wₘᵢₙ and wₘₐₓ.
+With this, we have the complete ordering:
+1 ≤ wₘᵢₙ ≤ wₗᵢ ≤ wₘₐₓ ≤ n - 1
+-/
 def wₗᵢ_range (s t n: ℝ) [PosReal s] [PosReal t]:
 wₘᵢₙ s t n ≤ wₗᵢ s t n ∧ wₗᵢ s t n ≤ wₘₐₓ s t n := by
   unfold wₘᵢₙ wₗᵢ wₘₐₓ
@@ -2540,14 +2686,14 @@ wₘᵢₙ s t n ≤ wₗᵢ s t n ∧ wₗᵢ s t n ≤ wₘₐₓ s t n := by
     rcases kₙ_not_exist s t n n1 with knone
     simp [knone]
 
-noncomputable
-def wₗᵢ' (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
-  match kₙ s t n with
-  | some k =>
-    let a := (n - nₖ s t k) / (nₖ s t (k + 1) - nₖ s t k)
-    (1 - a) * (wₖ' s t k) + a * (wₖ' s t (k + 1))
-  | none => 0
+lemma wₘₘ_order (s t n: ℝ) [PosReal s] [PosReal t]:
+wₘᵢₙ s t n ≤ wₘₐₓ s t n := by
+  rcases wₗᵢ_range s t n with ⟨left, right⟩
+  exact le_trans left right
 
+/-
+As usual, wₗᵢ is symmetric
+-/
 lemma wₗᵢ_symm (s t n: ℝ) [PosReal s] [PosReal t]:
 wₗᵢ s t n = wₗᵢ' t s n := by
   unfold wₗᵢ wₗᵢ'
@@ -2560,6 +2706,9 @@ wₗᵢ s t n = wₗᵢ' t s n := by
   · exact wₖ_symm s t k
   · exact wₖ_symm s t (k + 1)
 
+/-
+... and has recurrence formula
+-/
 lemma wₗᵢ_rec (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 wₗᵢ s t n + wₗᵢ t s n = n := by
   have n1: n ≥ 1 := by
@@ -2571,7 +2720,7 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
       simp
       unfold kceiled
       simp
-      rw [nₖ1]
+      rw [n₁]
       exact n2
     apply Finset.le_max_of_eq mem keq
   have k0: k ≠ 0 := by exact Nat.not_eq_zero_of_lt k1
@@ -2614,73 +2763,18 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
   rw [cast1, cast2]
   field_simp
   ring
-/-
-Just like wₖ, w(n) is bounded within [1, n - 1]
--/
-lemma wₘᵢₙ_min (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘᵢₙ s t n ≥ 1 := by
-  unfold wₘᵢₙ
-  have h1: n ≥ 1 := by linarith
-  rcases kₙ_exist s t n h1 with ⟨k, kexist⟩
-  rw [kexist]
-  simp
-  unfold kₙ at kexist
-  left
-  apply wₖ_min s t k
-  have mem: 1 ∈ (kceiled s t n).toFinset := by
-    simp
-    unfold kceiled
-    simp
-    rw [nₖ1]
-    exact h
-  apply Finset.le_max_of_eq mem kexist
 
-lemma wₘₐₓ_max (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘₐₓ s t n ≤ n - 1 := by
-  unfold wₘₐₓ
-  have h1: n ≥ 1 := by linarith
-  rcases kₙ_exist s t n h1 with ⟨k, kexist⟩
-  have k1: k ≥ 1 := by
-    have mem: 1 ∈ (kceiled s t n).toFinset := by
-      simp
-      unfold kceiled
-      simp
-      rw [nₖ1]
-      exact h
-    apply Finset.le_max_of_eq mem kexist
-  rw [kexist]
-  simp
-  right
-  rw [add_comm]
-  rw [add_comm_sub]
-  apply add_le_add
-  · trivial
-  · have h2: wₖ s t k ≤ nₖ s t k - 1 := by
-      apply wₖ_max s t k
-      exact k1
-    have nh : nₖ s t k > 1 := by
-      rw [← nₖ0 s t]
-      have h: StrictMono (nₖ s t) := by exact nₖ_mono s t
-      apply h
-      exact k1
-    have lift: nₖ s t k - (1: ℝ) = ↑(nₖ s t k - 1) := by
-      refine Eq.symm (Nat.cast_pred ?_)
-      exact Nat.zero_lt_of_lt nh
-    rw [lift]
-    exact Nat.cast_le.mpr h2
 
 /-
-These are the most important properties of dE and w.
-
-By defining dD(n, w) = dE(w) - dE(n - w) + t - s
-w(n) indicates where dD is negative, zero, or positive.
-
-In these theorems, we conviniently ignored boundary points at w = wₘᵢₙ or w = wₘₐₓ.
-dD value at those points can be found, but it doesn't add much value for our further arguments.
-
-TODO: This is not fully proved at the moment
+We define the "strategy evaluation differential function"
+dD(n, w) = dE(w) - dE(n - w) + t - s
 -/
 noncomputable
 def dD (s t n: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun w ↦ dE s t w - dE s t (n - w) + t - s
 
+/-
+It is symmetric
+-/
 lemma dD_symm (s t n w: ℝ) [PosReal s] [PosReal t]:
 dD s t n w = -dD t s n (n - w) := by
   unfold dD
@@ -2688,6 +2782,9 @@ dD s t n w = -dD t s n (n - w) := by
   rw [dE_symm s t]
   ring_nf
 
+/-
+... and weakly increasing w.r.t w
+-/
 lemma dD_mono (s t n: ℝ) [PosReal s] [PosReal t]: Monotone (dD s t n) := by
   unfold Monotone
   intro a b able
@@ -2700,6 +2797,12 @@ lemma dD_mono (s t n: ℝ) [PosReal s] [PosReal t]: Monotone (dD s t n) := by
   refine add_le_add  ?_ (le_refl t)
   apply tsub_le_tsub h1 h2
 
+/-
+We show that wₘᵢₙ and wₘₐₓ indicates where dD is negative, zero, or positive.
+
+In these theorems, we conviniently ignored boundary points at w = wₘᵢₙ or w = wₘₐₓ.
+dD value at those points can be found, but it doesn't add much value for our further arguments.
+-/
 theorem dD_zero (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w > wₘᵢₙ s t n) (rightBound: w < wₘₐₓ s t n):
 dD s t n w = 0 := by
@@ -2728,7 +2831,7 @@ dD s t n w = 0 := by
     simp
     unfold kceiled
     simp
-    rw [nₖ1]
+    rw [n₁]
     exact h
   have k1rel: dE s t w = δₖ s t kl - t := by
     apply w_eq s t w
@@ -2767,7 +2870,7 @@ dD s t n w < 0 := by
     simp
     unfold kceiled
     simp
-    rw [nₖ1]
+    rw [n₁]
     exact h
 
   unfold dD
@@ -2859,8 +2962,33 @@ dD s t n w > 0 := by
 
 
 /-
+Let's also show that dE and dD are integrable, which will be soon used
+-/
+lemma dE_integrable (s t m n: ℝ) [PosReal s] [PosReal t]:
+IntervalIntegrable (dE s t) MeasureTheory.volume m n := by
+  apply Monotone.intervalIntegrable (dE_mono s t)
 
-Now we can construct our main function E(n)
+/-
+Here is a more useful version with the correction term s + t
+-/
+lemma dE_integrable' (s t m n: ℝ) [PosReal s] [PosReal t]:
+IntervalIntegrable (fun x ↦ (dE s t x) + s + t) MeasureTheory.volume m n := by
+  have ti: IntervalIntegrable (fun x ↦ t)  MeasureTheory.volume m n := by
+    apply intervalIntegrable_const
+  have si: IntervalIntegrable (fun x ↦ s)  MeasureTheory.volume m n := by
+    apply intervalIntegrable_const
+
+  apply IntervalIntegrable.add ?_ ti
+  apply IntervalIntegrable.add ?_ si
+  apply dE_integrable
+
+lemma dD_integrable (s t n w1 w2: ℝ) [PosReal s] [PosReal t]:
+IntervalIntegrable (dD s t n) MeasureTheory.volume w1 w2 := by
+  apply Monotone.intervalIntegrable (dD_mono s t n)
+
+/-
+
+Now we can construct our main function, the cost function E(n)
 
     ↑ E(n)
     |
@@ -2892,11 +3020,17 @@ E₀--+-----*·---|-----|--------|---------------|-----|--→ n
 
 -/
 
+/-
+We first pin the vertices Eₖ on this function
+-/
 noncomputable
 def Eₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℝ
 | 0 => 0
 | Nat.succ k => (Eₖ s t k) + (Jₖ s t k) * (δₖ s t k + s + t)
 
+/-
+... which is symmetric
+-/
 lemma Eₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 Eₖ s t k = Eₖ t s k := by
   induction k with
@@ -2908,26 +3042,9 @@ Eₖ s t k = Eₖ t s k := by
     rw [δₖ_symm]
     rw [add_right_comm]
 
-lemma dE_integrable (s t m n: ℝ) [PosReal s] [PosReal t]:
-IntervalIntegrable (dE s t) MeasureTheory.volume m n := by
-  apply Monotone.intervalIntegrable (dE_mono s t)
-
-lemma dE_integrable' (s t m n: ℝ) [PosReal s] [PosReal t]:
-IntervalIntegrable (fun x ↦ (dE s t x) + s + t) MeasureTheory.volume m n := by
-  have ti: IntervalIntegrable (fun x ↦ t)  MeasureTheory.volume m n := by
-    apply intervalIntegrable_const
-  have si: IntervalIntegrable (fun x ↦ s)  MeasureTheory.volume m n := by
-    apply intervalIntegrable_const
-
-  apply IntervalIntegrable.add ?_ ti
-  apply IntervalIntegrable.add ?_ si
-  apply dE_integrable
-
-lemma dD_integrable (s t n w1 w2: ℝ) [PosReal s] [PosReal t]:
-IntervalIntegrable (dD s t n) MeasureTheory.volume w1 w2 := by
-  apply Monotone.intervalIntegrable (dD_mono s t n)
-
-
+/-
+Eₖ can be alternatively expressed as integrating dE between vertices
+-/
 lemma Eₖ_integral (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 Eₖ s t k = ∫ x in (1: ℝ)..(nₖ s t k), dE s t x + s + t := by
  induction k with
@@ -2970,12 +3087,18 @@ Eₖ s t k = ∫ x in (1: ℝ)..(nₖ s t k), dE s t x + s + t := by
     · simp
     · simp
 
+/-
+We then define E(n) as linear interpolation between Eₖ
+-/
 noncomputable
-def E (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
+def E (s t: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun n ↦
   match kₙ s t n with
   | some k => Eₖ s t k + (n - nₖ s t k) * (δₖ s t k + s + t)
   | none => 0
 
+/-
+... which is symmetric
+-/
 lemma E_symm (s t n: ℝ) [PosReal s] [PosReal t]: E s t n = E t s n := by
   unfold E
   rw [kₙ_symm]
@@ -2986,57 +3109,9 @@ lemma E_symm (s t n: ℝ) [PosReal s] [PosReal t]: E s t n = E t s n := by
   rw [δₖ_symm]
   rw [add_right_comm]
 
-
-lemma Ew_accum (s t: ℝ) (k: ℕ) (k1: k ≥ 1) [PosReal s] [PosReal t]:
-E s t (wₖ s t k) + (Jtₖ s t k) * (δₖ s t k + s) = E s t (wₖ s t (k + 1)) := by
-  by_cases zero_interval: wₖ s t k = wₖ s t (k + 1)
-  · rw [zero_interval]
-    simp
-    left
-    rw [wₖ] at zero_interval
-    unfold Jtₖ at zero_interval
-    simp at zero_interval
-    exact zero_interval
-  · rcases wₖ_is_nₖ s t k with ⟨k', k'eq⟩
-    rcases wₖ_is_nₖ_p1 s t k k' k'eq zero_interval with k'p1eq
-    rw [k'eq]
-    rw [k'p1eq]
-    unfold E
-    rw [kₙ_inv]
-    rw [kₙ_inv]
-    simp
-    rw [Eₖ]
-    simp
-    have dEeq: dE s t (wₖ s t k) = δₖ s t k - t := by
-      apply w_eq
-      · exact k1
-      · simp
-      · simp
-        apply lt_of_le_of_ne ?_ zero_interval
-        apply (wₖ_mono s t)
-        exact Nat.le_add_right k 1
-    unfold dE at dEeq
-    rw [k'eq] at dEeq
-    rw [kₙ_inv] at dEeq
-    simp at dEeq
-    congr 1
-    · simp
-      unfold Jtₖ
-      rw [← dEeq]
-      rfl
-    · rw [dEeq]
-      ring
-
-lemma Ew'_accum (s t: ℝ) (k: ℕ) (k1: k ≥ 1) [PosReal s] [PosReal t]:
-E s t (wₖ' s t k) + (Jsₖ s t k) * (δₖ s t k + t) = E s t (wₖ' s t (k + 1)) := by
-  rw [E_symm]
-  rw [← wₖ_symm]
-  rw [Jstₖ_symm]
-  rw [δₖ_symm]
-  nth_rw 2 [E_symm]
-  rw [← wₖ_symm]
-  exact Ew_accum t s k k1
-
+/-
+... and can be expressed as an integral
+-/
 lemma E_integral (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
 E s t n = ∫ x in (1: ℝ)..n, dE s t x + s + t := by
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
@@ -3081,9 +3156,72 @@ E s t n = ∫ x in (1: ℝ)..n, dE s t x + s + t := by
     rw [right]
     exact left
 
+/-
+While E(n) itself is defined as partial sum of Jₖ * (δₖ + s + t),
+we can also show the composed mapping E(w(n)) is the partial sum of Jtₖ * (δₖ + s)
+-/
+lemma Ew_accum (s t: ℝ) (k: ℕ) (k1: k ≥ 1) [PosReal s] [PosReal t]:
+E s t (wₖ s t k) + (Jtₖ s t k) * (δₖ s t k + s) = E s t (wₖ s t (k + 1)) := by
+  by_cases zero_interval: wₖ s t k = wₖ s t (k + 1)
+  · rw [zero_interval]
+    simp
+    left
+    rw [wₖ] at zero_interval
+    unfold Jtₖ at zero_interval
+    simp at zero_interval
+    exact zero_interval
+  · rcases wₖ_is_nₖ s t k with ⟨k', k'eq⟩
+    rcases wₖ_is_nₖ_p1 s t k k' k'eq zero_interval with k'p1eq
+    rw [k'eq]
+    rw [k'p1eq]
+    unfold E
+    rw [kₙ_inv]
+    rw [kₙ_inv]
+    simp
+    rw [Eₖ]
+    simp
+    have dEeq: dE s t (wₖ s t k) = δₖ s t k - t := by
+      apply w_eq
+      · exact k1
+      · simp
+      · simp
+        apply lt_of_le_of_ne ?_ zero_interval
+        apply (wₖ_mono s t)
+        exact Nat.le_add_right k 1
+    unfold dE at dEeq
+    rw [k'eq] at dEeq
+    rw [kₙ_inv] at dEeq
+    simp at dEeq
+    congr 1
+    · simp
+      unfold Jtₖ
+      rw [← dEeq]
+      rfl
+    · rw [dEeq]
+      ring
+
+/-
+Symmetrically E(w'(n)) is the partial sum of Jsₖ * (δₖ + t)
+-/
+lemma Ew'_accum (s t: ℝ) (k: ℕ) (k1: k ≥ 1) [PosReal s] [PosReal t]:
+E s t (wₖ' s t k) + (Jsₖ s t k) * (δₖ s t k + t) = E s t (wₖ' s t (k + 1)) := by
+  rw [E_symm]
+  rw [← wₖ_symm]
+  rw [Jstₖ_symm]
+  rw [δₖ_symm]
+  nth_rw 2 [E_symm]
+  rw [← wₖ_symm]
+  exact Ew_accum t s k k1
+
+/-
+And here is the strategy evaluation function
+-/
 noncomputable
 def D (s t n w: ℝ) [PosReal s] [PosReal t] := E s t w + E s t (n - w) + t * w + s * (n - w)
 
+/-
+... which is symmetric
+-/
 lemma D_symm (s t n w: ℝ) [PosReal s] [PosReal t]:
 D s t n w = D t s n (n - w) := by
   unfold D
@@ -3091,6 +3229,9 @@ D s t n w = D t s n (n - w) := by
   rw [E_symm s t]
   ring_nf
 
+/-
+... and is the integral of the strategy evaluation differential function
+-/
 lemma D_integral (s t n w1 w2: ℝ) (w1low: w1 ≥ 1) (w1high: w1 ≤ n - 1) (w2low: w2 ≥ 1) (w2high: w2 ≤ n - 1)
 [PosReal s] [PosReal t]:
 D s t n w2 - D s t n w1 = ∫ w in w1..w2, dD s t n w := by
@@ -3128,6 +3269,9 @@ D s t n w2 - D s t n w1 = ∫ w in w1..w2, dD s t n w := by
   simp
   ring
 
+/-
+We will now prove several version of the recurrence formula on E
+-/
 lemma Eₖ_rec (s t: ℝ) [PosReal s] [PosReal t]:
 ∀k: ℕ, 1 ≤ k →
 Eₖ s t k = E s t (wₖ s t k) + E s t (wₖ' s t k) +
@@ -3244,6 +3388,10 @@ t *   ((1 - a) * (wₖ s t k) + a * (wₖ s t (k + 1))) + s *   ((1 - a) * (wₖ
   ring
   exact Nat.le_add_right_of_le k1
 
+/-
+Eventually, we reached the major conclusion:
+The cost equals the strategy evaluation at the optimal strategy wₗᵢ
+-/
 lemma E_wₗᵢ (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 E s t n = D s t n (wₗᵢ s t n) := by
   have rec: n - wₗᵢ s t n = wₗᵢ' s t n := by
@@ -3282,7 +3430,7 @@ E s t n = D s t n (wₗᵢ s t n) := by
     simp
     unfold kceiled
     simp
-    rw [nₖ1]
+    rw [n₁]
     exact n2
   · apply div_nonneg ?_ (le_of_lt denogt)
     simp
@@ -3300,6 +3448,10 @@ E s t n = D s t n (wₗᵢ s t n) := by
     have k1lmax : k + 1 ≤ k := by exact Finset.le_max_of_eq k1 keq
     simp at k1lmax
 
+/-
+But because D has flat derivative dD between wₘᵢₙ and wₘₐₓ
+all w in between gives cost = strategy evaluation
+-/
 lemma E_w (s t n w: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w ≥ wₘᵢₙ s t n) (rightBound: w ≤ wₘₐₓ s t n):
 E s t n = D s t n w := by
@@ -3332,6 +3484,10 @@ E s t n = D s t n w := by
   · simp
   · simp
 
+/-
+And using the fact that the derivative dD is negative/positive outside the range,
+we conclude that the strategy evaluation is larger than the cost everywhere else.
+-/
 lemma E_wₘᵢₙ (s t n w: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w ≥ 1) (rightBound: w < wₘᵢₙ s t n):
 E s t n < D s t n w := by
@@ -3372,3 +3528,230 @@ E s t n < D s t n w := by
     rw [w_rec] at leftBound
     exact sub_lt_comm.mp leftBound
   exact E_wₘᵢₙ t s n (n - w) n2 leftBound' rightBound'
+
+/-
+Therefore, the interval bounded by wₘᵢₙ and wₘₐₓ idicates where E = D.
+Let's make it its own function
+-/
+def wₛₑₜ (s t: ℝ) [PosReal s] [PosReal t]: ℝ → Set ℝ :=
+  fun n ↦ Set.Icc (wₘᵢₙ s t n) (wₘₐₓ s t n)
+
+/-
+Let's summarize our result in a high level
+
+For any possible cost function E(n): [1, ∞) → ℝ
+We can define a strategy evaluation function StratEval{E}(n, w)
+
+A cost function E is called optimal if the min value of StratEval is E itself,
+and a strategy function w is called optimal if it is the set for StratEval to reach E.
+-/
+
+def StratEval (Efun: ℝ → ℝ) (s t n w: ℝ) :=
+  Efun w + Efun (n - w) + t * w + s * (n - w)
+
+def HasMin (s: Set ℝ) (m: ℝ): Prop := m ∈ s ∧ ∀ a ∈ s, a ≥ m
+
+def IsOptimalCost (Efun: ℝ → ℝ) (s t: ℝ): Prop :=
+  ∀ n ≥ 2, HasMin ((StratEval Efun s t n) '' (Set.Icc 1 (n - 1))) (Efun n)
+
+def IsOptimalStrat (Efun: ℝ → ℝ) (wfun: ℝ → Set ℝ) (s t: ℝ): Prop :=
+  ∀ n ≥ 2, ∀ w ∈ (Set.Icc 1 (n - 1)), StratEval Efun s t n w = Efun n ↔ w ∈ wfun n
+
+/-
+Then obviously the E and w function we have constructed are optimal
+-/
+theorem E_IsOptimalCost (s t: ℝ) [PosReal s] [PosReal t]:
+IsOptimalCost (E s t) s t := by
+  unfold IsOptimalCost
+  intro n n2
+  unfold HasMin
+  unfold StratEval
+  constructor
+  · simp
+    use wₘᵢₙ s t n
+    constructor
+    · constructor
+      · exact wₘᵢₙ_min s t n n2
+      · exact le_trans (wₘₘ_order s t n) (wₘₐₓ_max s t n n2)
+    · have refl: wₘᵢₙ s t n ≥ wₘᵢₙ s t n := by simp
+      obtain ew := E_w s t n (wₘᵢₙ s t n) n2 refl (wₘₘ_order s t n)
+      unfold D at ew
+      exact ew.symm
+  · simp
+    intro d w low high eq
+    have deq: d = D s t n w := by exact id (Eq.symm eq)
+    rw [deq]
+    by_cases wlow: w < wₘᵢₙ s t n
+    · apply le_of_lt
+      apply E_wₘᵢₙ s t n w n2 low wlow
+    · by_cases whigh: w ≤ wₘₐₓ s t n
+      · simp at wlow
+        apply le_of_eq
+        apply E_w s t n w n2 wlow whigh
+      · simp at whigh
+        apply le_of_lt
+        apply E_wₘₐₓ s t n w n2 whigh high
+
+theorem W_IsOptimalStrat (s t: ℝ) [PosReal s] [PosReal t]:
+IsOptimalStrat (E s t) (wₛₑₜ s t) s t := by
+  unfold IsOptimalStrat
+  unfold StratEval
+  simp
+  intro n n2 w wlow whigh
+  have deq: E s t w + E s t (n - w) + t * w + s * (n - w) = D s t n w := by rfl
+  rw [deq]
+  constructor
+  · contrapose
+    rintro range
+    rcases (Decidable.not_and_iff_or_not.mp range) with h|h
+    · simp at h;
+      apply ne_of_gt
+      exact E_wₘᵢₙ s t n w n2 wlow h
+    · simp at h;
+      apply ne_of_gt
+      exact E_wₘₐₓ s t n w n2 h whigh
+  · rintro ⟨low, high⟩
+    exact Eq.symm (E_w s t n w n2 low high)
+
+/-
+Finally, we want to lift our E and w to integers,
+which is the domain of the original question.
+-/
+
+noncomputable
+def Eℤ (s t: ℝ) [PosReal s] [PosReal t]: ℤ → ℝ :=
+fun n ↦ E s t n
+
+noncomputable
+def wₘᵢₙℤ (s t: ℝ) [PosReal s] [PosReal t]: ℤ → ℤ :=
+fun n ↦ match kₙ s t n with
+  | some k => max (wₖ s t k) ((wₖ s t (k + 1)) + n - (nₖ s t (k + 1)))
+  | none => 0
+
+noncomputable
+def wₘₐₓℤ (s t: ℝ) [PosReal s] [PosReal t]: ℤ → ℤ :=
+fun n ↦ match kₙ s t n with
+  | some k => min (wₖ s t (k + 1)) ((wₖ s t k) + n - (nₖ s t k))
+  | none => 0
+
+/-
+While Eℤ is easy to understand, we need to show that
+wₘᵢₙℤ and wₘₐₓℤ remains the same value when lifted
+-/
+lemma wₘᵢₙℤeq (s t: ℝ) (n: ℤ) [PosReal s] [PosReal t]:
+wₘᵢₙℤ s t n = wₘᵢₙ s t n := by
+  unfold wₘᵢₙℤ wₘᵢₙ
+  by_cases n1: (n: ℝ) < 1
+  · rw [kₙ_not_exist s t n n1]
+    simp
+  · have n1: (n: ℝ) ≥ 1 := by exact le_of_not_lt n1
+    rcases kₙ_exist s t n n1 with ⟨k, keq⟩
+    rw [keq]
+    simp
+
+lemma wₘₐₓℤeq (s t: ℝ) (n: ℤ) [PosReal s] [PosReal t]:
+wₘₐₓℤ s t n = wₘₐₓ s t n := by
+  unfold wₘₐₓℤ wₘₐₓ
+  by_cases n1: (n: ℝ) < 1
+  · rw [kₙ_not_exist s t n n1]
+    simp
+  · have n1: (n: ℝ) ≥ 1 := by exact le_of_not_lt n1
+    rcases kₙ_exist s t n n1 with ⟨k, keq⟩
+    rw [keq]
+    simp
+
+noncomputable
+def wℤ (s t: ℝ) [PosReal s] [PosReal t]: ℤ → Set ℤ :=
+fun n ↦ Set.Icc (wₘᵢₙℤ s t n) (wₘₐₓℤ s t n)
+
+/-
+We can then define the integer version of the optimal criteria,
+and proof the optimality of Eℤ and Wℤ
+-/
+def StratEvalℤ (Efun: ℤ → ℝ) (s t: ℝ) (n w: ℤ) :=
+  Efun w + Efun (n - w) + t * w + s * (n - w)
+
+def IsOptimalCostℤ (Efun: ℤ → ℝ) (s t: ℝ): Prop :=
+  ∀ n ≥ 2, HasMin ((StratEvalℤ Efun s t n) '' (Set.Icc 1 (n - 1))) (Efun n)
+
+def IsOptimalStratℤ (Efun: ℤ → ℝ) (wfun: ℤ → Set ℤ) (s t: ℝ): Prop :=
+  ∀ n ≥ 2, ∀ w ∈ (Set.Icc 1 (n - 1)), StratEvalℤ Efun s t n w = Efun n ↔ w ∈ wfun n
+
+theorem Eℤ_IsOptimalCost (s t: ℝ) [PosReal s] [PosReal t]:
+IsOptimalCostℤ (Eℤ s t) s t := by
+  unfold IsOptimalCostℤ
+  intro n n2
+  rify at n2
+  unfold HasMin
+  unfold StratEvalℤ
+  constructor
+  · simp
+    use wₘᵢₙℤ s t n
+    constructor
+    · constructor
+      · rify
+        rw [wₘᵢₙℤeq]
+        exact wₘᵢₙ_min s t n n2
+      · rify
+        rw [wₘᵢₙℤeq]
+        exact le_trans (wₘₘ_order s t n) (wₘₐₓ_max s t n n2)
+    · have refl: wₘᵢₙ s t n ≥ wₘᵢₙ s t n := by simp
+      obtain ew := E_w s t n (wₘᵢₙ s t n) n2 refl (wₘₘ_order s t n)
+      unfold D at ew
+      unfold Eℤ
+      push_cast
+      rw [wₘᵢₙℤeq]
+      exact ew.symm
+  · simp
+    intro d w low high eq
+    rify at low
+    rify at high
+    have deq: d = D s t n w := by
+      unfold Eℤ at eq
+      push_cast at eq
+      exact id (Eq.symm eq)
+    rw [deq]
+    by_cases wlow: w < wₘᵢₙ s t n
+    · apply le_of_lt
+      apply E_wₘᵢₙ s t n w n2 low wlow
+    · by_cases whigh: w ≤ wₘₐₓ s t n
+      · simp at wlow
+        apply le_of_eq
+        apply E_w s t n w n2 wlow whigh
+      · simp at whigh
+        apply le_of_lt
+        apply E_wₘₐₓ s t n w n2 whigh high
+
+theorem Wℤ_IsOptimalStrat (s t: ℝ) [PosReal s] [PosReal t]:
+IsOptimalStratℤ (Eℤ s t) (wℤ s t) s t := by
+  unfold IsOptimalStratℤ
+  unfold StratEvalℤ
+  simp
+  intro n n2 w wlow whigh
+  rify at n2
+  rify at wlow
+  rify at whigh
+  unfold Eℤ
+  push_cast
+  have deq: E s t w + E s t (n - w) + t * w + s * (n - w) = D s t n w := by rfl
+  rw [deq]
+  constructor
+  · contrapose
+    rintro range
+    rcases (Decidable.not_and_iff_or_not.mp range) with h|h
+    · simp at h;
+      rify at h
+      rw [wₘᵢₙℤeq] at h
+      apply ne_of_gt
+      exact E_wₘᵢₙ s t n w n2 wlow h
+    · simp at h;
+      rify at h
+      rw [wₘₐₓℤeq] at h
+      apply ne_of_gt
+      exact E_wₘₐₓ s t n w n2 h whigh
+  · rintro ⟨low, high⟩
+    rify at low
+    rw [wₘᵢₙℤeq] at low
+    rify at high
+    rw [wₘₐₓℤeq] at high
+    exact Eq.symm (E_w s t n w n2 low high)
