@@ -1,7 +1,39 @@
 import Mathlib.Tactic
 import Mathlib.Util.Delaborators
 
-/-- util  -/
+/-
+
+In this file, we will try to construct a solution to the following problem:
+
+A software has (n+1) versions v_0,v_1,...,v_n, and n changes in between.
+It is discovered one of the change broke a feature of the software, but we don't know
+which one did. We only know v_0 is fine and v_n is broken. How do we quickly find the broken
+change?
+
+Well, the answer to this classic question is to do binary search. But what if the cost of
+performing a software test depends on the outcome? For example, a broken software will result
+in a system crash and requires much longer time to reboot. Which version should we test first,
+and next?
+
+Let s and t be the cost of a successful and a failed test. The expected cost F(n) is
+
+F(1) = 0
+F(n) = min (1 ≤ w ≤ n - 1) {(w / n) * (F(w) + t) + ((n - w) / n) * (F(n - w) + s)}
+
+where w is the first version to test. To simplify a little bit, we normalize F(n) with
+
+E(n) = n * F(n)
+
+where E(n) satisfies
+
+E(1) = 0
+E(n) = min (1 ≤ w ≤ n - 1) {F(w) + F(n - w) + w * t + (n - w) * s}
+
+-/
+
+
+
+/- some random util theorems -/
 theorem sum_to_zero (a b : ℝ) (ha : a ≥ 0) (hb : b ≥ 0) (h : a + b ≤ 0) : a = 0 ∧ b = 0 := by
   constructor
   · -- Prove `a = 0`
@@ -28,7 +60,7 @@ by
   · simpa using other
   · exact Finset.le_max mem
 
-/--  -/
+
 
 class PosReal (x : ℝ) : Prop where
   pos : x > 0
@@ -3755,3 +3787,68 @@ IsOptimalStratℤ (Eℤ s t) (wℤ s t) s t := by
     rify at high
     rw [wₘₐₓℤeq] at high
     exact Eq.symm (E_w s t n w n2 low high)
+
+/-
+And finally, Eℤ is the unique optimal function with starting point of Eℤ(1) = 0
+-/
+theorem Eℤ₁ (s t: ℝ) [PosReal s] [PosReal t]: Eℤ s t 1 = 0 := by
+  unfold Eℤ
+  unfold E
+  simp
+  rw [k₁]
+  simp
+  unfold Eₖ
+  rw [n₀]
+  rw [δ₀]
+  simp
+
+lemma HasMinEq (s: Set ℝ) (m n: ℝ) (mMin: HasMin s m) (nMin: HasMin s n): m = n := by
+  unfold HasMin at mMin
+  unfold HasMin at nMin
+  rcases mMin with ⟨mmem, mle⟩
+  rcases nMin with ⟨nmem, nle⟩
+  apply le_antisymm
+  · apply mle n nmem
+  · apply nle m mmem
+
+theorem Eℤ_Unique (s t: ℝ) (Efun: ℤ → ℝ) [PosReal s] [PosReal t]
+(E1: Efun 1 = 0) (opt: IsOptimalCostℤ Efun s t):
+∀n ≥ 1, Efun n = Eℤ s t n := by
+  have alt: ∀n ≥ 1, ∀m, m ≥ 1 → m ≤ n → Efun m = Eℤ s t m := by
+    apply Int.le_induction
+    · intro m m1 m1'
+      have meq: m = 1 := by exact Eq.symm (Int.le_antisymm m1 m1')
+      rw [meq]
+      rw [E1, Eℤ₁]
+    · intro n n1 prev
+      intro m m1 mlenp1
+      by_cases mlen: m ≤ n
+      · exact prev m m1 mlen
+      · have n12: n + 1 ≥ 2 := by exact Int.le_add_of_neg_add_le_right n1
+        simp at mlen
+        have meq: m = n + 1 := by exact Int.le_antisymm mlenp1 mlen
+        rw [meq]
+        obtain EFunOpt := opt (n + 1) n12
+        simp at EFunOpt
+        obtain Eℤopt := Eℤ_IsOptimalCost s t (n + 1) n12
+        simp at Eℤopt
+        have StratEq: StratEvalℤ Efun s t (n + 1) '' Set.Icc 1 n = StratEvalℤ (Eℤ s t) s t (n + 1) '' Set.Icc 1 n := by
+          refine Set.image_congr ?_
+          simp
+          intro w wlow whigh
+          unfold StratEvalℤ
+          simp
+          congr
+          · apply prev w wlow whigh
+          · apply prev (n + 1 - w)
+            · refine Int.le_sub_left_of_add_le ?_
+              simp
+              apply whigh
+            · simp
+              apply wlow
+        rw [StratEq] at EFunOpt
+        apply HasMinEq _ _ _ EFunOpt Eℤopt
+
+  intro n n1
+  apply alt n n1 n n1
+  exact Int.le_refl n

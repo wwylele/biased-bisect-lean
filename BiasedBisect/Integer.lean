@@ -1,4 +1,5 @@
 import BiasedBisect.Basic
+import BiasedBisect.Inv
 
 /-
 
@@ -80,6 +81,13 @@ lemma δnext_int_larger (s t: ℕ+) (δ: ℤ): δnext s t δ >= δ + 1 := by
   simp at h
   exact h
 
+--noncomputable
+--def δₖ_int (s t: ℕ+): ℕ → ℤ
+--| 0 => 0
+--| Nat.succ n =>
+--  let ⟨δ, p⟩ := δnext_int s t (δₖ_int s t n)
+--  δ
+
 /-
 We can now provide integer versions for Jline and Jceiled
 -/
@@ -141,19 +149,31 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
     simp
     exact line_empty'
 
+--noncomputable
+--def dE_int (s t: ℕ+): ℝ → ℤ := fun n ↦
+--  match kₙ s t n with
+--  | some k => δₖ s t k
+--  | none => 0
+
 /-
-Let's introduce a new sequence Φ(δ) that's simply Jceiled_int shifted by 1.
+Let's introduce a new sequence φ(δ) that's simply Jceiled_int shifted by 1.
 
 We will soon see that this is the sequence that uniquely satisfies the following conditions:
- - Φ(< 0) = 1
- - Φ(δ ≥ 0) = Φ(δ - s) + Φ(δ - t)
+ - φ(< 0) = 1
+ - φ(δ ≥ 0) = φ(δ - s) + φ(δ - t)
 As an example, for s = 1 and t = 2, this is the Fibonacci sequence (shifted in index)
 -/
 noncomputable
-def Φ (s t: ℕ+) (δ: ℤ) := 1 + Jceiled_int s t δ
+def φ (s t: ℕ+) (δ: ℤ) := 1 + Jceiled_int s t δ
 
-theorem Φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): Φ s t δ = 1 := by
-  unfold Φ
+lemma φ_agree (s t: ℕ+) (δ: ℤ): φ s t δ = φ s t δ := by
+  unfold φ
+  unfold Jceiled_int
+  unfold φ
+  rfl
+
+theorem φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): φ s t δ = 1 := by
+  unfold φ
   simp
   unfold Jceiled_int
   unfold Jceiled
@@ -177,16 +197,16 @@ theorem Φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): Φ s t δ = 1 := by
   rw [line_empty]
   apply Finset.sum_empty
 
-theorem Φ_rec (s t: ℕ+) (δ: ℤ) (dpos: δ ≥ 0):
-Φ s t δ = Φ s t (δ - s) + Φ s t (δ - t) := by
-  have alt: 0 ≤ δ → Φ s t δ = Φ s t (δ - s) + Φ s t (δ - t) := by
+theorem φ_rec (s t: ℕ+) (δ: ℤ) (dpos: δ ≥ 0):
+φ s t δ = φ s t (δ - s) + φ s t (δ - t) := by
+  have alt: 0 ≤ δ → φ s t δ = φ s t (δ - s) + φ s t (δ - t) := by
     apply Int.le_induction
     · simp
       have sneg: -(s:ℤ) < 0 := by simp
       have tneg: -(t:ℤ) < 0 := by simp
-      rw [Φ_neg s t (-(s:ℤ)) sneg]
-      rw [Φ_neg s t (-(t:ℤ)) tneg]
-      unfold Φ
+      rw [φ_neg s t (-(s:ℤ)) sneg]
+      rw [φ_neg s t (-(t:ℤ)) tneg]
+      unfold φ
       have zero: 0 = (-1) + 1 := by simp
       rw [zero]
       rw [← (Jceiled_int_accum s t (-1))]
@@ -194,10 +214,10 @@ theorem Φ_rec (s t: ℕ+) (δ: ℤ) (dpos: δ ≥ 0):
       simp
       rw [Jline₀]
       nth_rw 2 [add_comm]
-      rw [← Φ]
-      rw [Φ_neg]
+      rw [← φ]
+      rw [φ_neg]
       simp
-    · unfold Φ
+    · unfold φ
       intro δ dpos prev
       rw [add_sub_right_comm]
       rw [add_sub_right_comm]
@@ -211,3 +231,46 @@ theorem Φ_rec (s t: ℕ+) (δ: ℤ) (dpos: δ ≥ 0):
       · apply ne_of_gt
         exact Int.lt_add_one_iff.mpr dpos
   exact alt dpos
+
+def ΔceiledByφ (s t: ℕ+) (n: ℝ) := {δ: ℤ | φ s t δ ≤ n}
+
+--theorem φ_inv (s t: ℕ+) (n: ℝ) (n1: n ≥ 1):
+--ΔceiledByφ s t n = Set.Iic (dE s t n - 1) := by
+
+lemma ΔceiledByφ_empty (s t: ℕ+) (n1: n < 1): ΔceiledByφ s t n = ∅ := by
+  apply Set.eq_empty_of_forall_not_mem
+  intro δ
+  unfold ΔceiledByφ
+  simp
+  apply lt_of_lt_of_le n1
+  unfold φ
+  simp
+
+lemma ΔceiledByφ_nonempty (s t: ℕ+) (n1: n ≥ 1): (ΔceiledByφ s t n).Nonempty := by
+  apply Set.nonempty_of_mem
+  show -1 ∈ ΔceiledByφ s t n
+  unfold ΔceiledByφ
+  simp
+  unfold φ
+  unfold Jceiled_int
+  unfold Jceiled
+  simp
+  have setEq: (Λceiled s t (-1)).toFinset = ∅ := by
+    simp
+    apply Λceiled_neg
+    simp
+  rw [setEq]
+  unfold Jₚ
+  simp
+  exact n1
+
+
+/-
+noncomputable
+def dE_int (s t: ℕ+) := fun n ↦
+  match (ΔceiledByφ s t (n + 1)).toFinset.max with
+  | some δ => δ
+  | none => 0
+
+theorem dE_int_agree (s t: ℕ+) (n: ℝ): dE s t n = dE_int s t n := by sorry
+-/
