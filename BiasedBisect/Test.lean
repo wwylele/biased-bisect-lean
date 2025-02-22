@@ -1,6 +1,4 @@
-import BiasedBisect.Basic
+import Mathlib
 
-
-lemma stuff (w1 w2 n: ℝ) (f: ℝ → ℝ):
-∫ (x : ℝ) in w1..w2, f (n - x) = ∫ (x : ℝ) in (n - w2)..(n - w1), f x := by
-  simp [intervalIntegral.integral_comp_sub_left]
+lemma sum_cartesian (a b: ℝ) (f: α → ℝ) (g: β → ℝ) (h1: HasSum f a) (h2: HasSum g b):
+  HasSum (fun (u, v) ↦ (f u) * (g v)) (a * b) := by sorry

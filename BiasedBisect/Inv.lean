@@ -78,6 +78,43 @@ theorem φ_inv (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
       rw [h]
       exact δlt
 
+
+
+/-Some culculus-/
+
+lemma ne_zero_of_re_neg {s : ℂ} (hs : 0 > s.re) : s ≠ 0 :=
+  fun h ↦ (Complex.zero_re ▸ h ▸ hs).false
+
+lemma exp_dir (f σ: ℝ) (x: ℂ) (σ0: σ > 0):
+HasDerivAt (fun x ↦ Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) / (-2 * π * f * Complex.I - σ) )
+(Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c))) x
+:= by
+  have muldiv: Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) =
+    Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) * (-2 * π * f * Complex.I - σ) / (-2 * π * f * Complex.I - σ) := by
+    rw [mul_div_cancel_right₀]
+    apply ne_zero_of_re_neg
+    simp
+    exact σ0
+  rw [muldiv]
+  apply HasDerivAt.div_const
+  apply HasDerivAt.cexp
+  have right: (-2 * ↑π * ↑f * Complex.I - ↑σ) = (-2 * ↑π * ↑f * Complex.I - ↑σ) * 1 := by
+    rw [MulOneClass.mul_one]
+  nth_rw 2 [right]
+  apply HasDerivAt.const_mul
+  refine HasDerivAt.sub_const ?_ c
+  exact hasDerivAt_id' x
+
+lemma exp_integ(f σ a b: ℝ) (σ0: σ > 0):
+∫ x in a..b, Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) =
+Complex.exp ((-2 * π * f * Complex.I - σ) * (b - c)) / (-2 * π * f * Complex.I - σ) - Complex.exp ((-2 * π * f * Complex.I - σ) * (a - c)) / (-2 * π * f * Complex.I - σ) := by
+  apply intervalIntegral.integral_eq_sub_of_hasDerivAt
+  · intro x xmem
+    apply HasDerivAt.comp_ofReal (exp_dir f σ x σ0)
+  · sorry
+
+/-End-/
+
 noncomputable
 def U (μ x: ℝ): ℂ := if x ≤ 0 then 0 else if x < μ then x / μ else 1
 
