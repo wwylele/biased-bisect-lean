@@ -142,6 +142,19 @@ lemma Λceiled_symm (s t δ: ℝ) (p q: ℕ) (h: (p, q) ∈ Λceiled s t δ):
   rw [add_comm]
   exact h
 
+lemma Λceiled_homo (s t δ l: ℝ) [PosReal l]:
+Λceiled s t δ = Λceiled (l * s) (l * t) (l * δ) := by
+  unfold Λceiled
+  ext x
+  simp
+  rw [← mul_assoc, ← mul_assoc]
+  rw [mul_comm _ l, mul_comm _ l]
+  rw [mul_assoc, mul_assoc]
+  rw [← mul_add]
+  symm
+  apply mul_le_mul_left
+  exact PosReal.pos
+
 /-
 As an important example, the subset ceiled by 0 only includes the point (0, 0)
 -/

@@ -83,8 +83,9 @@ lemma δnext_int_larger (s t: ℕ+) (δ: ℤ): δnext s t δ >= δ + 1 := by
   simp at h
   exact h
 
---lemma δₖ_int (s t: ℕ+) (k: ℕ): ∃δ: ℤ, δ = δₖ s t k
-
+/-
+We can now define integer versions of δₖ
+-/
 noncomputable
 def δₖ_int (s t: ℕ+): ℕ → ℤ
 | 0 => 0
@@ -104,7 +105,7 @@ lemma δₖ_int_agree (s t: ℕ+) (k: ℕ): δₖ_int s t k = δₖ s t k := by
 
 
 /-
-We can now provide integer versions for Jline and Jceiled
+... and integer versions for Jline and Jceiled
 -/
 noncomputable
 def Jline_int (s t: ℕ+) (δ: ℤ) := Jline s t δ
@@ -164,6 +165,9 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
     simp
     exact line_empty'
 
+/-
+And the integer version of dE
+-/
 noncomputable
 def dE_int (s t: ℕ+): ℝ → ℤ := fun n ↦
   match kₙ s t n with
@@ -260,6 +264,9 @@ theorem Φ_rec (s t: ℕ+) (δ: ℤ) (dpos: δ ≥ 0):
         exact Int.lt_add_one_iff.mpr dpos
   exact alt dpos
 
+/-
+Φ is the discrete analog of the continuous function φ
+-/
 def ΔceiledByΦ (s t: ℕ+) (n: ℝ) := {δ: ℤ | Φ s t δ ≤ n}
 
 lemma ΔceiledByΦ_agree (s t: ℕ+) (n: ℝ):
@@ -303,7 +310,9 @@ Int.cast '' Set.Iic (dE_int s t n - 1) = Set.Iio (dE s t n) ∩ (Int.cast '' Set
       exact Int.le_sub_one_of_lt h1
     · exact h2
 
-
+/-
+And finally, we show that Φ is the inverse function of dE in some sense
+-/
 theorem Φ_inv (s t: ℕ+) (n: ℝ) (n1: n ≥ 1):
 ΔceiledByΦ s t n = Set.Iic (dE_int s t n - 1) := by
   have lifted: ((Int.cast '' (ΔceiledByΦ s t n)): Set ℝ) = Int.cast '' Set.Iic (dE_int s t n - 1) := by
@@ -313,166 +322,20 @@ theorem Φ_inv (s t: ℕ+) (n: ℝ) (n1: n ≥ 1):
     exact φ_inv s t n n1
   exact (Set.image_eq_image Int.cast_injective).mp lifted
 
+/-
+We will investigate the generator function Z{Φ}(x) = ∑i:ℕ, Φ(i) * x^i and
+and show that it converges to a nice function.
 
-lemma ΔceiledByΦ_empty (s t: ℕ+) (n1: n < 1): ΔceiledByΦ s t n = ∅ := by
-  apply Set.eq_empty_of_forall_not_mem
-  intro δ
-  unfold ΔceiledByΦ
-  simp
-  apply lt_of_lt_of_le n1
-  unfold Φ
-  simp
+We start with a few lemma that will help us to reason about the summation
+-/
 
-lemma ΔceiledByΦ_nonempty (s t: ℕ+) (n1: n ≥ 1): (ΔceiledByΦ s t n).Nonempty := by
-  apply Set.nonempty_of_mem
-  show -1 ∈ ΔceiledByΦ s t n
-  unfold ΔceiledByΦ
-  simp
-  unfold Φ
-  unfold Jceiled_int
-  unfold Jceiled
-  simp
-  have setEq: (Λceiled s t (-1)).toFinset = ∅ := by
-    simp
-    apply Λceiled_neg
-    simp
-  rw [setEq]
-  unfold Jₚ
-  simp
-  exact n1
-
-lemma Φ_grossBound (s t: ℕ+) (δ: ℤ) (h: δ ≥ -(max s t)):
-Φ s t δ ≤ (Real.exp ((max s t) / (min s t))) * (Real.exp ((1: ℝ) / (min s t))) ^ δ := by
-  have variant(n: ℤ): n ≥ -(max s t) → ∀δ:ℤ, δ ≥ -(max s t) → δ ≤ n →
-  Φ s t δ ≤ (Real.exp ((max s t) / (min s t))) * (Real.exp ((1: ℝ) / (min s t))) ^ δ := by
-    apply Int.le_induction
-    · intro δ ge le
-      have eq: δ = -(max s t) := by exact Int.le_antisymm le ge
-      have one: Φ s t δ = 1 := by
-        apply Φ_neg
-        rw [eq]
-        apply neg_neg_of_pos
-        simp
-      rw [one, eq]
-      rw [← Real.rpow_intCast]
-      rw [← Real.exp_mul]
-      push_cast
-      rw [← Real.exp_add]
-      simp
-      rw [inv_mul_eq_div]
-    · intro m mbound prev
-      intro δ δlow δhigh
-      by_cases δm: δ ≤ m
-      · exact prev δ δlow δm
-      · simp at δm
-        have δeq: δ = m + 1 := by exact Int.le_antisymm δhigh δm
-        by_cases δ0: δ < 0
-        · have one: Φ s t δ = 1 := by
-            apply Φ_neg
-            exact δ0
-          rw [one]
-          obtain prevBound := prev m mbound (le_refl m)
-          have mone: Φ s t m = 1 := by
-            apply Φ_neg
-            exact Int.lt_trans δm δ0
-          rw [mone] at prevBound
-          rw [δeq]
-          apply le_trans prevBound
-          apply (mul_le_mul_left ?_).mpr
-          · rw [zpow_add₀]
-            · nth_rw 1 [← mul_one (Real.exp (1 / min s t) ^ m)]
-              apply (mul_le_mul_left ?_).mpr
-              · simp
-              · refine zpow_pos ?_ m
-                apply Real.exp_pos
-            · apply Real.exp_ne_zero
-          · apply Real.exp_pos
-        · simp at δ0
-          rw [Φ_rec s t δ δ0]
-          push_cast
-          have left: (Φ s t (δ - s)) + ↑(Φ s t (δ - t)) ≤ Real.exp ((max s t) / (min s t)) * Real.exp (1 / min s t) ^ (δ - s) + Real.exp ((max s t) / (min s t)) * Real.exp (1 / min s t) ^ (δ - t) := by
-            apply add_le_add
-            · apply prev (δ - s)
-              · apply ge_trans
-                · show δ - s ≥ -s
-                  simp
-                  exact δ0
-                · simp
-              · rw [δeq]
-                simp
-                exact NeZero.one_le
-            · apply prev (δ - t)
-              · apply ge_trans
-                · show δ - t ≥ -t
-                  simp
-                  exact δ0
-                · simp
-              · rw [δeq]
-                simp
-                exact NeZero.one_le
-          apply le_trans left
-          rw [← mul_add]
-          apply mul_le_mul
-          · simp
-          · rw [sub_eq_add_neg, sub_eq_add_neg]
-            rw [zpow_add₀, zpow_add₀]
-            · rw [← mul_add]
-              nth_rw 2 [← mul_one (Real.exp (1 / min s t) ^ δ)]
-              apply mul_le_mul
-              · apply le_refl
-              · rw [← Real.rpow_intCast, ← Real.rpow_intCast]
-                rw [← Real.exp_mul, ← Real.exp_mul]
-                apply le_trans
-                · show _ ≤ Real.exp (-1) + Real.exp (-1)
-                  push_cast
-                  have bound (x y: ℕ+): Real.exp (1 / min x y * -x) ≤ Real.exp (-1) := by
-                    simp
-                    refine (one_le_inv_mul₀ ?_).mpr ?_
-                    . simp
-                    · simp
-                  apply add_le_add
-                  · apply bound
-                  · rw [min_comm]
-                    apply bound
-                · rw [← two_mul]
-                  rw [mul_comm]
-                  apply mul_le_of_le_div₀
-                  · simp
-                  · simp
-                  apply le_of_lt
-                  apply lt_trans Real.exp_neg_one_lt_d9
-                  norm_num
-              · apply add_nonneg
-                · apply le_of_lt
-                  apply zpow_pos
-                  apply Real.exp_pos
-                · apply le_of_lt
-                  apply zpow_pos
-                  apply Real.exp_pos
-              · apply zpow_nonneg
-                apply Real.exp_nonneg
-            · apply Real.exp_ne_zero
-            · apply Real.exp_ne_zero
-          · apply add_nonneg
-            · apply le_of_lt
-              apply zpow_pos
-              apply Real.exp_pos
-            · apply le_of_lt
-              apply zpow_pos
-              apply Real.exp_pos
-          · apply Real.exp_nonneg
-
-
-  apply variant δ h δ h
-  exact Int.le_refl δ
-
-
+/-
+Λexchange: the bijection between (i, (p, q) ∈ (Λceiled i)) ↔ ((p, q), (i - δₚ(p ,q)))
+-/
 lemma ΛexchangeMem (s t: ℕ+) (pq :(ℕ × ℕ)) (i: ℕ):
 pq ∈ (Λceiled s t (i + pq.1 * s + pq.2 * t: ℕ)).toFinset := by
   unfold Λceiled
   simp
-
-
 
 def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t i).toFinset) where
   toFun | ⟨pq, i⟩ => ⟨i + pq.1 * s + pq.2 * t, ⟨pq, ΛexchangeMem s t pq i⟩⟩
@@ -508,6 +371,9 @@ def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t
       rw [add_assoc]
       rw [sub_add_cancel]
 
+/-
+Λdecomp: the bijection to domcompose ℕ × ℕ lattice to slices of 45°
+-/
 lemma ΛdecompMem (p q: ℕ): p ∈ Finset.range (p + q + 1) := by
   simp
   linarith
@@ -535,6 +401,9 @@ def Λdecomp: ((j:ℕ) × Finset.range (j + 1)) ≃ (ℕ × ℕ) where
     unfold Function.RightInverse Function.LeftInverse
     simp
 
+/-
+A gross bound for Jₚ to dompose it to a product of f(p) and g(q)
+-/
 lemma Jₚ_bound: ∀p, ∀q, Jₚ (p, q) ≤ 2^p * 2^q := by
   intro p
   induction p with
@@ -557,6 +426,10 @@ lemma Jₚ_bound: ∀p, ∀q, Jₚ (p, q) ≤ 2^p * 2^q := by
       rw [right]
       exact add_le_add prev' (prev (q + 1))
 
+/-
+An analog to geometric series over ℕ × ℕ
+The radius bound here is not sharp
+-/
 lemma pqx_sum [RCLike K]
 (s t: ℕ+) (x: K) (bound: ‖x‖ < 2⁻¹):
 HasSum (fun pq ↦ ↑(Jₚ pq) * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))) (1 - (x ^ (s:ℕ) + x ^ (t:ℕ)))⁻¹ := by
@@ -641,8 +514,11 @@ HasSum (fun pq ↦ ↑(Jₚ pq) * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))) (1 - (x
       · apply le_of_lt; apply lt_trans bound; norm_num
       · simp
 
-
-lemma ΦX_sum (s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
+/-
+A main theorem: the generating function Z{Φ}(x) converges to a rational function
+The bound here is not sharp, but it should be sufficient for future reasoning over complex plane
+-/
+theorem ZΦ_sum (s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
 HasSum (fun i:ℕ ↦ Φ s t i * x ^ i) ((1 - x)⁻¹ + (1 - (x ^ (s:ℕ) + x ^ (t:ℕ)))⁻¹ * (1 - x)⁻¹) := by
   have bound2: ‖x‖ < 1 := by
     apply lt_trans bound
@@ -706,7 +582,19 @@ HasSum (fun i:ℕ ↦ Φ s t i * x ^ i) ((1 - x)⁻¹ + (1 - (x ^ (s:ℕ) + x ^ 
 
 
 
-lemma unique_pq (s t: ℕ+) (pq pq': ℕ × ℕ)
+noncomputable
+def ξPolynomial(s t: ℕ+) :=
+  Polynomial.monomial s (1:ℂ) + Polynomial.monomial t (1:ℂ) + Polynomial.monomial 0 (-1:ℂ)
+
+noncomputable
+def ξSet(s t: ℕ+) := (ξPolynomial s t).roots
+
+lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ):
+((1 - x)⁻¹ + (1 - (x ^ (s:ℕ) + x ^ (t:ℕ)))⁻¹ * (1 - x)⁻¹) =
+(Multiset.map (fun ξ ↦ (1 - x * ξ⁻¹)⁻¹*(1 - ξ)⁻¹*(s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹) (ξSet s t)).sum := by sorry
+
+
+lemma unique_pq' (s t: ℕ+) (pq pq': ℕ × ℕ)
 (coprime: PNat.Coprime s t) (eq: δₚ s t pq = δₚ s t pq') (bound: δₚ s t pq < s * t): pq = pq' := by
   unfold δₚ at eq
   simp at eq
@@ -792,21 +680,537 @@ lemma δₖ_unique_pq (s t: ℕ+) (k: ℕ)
 ∃! pq: ℕ × ℕ, δₖ s t k = δₚ s t pq := by sorry
 
 
-lemma slopeBound (a b c d s t: ℕ+) (det: a * d = b * c + 1) (left: b * t < d * s) (right: c * s < a * t):
-t ≥ c + d := by sorry
+lemma slopeBound (a b c d s t: ℕ+) (det: a * d = b * c + 1) (left: c * t < d * s) (right: b * s < a * t):
+t ≥ b + d := by
+  have left': c * t + 1 ≤ d * s := by exact left
+  have left'': (c * t + 1) * b ≤ d * s * b := by exact (mul_le_mul_iff_right b).mpr left'
+  have left''': (c * t + 1) * b + d ≤ d * s * b + d := by exact add_le_add_right left'' d
+  rw [mul_assoc] at left'''
+  rw [← mul_add_one] at left'''
+  rw [mul_comm s b] at left'''
+  have right': b * s + 1 ≤ a * t := by exact right
+  have right'': d * (b * s + 1) ≤ d * (a * t) := by exact mul_le_mul_left' right' d
+  have all: (c * t + 1) * b + d ≤ d * (a * t) := le_trans left''' right''
+  rw [← mul_assoc] at all
+  rw [mul_comm d a] at all
+  rw [det] at all
+  rw [add_mul, add_mul] at all
+  have eq: c * t * b = b * c * t := by ring
+  rw [eq] at all
+  rw [add_assoc] at all
+  apply (add_le_add_iff_left (b * c * t)).mp at all
+  simp at all
+  exact all
 
-lemma Δceiled_inert (a b c d s t: ℕ+) (p q: ℕ)
-(det: a * d = b * c + 1) (left: b * t < d * s) (right: c * s < a * t)
-(bound: p * (a + b) + q * (c + d) < (a + b) * (c + d)):
-Λceiled s t (p * s + q * t) = Λceiled (a + b) (c + d) (p * (a + b) + q * (c + d)) := by
+theorem Δceiled_inert_half (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ) [PosReal s1] [PosReal t1]
+[PosReal s2] [PosReal t2] (det: a * d = b * c + 1)
+(left: a * t1 > b * s1) (mid: s1 * t2 > s2 * t1) (right: d * s2 > c * t2)
+(pBound: p < b + d)
+(p' q': ℕ) (qless: q < q') (pmore: p' < p):
+p' * s1 + q' * t1 ≤ p * s1 + q * t1 ↔ p' * s2 + q' * t2 ≤ p * s2 + q * t2 := by
+  have rewr (s t: ℝ): p' * s + q' * t ≤ p * s + q * t ↔ (q' - q: ℕ) * t ≤ (p - p': ℕ) * s := by
+    rw [Nat.cast_sub (le_of_lt qless)]
+    rw [Nat.cast_sub (le_of_lt pmore)]
+    rw [sub_mul, sub_mul]
+    constructor
+    repeat
+      intro h
+      linarith
+  rw [rewr s1 t1]
+  rw [rewr s2 t2]
+  set dp := p - p'
+  set dq := q' -q
+  have dpBound: dp < b + d := by
+    unfold dp
+    exact tsub_lt_of_lt pBound
+  have dp0: dp > 0 := by
+    unfold dp
+    simp
+    exact pmore
+  have dq0: dq > 0 := by
+    unfold dq
+    simp
+    exact qless
+  have dp0': (dp:ℝ) > 0 := by
+    exact Nat.cast_pos'.mpr dp0
+  have bpos: (b:ℝ) > 0 := by simp
+  have dpos: (d:ℝ) > 0 := by simp
+  constructor
+  · intro le1
+    by_contra ge2
+    simp at ge2
+    nth_rw 2 [mul_comm] at le1
+    apply (div_le_div_iff₀ dp0' PosReal.pos).mpr at le1
+    nth_rw 1 [mul_comm] at ge2
+    apply (div_lt_div_iff₀ PosReal.pos dp0').mpr at ge2
+    nth_rw 2 [mul_comm] at left
+    apply (div_lt_div_iff₀ PosReal.pos bpos).mpr at left
+    nth_rw 1 [mul_comm] at right
+    apply (div_lt_div_iff₀ dpos PosReal.pos).mpr at right
+    obtain Left: (dq:ℝ) / dp < a / b := lt_of_le_of_lt le1 left
+    obtain Right: (c:ℝ) / d < dq / dp := lt_trans right ge2
+    apply (div_lt_div_iff₀ dp0' bpos).mp at Left
+    apply (div_lt_div_iff₀ dpos dp0').mp at Right
+    let S: ℕ+ := ⟨dq, dq0⟩
+    let T: ℕ+ := ⟨dp, dp0⟩
+    have dqS: dq = S := by trivial
+    have dpT: dp = T := by trivial
+    rw [dqS, dpT] at Left
+    rw [dqS, dpT] at Right
+    norm_cast at Left
+    norm_cast at Right
+    rw [mul_comm] at Left
+    nth_rw 2 [mul_comm] at Right
+    have anotherBound := slopeBound a b c d S T det Right Left
+    rw [dpT] at dpBound
+    norm_cast at dpBound
+    obtain what := lt_of_lt_of_le dpBound anotherBound
+    simp at what
+  · intro le2
+    nth_rw 2 [mul_comm]
+    apply (div_le_div_iff₀ dp0' PosReal.pos).mp
+    nth_rw 2 [mul_comm] at le2
+    apply (div_le_div_iff₀ dp0' PosReal.pos).mpr at le2
+    apply (div_lt_div_iff₀ PosReal.pos PosReal.pos).mpr at mid
+    apply le_of_lt
+    exact lt_of_le_of_lt le2 mid
+
+
+
+lemma Δceiled_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
+[PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
+(det: a * d = b * c + 1)
+(left: a * t1 > b * s1) (mid: s1 * t2 > s2 * t1) (right: d * s2 > c * t2)
+(pBound: p < b + d) (qBound: q < a + c):
+Λceiled s1 t1 (p * s1 + q * t1) = Λceiled s2 t2 (p * s2 + q * t2) := by
   unfold Λceiled
   ext ⟨p', q'⟩
   simp
-  constructor
-  · intro h1
-    by_contra h2
-    simp at h2
+  by_cases pless: p' ≤ p
+  · by_cases qless: q' ≤ q
+    · apply iff_of_true
+      repeat
+        apply add_le_add
+        repeat
+          apply (mul_le_mul_right ?_).mpr
+          · simp
+            trivial
+          · exact PosReal.pos
+    · simp at qless
+      rcases lt_or_eq_of_le pless with pmore|peq
+      · exact Δceiled_inert_half a b c d s1 t1 s2 t2 p q det left mid right pBound p' q' qless pmore
+      · rw [peq]
+        simp
+        apply iff_of_false
+        repeat
+          simp
+          apply (mul_lt_mul_right ?_).mpr
+          · simp
+            trivial
+          · exact PosReal.pos
+  · simp at pless
+    by_cases qmore: q' ≥ q
+    · apply iff_of_false
+      repeat
+        simp
+        apply add_lt_add_of_lt_of_le
+        · apply (mul_lt_mul_right ?_).mpr
+          · simp
+            trivial
+          · exact PosReal.pos
+        · apply (mul_le_mul_right ?_).mpr
+          · simp
+            trivial
+          · exact PosReal.pos
+    · simp at qmore
+      have det': d * a = c * b + 1 := by
+        nth_rw 1 [mul_comm]
+        nth_rw 2 [mul_comm]
+        exact det
+      have mid': t2 * s1 > t1 * s2 := by
+        nth_rw 1 [mul_comm]
+        nth_rw 2 [mul_comm]
+        exact mid
+      rw [add_comm] at qBound
+      nth_rw 1 [add_comm]
+      nth_rw 2 [add_comm]
+      nth_rw 3 [add_comm]
+      nth_rw 4 [add_comm]
+      symm
+      exact Δceiled_inert_half d c b a t2 s2 t1 s1 q p det' right mid' left qBound q' p' pless qmore
+
+lemma Δceiled_inert' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
+[PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
+(det: a * d = b * c + 1)
+(left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
+(left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
+(pBound: p < b + d) (qBound: q < a + c):
+Λceiled s1 t1 (p * s1 + q * t1) = Λceiled s2 t2 (p * s2 + q * t2) := by
+  rcases lt_trichotomy (s1 * t2) (s2 * t1) with t|eq|gt
+  · exact Eq.symm (Δceiled_inert a b c d s2 t2 s1 t1 p q det left2 t right1 pBound qBound)
+  · let l := s2 / s1
+    have sl: s2 = l * s1 := by
+      unfold l
+      rw [div_mul_cancel₀]
+      apply ne_of_gt
+      exact PosReal.pos
+    have tl: t2 = l * t1 := by
+      unfold l
+      rw [← mul_div_right_comm]
+      rw [← eq]
+      rw [mul_div_right_comm]
+      rw [div_self (ne_of_gt PosReal.pos)]
+      simp
+    let lpos: PosReal l := {
+      pos := by
+        unfold l
+        apply (div_pos_iff_of_pos_left PosReal.pos).mpr
+        exact PosReal.pos
+    }
+    rw [sl, tl]
+    rw [← mul_assoc, ← mul_assoc]
+    rw [mul_comm _ l, mul_comm _ l]
+    rw [mul_assoc, mul_assoc]
+    rw [← mul_add]
+    apply Λceiled_homo s1 t1 (↑p * s1 + ↑q * t1) l
+  · exact Δceiled_inert a b c d s1 t1 s2 t2 p q det left1 gt right2 pBound qBound
+
+lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
+[PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
+(det: a * d = b * c + 1)
+(left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
+(left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
+(p1Bound: p1 < b + d) (q1Bound: q1 < a + c)
+(p2Bound: p2 < b + d) (q2Bound: q2 < a + c):
+δₚ s1 t1 (p1, q1) < δₚ s1 t1 (p2, q2) → δₚ s2 t2 (p1, q1) < δₚ s2 t2 (p2, q2) := by
+  by_contra rel
+  simp at rel
+  rcases rel with ⟨r1, r2⟩
+  have c1: Λceiled s1 t1 (δₚ s1 t1 (p1, q1)) ⊆ Λceiled s1 t1 (δₚ s1 t1 (p2, q2)) := by
+    unfold Λceiled
+    simp
+    intro p q mem
+    apply le_of_lt
+    apply lt_of_le_of_lt mem r1
+  have c2: Λceiled s2 t2 (δₚ s2 t2 (p1, q1)) ⊇ Λceiled s2 t2 (δₚ s2 t2 (p2, q2)) := by
+    unfold Λceiled
+    simp
+    intro p q mem
+    apply le_trans mem r2
+  have left: Λceiled s1 t1 (δₚ s1 t1 (p1, q1)) = Λceiled s2 t2 (δₚ s2 t2 (p1, q1)) := by
+    unfold δₚ
+    refine Δceiled_inert' a b c d s1 t1 s2 t2 p1 q1 det left1 right1 left2 right2 p1Bound q1Bound
+  have right: Λceiled s1 t1 (δₚ s1 t1 (p2, q2)) = Λceiled s2 t2 (δₚ s2 t2 (p2, q2)) := by
+    unfold δₚ
+    refine Δceiled_inert' a b c d s1 t1 s2 t2 p2 q2 det left1 right1 left2 right2 p2Bound q2Bound
+  rw [← left, ← right] at c2
+  have eq: Λceiled s1 t1 (δₚ s1 t1 (p1, q1)) = Λceiled s1 t1 (δₚ s1 t1 (p2, q2)) := by
+    exact Set.Subset.antisymm c1 c2
+  have pq2: (p2, q2) ∈ Λceiled s1 t1 (δₚ s1 t1 (p2, q2)) := by
+    unfold Λceiled δₚ
+    simp
+  rw [← eq] at pq2
+  unfold Λceiled at pq2
+  simp at pq2
+  rw [← δₚ] at pq2
+  obtain what := lt_of_le_of_lt pq2 r1
+  simp at what
+
+lemma unique_pq (a b c d: ℕ+) (s t: ℝ) (pq pq': ℕ × ℕ)
+[PosReal s] [PosReal t]
+(det: a * d = b * c + 1)
+(left: a * t > b * s) (right: d * s > c * t)
+(eq: δₚ s t pq = δₚ s t pq') (bound: δₚ s t pq < (a + c) * (b + d)): pq = pq' := by sorry
+
+lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
+[PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
+(det: a * d = b * c + 1)
+(left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
+(left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
+(kbound: ℕ) (pqₖ: ℕ → ℕ × ℕ)
+(pqMatch1: ∀ k ≤ kbound, δₖ s1 t1 k = δₚ s1 t1 (pqₖ k))
+(pqBound: ∀ k ≤ kbound, (pqₖ k).1 * (a + c) + (pqₖ k).2 * (b + d) < (a + c) * (b + d))
+: ∀ k ≤ kbound, δₖ s2 t2 k = δₚ s2 t2 (pqₖ k) := by
+  intro k kle
+  induction k with
+  | zero =>
+    rw [δ₀]
+    obtain at1 := pqMatch1 0 kle
+    rw [δ₀] at at1
+    unfold δₚ at at1
+    simp at at1
+    obtain at1 := ge_of_eq at1
+    have left: (pqₖ 0).1 * s1 ≥ 0 := by
+      apply mul_nonneg
+      · simp
+      · exact le_of_lt (PosReal.pos)
+    have right: (pqₖ 0).2 * t1 ≥ 0 := by
+      apply mul_nonneg
+      · simp
+      · exact le_of_lt (PosReal.pos)
+    obtain ⟨shuts, shutt⟩ := sum_to_zero _ _ left right at1
+    apply eq_zero_of_ne_zero_of_mul_right_eq_zero (ne_of_gt PosReal.pos) at shuts
+    apply eq_zero_of_ne_zero_of_mul_right_eq_zero (ne_of_gt PosReal.pos) at shutt
+    unfold δₚ
+    simp
+    rw [shuts, shutt]
+    simp
+  | succ k prev =>
+    have kleprev: k ≤ kbound := by exact Nat.le_of_succ_le kle
+    obtain prev := prev kleprev
+    obtain pqBoundk := pqBound k kleprev
+    have pBound: (pqₖ k).1 < b + d := by
+      have pqac: (pqₖ k).2 * (b + d) ≥ 0 := by
+        apply mul_nonneg
+        · simp
+        · simp
+      obtain pqBoundk' := lt_of_add_lt_of_nonneg_left pqBoundk pqac
+      rw [mul_comm] at pqBoundk'
+      apply lt_of_mul_lt_mul_left pqBoundk'
+      simp
+    have qBound: (pqₖ k).2 < a + c := by
+      have pqac: (pqₖ k).1 * (a + c) ≥ 0 := by
+        apply mul_nonneg
+        · simp
+        · simp
+      obtain pqBoundk' := lt_of_add_lt_of_nonneg_right pqBoundk pqac
+      apply lt_of_mul_lt_mul_right pqBoundk'
+      simp
+    obtain pqBoundkp := pqBound (k + 1) kle
+    have pBound': (pqₖ (k + 1)).1 < b + d := by
+      have pqac: (pqₖ (k + 1)).2 * (b + d) ≥ 0 := by
+        apply mul_nonneg
+        · simp
+        · simp
+      obtain pqBoundk' := lt_of_add_lt_of_nonneg_left pqBoundkp pqac
+      rw [mul_comm] at pqBoundk'
+      apply lt_of_mul_lt_mul_left pqBoundk'
+      simp
+    have qBound': (pqₖ (k + 1)).2 < a + c := by
+      have pqac: (pqₖ (k + 1)).1 * (a + c) ≥ 0 := by
+        apply mul_nonneg
+        · simp
+        · simp
+      obtain pqBoundk' := lt_of_add_lt_of_nonneg_right pqBoundkp pqac
+      apply lt_of_mul_lt_mul_right pqBoundk'
+      simp
+    let acpos: PosReal (a + c) := {
+      pos := by apply add_pos_of_nonneg_of_pos; simp; simp
+    }
+    let bdpos: PosReal (b + d) := {
+      pos := by apply add_pos_of_nonneg_of_pos; simp; simp
+    }
+    have abcd1: (a: ℝ) * (b + d) > b * (a + c) := by
+      norm_cast
+      rw [mul_add, mul_add]
+      rw [det]
+      rw [mul_comm]
+      rw [← add_assoc]
+      exact PNat.lt_add_right (a * b + b * c) 1
+    have abcd2: (d: ℝ) * (a + c) > c * (b + d) := by
+      norm_cast
+      rw [mul_add, mul_add]
+      rw [mul_comm d a]
+      rw [det]
+      rw [mul_comm c b]
+      rw [mul_comm c d]
+      rw [add_assoc]
+      rw [add_comm 1]
+      rw [← add_assoc]
+      exact PNat.lt_add_right (b * c + d * c) 1
+    have pqBound's2: δₚ s2 t2 (pqₖ (k + 1)) < s2 * (b + d) := by
+      by_contra ge
+      simp at ge
+      have mem: ((b + d: ℕ), 0) ∈ Λceiled s2 t2 ((pqₖ (k + 1)).1 * s2 + (pqₖ (k + 1)).2 * t2) := by
+        unfold Λceiled
+        simp
+        rw [mul_comm]
+        exact ge
+      rw [Δceiled_inert' a b c d s2 t2 (a + c) (b + d) (pqₖ (k + 1)).1 (pqₖ (k + 1)).2
+        det left2 right2 abcd1 abcd2 pBound' qBound' ] at mem
+      unfold Λceiled at mem
+      simp at mem
+      obtain another := pqBound (k + 1) kle
+      rify at another
+      obtain what := lt_of_le_of_lt mem another
+      rw [mul_comm] at what
+      simp at what
+    have pqBound't2: δₚ s2 t2 (pqₖ (k + 1)) < t2 * (a + c) := by
+      by_contra ge
+      simp at ge
+      have mem: (0, (a + c: ℕ)) ∈ Λceiled s2 t2 ((pqₖ (k + 1)).1 * s2 + (pqₖ (k + 1)).2 * t2) := by
+        unfold Λceiled
+        simp
+        rw [mul_comm]
+        exact ge
+      rw [Δceiled_inert' a b c d s2 t2 (a + c) (b + d) (pqₖ (k + 1)).1 (pqₖ (k + 1)).2
+        det left2 right2 abcd1 abcd2 pBound' qBound' ] at mem
+      unfold Λceiled at mem
+      simp at mem
+      obtain another := pqBound (k + 1) kle
+      rify at another
+      obtain what := lt_of_le_of_lt mem another
+      rw [mul_comm] at what
+      simp at what
+    apply le_antisymm
+    · have next: δₚ s1 t1 (pqₖ (k + 1)) > δₚ s1 t1 (pqₖ k) := by
+        rw [← pqMatch1 (k + 1) kle]
+        rw [← pqMatch1 k kleprev]
+        rw [δₖ]
+        apply δnext_larger
+      have preserveNext: δₚ s2 t2 (pqₖ (k + 1)) > δₚ s2 t2 (pqₖ k) := by
+        apply (Δceiled_lt_inert a b c d s1 t1 s2 t2 (pqₖ k).1 (pqₖ k).2 (pqₖ (k + 1)).1 (pqₖ (k + 1)).2
+          det left1 right1 left2 right2 pBound qBound pBound' qBound' next)
+
+      have preserveNext': δₚ s2 t2 (pqₖ (k + 1)) ∈ Δfloored s2 t2 (δₖ s2 t2 k) := by
+        rw [prev]
+        unfold Δfloored
+        simp
+        constructor
+        · unfold δₚ Δ is_δ
+          simp
+        · exact preserveNext
+      unfold δₖ δnext
+      exact
+        Set.IsWF.min_le (Δfloored_WF s2 t2 (δₖ s2 t2 k)) (Δfloored_nonempty s2 t2 (δₖ s2 t2 k))
+          preserveNext'
+    · by_contra lt
+      simp at lt
+      obtain δₖ2FromPq := δₖ_in_Δ s2 t2 (k + 1)
+      unfold Δ is_δ at δₖ2FromPq
+      simp at δₖ2FromPq
+      rcases δₖ2FromPq with ⟨p', ⟨q', δₖ2eq⟩⟩
+      rw [← δₖ2eq] at lt
+      obtain gt := δnext_larger s2 t2 (δₖ s2 t2 k)
+      rw [← δₖ] at gt
+      rw [← δₖ2eq] at gt
+      rw [prev] at gt
+      obtain pq's2 := lt_trans lt pqBound's2
+      obtain pq't2 := lt_trans lt pqBound't2
+      have p's2: (p':ℝ) * s2 < s2 * (↑↑b + ↑↑d) := by
+        apply lt_of_add_lt_of_nonneg_left pq's2
+        apply mul_nonneg
+        · simp
+        · exact le_of_lt (PosReal.pos)
+      have q't2: (q':ℝ) * t2 < t2 * (↑↑a + ↑↑c) := by
+        apply lt_of_add_lt_of_nonneg_right pq't2
+        apply mul_nonneg
+        · simp
+        · exact le_of_lt (PosReal.pos)
+      have p'bd: p' < b + d := by
+        rw [mul_comm] at p's2
+        rify
+        apply lt_of_mul_lt_mul_left p's2 (le_of_lt (PosReal.pos))
+      have q'ac: q' < a + c := by
+        rw [mul_comm] at q't2
+        rify
+        apply lt_of_mul_lt_mul_left q't2 (le_of_lt (PosReal.pos))
+      have preserveLt: p' * s1 + q' * t1 < δₚ s1 t1 (pqₖ (k + 1)) := by
+        have eq: p' * s1 + q' * t1 = δₚ s1 t1 (p', q') := by unfold δₚ; simp
+        have eq2: p' * s2 + q' * t2 = δₚ s2 t2 (p', q') := by unfold δₚ; simp
+        rw [eq]
+        apply (Δceiled_lt_inert a b c d s2 t2 s1 t1 p' q' (pqₖ (k + 1)).1 (pqₖ (k + 1)).2
+          det left2 right2 left1 right1 p'bd q'ac pBound' qBound' ?_)
+        rw [eq2] at lt
+        exact lt
+      have preserveGt: p' * s1 + q' * t1 > δₚ s1 t1 (pqₖ k) := by
+        have eq: p' * s1 + q' * t1 = δₚ s1 t1 (p', q') := by unfold δₚ; simp
+        have eq2: p' * s2 + q' * t2 = δₚ s2 t2 (p', q') := by unfold δₚ; simp
+        rw [eq]
+        apply (Δceiled_lt_inert a b c d s2 t2 s1 t1 (pqₖ k).1 (pqₖ k).2 p' q'
+          det left2 right2 left1 right1 pBound qBound p'bd q'ac ?_)
+        rw [eq2] at gt
+        exact gt
+      rw [← pqMatch1 (k + 1) kle] at preserveLt
+      unfold δₖ at preserveLt
+      rw [← pqMatch1 k kleprev] at preserveGt
+      have inFloor: p' * s1 + q' * t1 ∈ Δfloored s1 t1 (δₖ s1 t1 k) := by
+        unfold Δfloored Δ is_δ
+        simp
+        exact preserveGt
+      have inFloor': p' * s1 + q' * t1 ≥ δnext s1 t1 (δₖ s1 t1 k) := by
+        unfold δnext
+        exact
+          Set.IsWF.min_le (Δfloored_WF s1 t1 (δₖ s1 t1 k)) (Δfloored_nonempty s1 t1 (δₖ s1 t1 k))
+            inFloor
+      have what := gt_of_ge_of_gt inFloor' preserveLt
+      simp at what
+
+
+
+lemma nₖ_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
+[PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
+(det: a * d = b * c + 1)
+(left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
+(left2: a * t1 > b * s1) (right2: d * s1 > c * t1)
+(kbound: 2 * (k + 1) < (a + c + 1) * (b + d + 1)):
+nₖ s1 t1 k = nₖ s2 t2 k := by
+  sorry
+
+/-
+
+def Λtriangle (a b c d: ℕ+) (det: a * d = b * c + 1) :=
+{pq: ℕ × ℕ // pq.1 * (a + b) + pq.2 * (c + d) ≤ (a + b) * (c + d)}
+
+instance Λtriangle_Finite (a b c d: ℕ+) (det: a * d = b * c + 1):
+Finite (Λtriangle a b c d det) := by
+  sorry
+
+instance Λtriangle_Fintype (a b c d: ℕ+) (det: a * d = b * c + 1):
+Fintype (Λtriangle a b c d det) := by
+  sorry
+
+def ΛLEbyST (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s t: ℝ) (left: a * t > b * s) (right: d * s > c * t)
+(pq: Λtriangle a b c d det) (pq': Λtriangle a b c d det)
+:= (δₚ s t pq.val) ≤ (δₚ s t pq'.val)
+
+noncomputable
+instance ΛLEbyST_DecidableRel (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s t: ℝ) (left: a * t > b * s) (right: d * s > c * t):
+DecidableRel (ΛLEbyST a b c d det s t left right) := by
+  exact Classical.decRel (ΛLEbyST a b c d det s t left right)
+
+instance ΛLEbyST_IsTrans (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s t: ℝ) (left: a * t > b * s) (right: d * s > c * t):
+IsTrans (Λtriangle a b c d det) (ΛLEbyST a b c d det s t left right) where
+  trans := by
+    unfold ΛLEbyST
+    intro a b c ab bc
+    apply le_trans ab bc
+
+instance ΛLEbyST_IsAntisymm (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s t: ℝ) (left: a * t > b * s) (right: d * s > c * t):
+IsAntisymm (Λtriangle a b c d det) (ΛLEbyST a b c d det s t left right) where
+  antisymm := by
+    unfold ΛLEbyST
+    intro a b ab ba
     sorry
-  · intro h1
-    by_contra h2
-    sorry
+
+instance ΛLEbyST_IsTotal (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s t: ℝ) (left: a * t > b * s) (right: d * s > c * t):
+IsTotal (Λtriangle a b c d det) (ΛLEbyST a b c d det s t left right) where
+  total := by sorry
+
+noncomputable
+def ΛList (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s t: ℝ) (left: a * t > b * s) (right: d * s > c * t) :=
+Finset.sort (ΛLEbyST a b c d det s t left right) Finset.univ
+
+lemma ΛListLenth (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s t: ℝ) (left: a * t > b * s) (right: d * s > c * t):
+(ΛList a b c d det s t left right).length = (a + c + 1) * (b + d + 1) / 2 - 1 := by sorry
+
+
+lemma δₖFromList (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s t: ℝ) (left: a * t > b * s) (right: d * s > c * t)
+[PosReal s] [PosReal t]:
+List.map (δₖ s t) (List.range ((a + c + 1) * (b + d + 1) / 2 - 2)) = List.map (fun pq ↦ δₚ s t pq.val) (ΛList a b c d det s t left right)  := by
+  refine List.map_eq_iff.mpr ?_
+
+
+lemma ΛList_inert (a b c d: ℕ+) (det: a * d = b * c + 1)
+(s1 t1: ℝ) (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
+(s2 t2: ℝ) (left2: a * t2 > b * s2) (right2: d * s2 > c * t2):
+ΛList a b c d det s1 t1 left1 right1 = ΛList a b c d det s2 t2 left2 right2 := by sorry
+-/
