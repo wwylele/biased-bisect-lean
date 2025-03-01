@@ -274,7 +274,7 @@ lemma Λceiled_inert' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
     rw [mul_comm _ l, mul_comm _ l]
     rw [mul_assoc, mul_assoc]
     rw [← mul_add]
-    apply Λceiled_homo s1 t1 (↑p * s1 + ↑q * t1) l
+    apply Λceiled_homo s1 t1 (p * s1 + q * t1) l
   · exact Λceiled_inert a b c d s1 t1 s2 t2 p q det left1 gt right2 pBound qBound
 
 lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
@@ -441,7 +441,7 @@ lemma Λceiled_inert_t' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
     rw [mul_comm _ l]
     rw [mul_assoc]
     rw [← mul_sub]
-    apply Λceiled_homo s1 t1 (↑p * s1 - t1) l
+    apply Λceiled_homo s1 t1 (p * s1 - t1) l
   · exact Λceiled_inert_t a b c d s1 t1 s2 t2 p det left1 gt right2 pBound
 
 lemma abcdLeftRight (a b c d: ℕ+) (det: a * d = b * c + 1):
@@ -611,12 +611,12 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       rw [prev] at gt
       obtain pq's2 := lt_trans lt pqBound's2
       obtain pq't2 := lt_trans lt pqBound't2
-      have p's2: (p':ℝ) * s2 < s2 * (↑↑b + ↑↑d) := by
+      have p's2: (p':ℝ) * s2 < s2 * (b + d) := by
         apply lt_of_add_lt_of_nonneg_left pq's2
         apply mul_nonneg
         · simp
         · exact le_of_lt (PosReal.pos)
-      have q't2: (q':ℝ) * t2 < t2 * (↑↑a + ↑↑c) := by
+      have q't2: (q':ℝ) * t2 < t2 * (a + c) := by
         apply lt_of_add_lt_of_nonneg_right pq't2
         apply mul_nonneg
         · simp
@@ -1088,7 +1088,7 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
   have kTriangleMaxBound (kt: ℕ) (mem: kt ∈ kTriangle): kt ≤ (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) - 2 := by
     obtain le1: kt ≤ k - 1 := by exact Nat.le_sub_one_of_lt (kTriangleBound kt mem)
     apply le_trans le1
-    obtain le2: k ≤ ((↑a + ↑c + 1) * (↑b + ↑d + 1) - 2) / 2 - 1 := by exact Nat.le_sub_one_of_lt h
+    obtain le2: k ≤ ((a + c + 1) * (b + d + 1) - 2) / 2 - 1 := by exact Nat.le_sub_one_of_lt h
     exact Nat.sub_le_sub_right le2 1
 
   have notSaturated: (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) ≥ 2 := by
@@ -1241,13 +1241,167 @@ wₖ s1 t1 k = wₖ s2 t2 k := by
       rw [add_sub_assoc, add_sub_assoc, shift1, shift2]
       apply Λceiled_inert' a b c d s1 t1 s2 t2 _ _ det left1 right1 left2 right2 pb qb'
 
+noncomputable
+def nBranching (a b c d: ℕ+) := nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)
+
+theorem nBranchingFormula (a b c d: ℕ+) (det: a * d = b * c + 1):
+nBranching a b c d = 1 + ∑pq ∈ (Λtriangle a b c d).toFinset, Jₚ pq := by
+  have twoBound: (2:ℕ)  ≤ (a + c + 1) * (b + d + 1) := by
+    have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+    apply le_trans twoNine
+    gcongr
+    repeat exact NeZero.one_le
+  have fourBound: (4:ℕ)  ≤ (a + c + 1) * (b + d + 1) := by
+    have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+    apply le_trans fourNine
+    gcongr
+    repeat exact NeZero.one_le
+  unfold nBranching
+  have nonzero: (a + c + 1: ℕ) * (b + d + 1) / 2 - 1 ≠ 0 := by
+    refine Nat.sub_ne_zero_iff_lt.mpr ?_
+    refine (Nat.le_div_iff_mul_le ?_).mpr ?_
+    · simp
+    · norm_num
+      have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+      apply le_trans fourNine
+      gcongr
+      repeat exact NeZero.one_le
+  rw [nₖ_accum]
+  simp [nonzero]
+  unfold Jceiled
+  congr 1
+  simp
+  apply subset_antisymm
+  · unfold Λceiled
+    intro pq mem
+    simp at mem
+    have inΔ: (pq.1: ℝ) * (a + c) + pq.2 * (b + d) ∈ Δ (a + c) (b + d) := by
+      unfold Δ is_δ
+      simp
+    obtain ⟨k, keq⟩ := δₖ_surjΔ (a + c) (b + d)  _ inΔ
+    rw [← keq] at mem
+    obtain kmono := (StrictMono.le_iff_le (δₖ_mono (a + c) (b + d))).mp mem
+    have klt: k < ((a + c + 1) * (b + d + 1) - 2) / 2 := by
+      apply Nat.lt_of_le_sub_one (Nat.zero_lt_of_ne_zero nonzero) at kmono
+      convert kmono using 1
+      apply Nat.eq_sub_of_add_eq
+      symm
+      apply Nat.div_eq_sub_div
+      · simp
+      · exact twoBound
+    let pq' := pqOfδₖ_abcd a b c d k
+    obtain pq'eq := Exists.choose_spec (pqOfδₖ_abcd_exist a b c d k)
+    obtain bound := pqOfδₖ_abcd_bound a b c d k det klt
+    rify at bound
+    unfold pqOfδₖ_abcd at bound
+    unfold δₚ at pq'eq
+    simp at pq'eq
+    rw [pq'eq] at bound
+    rw [keq] at bound
+    unfold Λtriangle
+    simp
+    rify
+    exact bound
+  · let Δtriangle := δₚ (a + c) (b + d) '' Λtriangle a b c d
+    have ΔtriangleCard: Δtriangle.toFinset.card ≤ (Λtriangle a b c d).toFinset.card := by
+      unfold Δtriangle
+      set protect := (Λtriangle a b c d).toFinset.card
+      simp
+      unfold protect
+      exact Finset.card_image_le
+    by_contra exception
+    obtain ⟨pq, inTriangle, outCeiled⟩ := Set.not_subset_iff_exists_mem_not_mem.mp exception
+    unfold Λceiled at outCeiled
+    simp at outCeiled
+    have inΔ: (pq.1: ℝ) * (a + c) + pq.2 * (b + d) ∈ Δ (a + c) (b + d) := by
+      unfold Δ is_δ
+      simp
+    obtain ⟨k', keq⟩ := δₖ_surjΔ (a + c) (b + d) _ inΔ
+    rw [← keq] at outCeiled
+    rw [Nat.sub_sub] at outCeiled
+    norm_num at outCeiled
+    obtain k'floor := (StrictMono.lt_iff_lt (δₖ_mono (a + c) (b + d))).mp outCeiled
+    have k'mem: δₖ (a + c) (b + d) k' ∈ Δtriangle := by
+      rw [keq]
+      unfold Δtriangle
+      exact Set.mem_image_of_mem (δₚ (a + c) (b + d)) inTriangle
+    rw [ΛtriangleCard a b c d det] at ΔtriangleCard
+    have hole: ∃(l: ℕ), l ≤ (a + c + 1) * (b + d + 1) / 2 - 2 ∧ δₖ (a + c) (b + d) l ∉ Δtriangle := by
+      by_contra full
+      simp at full
+      have subset: Finset.image (δₖ (↑↑a + ↑↑c) (↑↑b + ↑↑d)) (Finset.Icc 0 ((a + c + 1) * (b + d + 1) / 2 - 2))
+        ⊆ Δtriangle.toFinset := by
+        refine Finset.subset_iff.mpr ?_
+        simp
+        exact full
+      have subset': Finset.image (δₖ (↑↑a + ↑↑c) (↑↑b + ↑↑d)) ({k'}) ⊆ Δtriangle.toFinset := by
+        refine Finset.subset_iff.mpr ?_
+        simp
+        exact k'mem
+      let uni := (Finset.Icc (0: ℕ) ((a + c + 1) * (b + d + 1) / 2 - 2)) ∪ {k'}
+      have subset_uni: Finset.image (δₖ (↑↑a + ↑↑c) (↑↑b + ↑↑d)) uni ⊆ Δtriangle.toFinset := by
+        unfold uni
+        rw [Finset.image_union]
+        apply Finset.union_subset subset subset'
+      have disj: (Finset.Icc (0: ℕ) ((a + c + 1) * (b + d + 1) / 2 - 2)) ∩ {k'} = ∅ := by
+        apply Finset.disjoint_iff_inter_eq_empty.mp
+        simp
+        exact k'floor
+      have uniCard: uni.card = (a + c + 1) * (b + d + 1) / 2 - 2 + 1 + 1 - 0 := by
+        unfold uni
+        rw [Finset.card_union]
+        rw [disj]
+        simp
+      have imageCard: (Finset.image (δₖ (↑↑a + ↑↑c) (↑↑b + ↑↑d)) uni).card = (a + c + 1) * (b + d + 1) / 2 - 2 + 1 + 1 - 0 := by
+        rw [← uniCard]
+        apply Finset.card_image_iff.mpr
+        apply Set.injOn_of_injective
+        apply StrictMono.injective (δₖ_mono _ _)
+      obtain cardBound := Finset.card_le_card subset_uni
+      rw [imageCard] at cardBound
+      obtain chain := le_trans cardBound ΔtriangleCard
+      have zero2: 0 < 2 := by simp
+      rw [Nat.div_eq_sub_div zero2 twoBound] at chain
+      simp at chain
+      have subAddCanCancel: (1: ℕ) ≤ ((a + c + 1) * (b + d + 1) - 2) / 2 := by
+        exact Nat.one_le_of_lt chain
+      rw [Nat.sub_add_cancel subAddCanCancel] at chain
+      simp at chain
+    obtain ⟨l, lrange, lnotmem⟩ := hole
+    obtain lrange := lt_of_le_of_lt lrange k'floor
+    obtain lkrel := δₖ_mono (a + c) (b + d) lrange
+    obtain lpq := δₖ_in_Δ (a + c) (b + d) l
+    unfold Δ is_δ at lpq
+    rcases lpq with ⟨lp, lq, lpqeq⟩
+    rw [← lpqeq] at lkrel
+    rw [← lpqeq] at lnotmem
+    unfold Δtriangle Λtriangle at lnotmem
+    simp at lnotmem
+    obtain lnotmem := lnotmem lp lq
+    rw [imp_not_comm] at lnotmem
+    unfold δₚ at lnotmem
+    simp at lnotmem
+    unfold Δtriangle Λtriangle at k'mem
+    simp at k'mem
+    rcases k'mem with ⟨kp, kq, kb, keq⟩
+    unfold δₚ at keq
+    simp at keq
+    rify at kb
+    rw [keq] at kb
+    rify at lnotmem
+    obtain chain := lt_of_lt_of_le kb lnotmem
+    obtain chain := lt_trans chain lkrel
+    simp at chain
+
+
 lemma kceiled_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(nbound: n ≤ nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)):
+(nbound: n ≤ nBranching a b c d):
 kceiled s1 t1 n = kceiled s2 t2 n := by
+  unfold nBranching at nbound
   unfold kceiled
   ext k
   simp
@@ -1261,7 +1415,7 @@ kceiled s1 t1 n = kceiled s2 t2 n := by
       apply le_trans twoNine
       gcongr
       repeat exact NeZero.one_le
-  have kboundBound: kbound < (↑a + ↑c + 1) * (↑b + ↑d + 1) / 2 := by
+  have kboundBound: kbound < (a + c + 1) * (b + d + 1) / 2 := by
      exact Nat.sub_one_lt_of_lt kboundOne
   obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
   rw [← nₖ_inert a b c d s1 t1 (a+c) (b+d) kbound det left1 right1 abcd1 abcd2 kboundBound] at nbound1
@@ -1291,7 +1445,7 @@ lemma kₙ_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(nbound: n ≤ nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)):
+(nbound: n ≤ nBranching a b c d):
 kₙ s1 t1 n = kₙ s2 t2 n := by
   unfold kₙ
   congr 1
@@ -1304,8 +1458,7 @@ theorem wₘᵢₙ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(_h: n ≥ 2)
-(nbound: n ≤ nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)):
+(_h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
 wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
   obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
   unfold wₘᵢₙ
@@ -1362,7 +1515,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
         det left1 right1 abcd1 abcd2 boundlt] at neq
       rw [← nₖ_inert a b c d s2 t2 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
         det left2 right2 abcd1 abcd2 boundlt] at neq2
-      have keq: k1 = (a + c + 1: ℕ) * (↑b + ↑d + 1) / 2 - 1 := by
+      have keq: k1 = (a + c + 1: ℕ) * (b + d + 1) / 2 - 1 := by
         unfold kₙ at k1eq
         have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
         unfold kceiled at kmem
@@ -1380,7 +1533,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
         apply (StrictMono.le_iff_le (nₖ_mono s1 t1)).mp at kmem
         apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at k11
         exact Eq.symm (Nat.eq_of_le_of_lt_succ kmem k11)
-      have kbound: k1 < (a + c + 1: ℕ) * (↑b + ↑d + 1) / 2 := by exact lt_of_eq_of_lt keq boundlt
+      have kbound: k1 < (a + c + 1: ℕ) * (b + d + 1) / 2 := by exact lt_of_eq_of_lt keq boundlt
       rw [← keq] at neq
       rw [neq]
       have min_left(s t: ℝ)[PosReal s] [PosReal t]: (wₖ s t k1 : ℝ) ⊔ ((wₖ s t (k1 + 1)) + (nₖ s t k1) - (nₖ s t (k1 + 1))) = wₖ s t k1 := by
@@ -1421,16 +1574,16 @@ theorem wₘₐₓ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(h: n ≥ 2)
-(nbound: n ≤ nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)):
+(h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
 wₘₐₓ s1 t1 n = wₘₐₓ s2 t2 n := by
+  unfold nBranching at nbound
   obtain rec1 := eq_sub_of_add_eq' (wₘₘ_rec t1 s1 n h)
   obtain rec2 := eq_sub_of_add_eq' (wₘₘ_rec t2 s2 n h)
   rw [rec1, rec2]
   congr 1
   rw [nₖ_symm] at nbound
   have nboundeq: nₖ (b + d) (a + c) ((a + c + 1) * (b + d + 1) / 2 - 1)
-    = nₖ (d + ↑↑b) (c + a) ((d + b + 1) * (c + a + 1) / 2 - 1) := by
+    = nₖ (d + b) (c + a) ((d + b + 1) * (c + a + 1) / 2 - 1) := by
     congr 1
     · apply add_comm
     · apply add_comm
@@ -1442,3 +1595,93 @@ wₘₐₓ s1 t1 n = wₘₐₓ s2 t2 n := by
   rw [mul_comm a d] at det
   rw [mul_comm b c] at det
   apply wₘᵢₙ_inert d c b a t1 s1 t2 s2 n det right1 left1 right2 left2 h nbound
+
+theorem wₗᵢ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
+[PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
+(det: a * d = b * c + 1)
+(left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
+(left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
+(_h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
+wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
+  obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
+  unfold wₗᵢ
+  by_cases n1: n ≥ 1
+  · rcases kₙ_exist s1 t1 n n1 with ⟨k1, k1eq⟩
+    rcases kₙ_exist s2 t2 n n1 with ⟨k2, k2eq⟩
+    rw [k1eq, k2eq]
+    simp
+    have keq: kₙ s1 t1 n = kₙ s2 t2 n := by
+      apply  kₙ_inert a b c d s1 t1 s2 t2 n det left1 right1 left2 right2 nbound
+    have keq': k1 = k2 := by
+      rw [← keq] at k2eq
+      rw [k1eq] at k2eq
+      exact ENat.coe_inj.mp k2eq
+    rw [← keq']
+    have boundlt: ((a + c + 1: ℕ) * (b + d + 1)) / 2 - 1 < ((a + c + 1) * (b + d + 1)) / 2 := by
+      refine Nat.sub_one_lt ?_
+      apply Nat.div_ne_zero_iff.mpr
+      constructor
+      · simp
+      · have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+        apply le_trans twoNine
+        gcongr
+        repeat exact NeZero.one_le
+    by_cases nlt: n < nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)
+    · have k1bound: k1 + 1 < (a + c + 1) * (b + d + 1) / 2 := by
+        unfold kₙ at k1eq
+        have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
+        unfold kceiled at kmem
+        simp at kmem
+        obtain klt := lt_of_le_of_lt kmem nlt
+        simp at klt
+        rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
+          det left1 right1 abcd1 abcd2 boundlt] at klt
+        apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at klt
+        exact Nat.add_lt_of_lt_sub klt
+      have kbound: k1 < (a + c + 1: ℕ) * (b + d + 1) / 2 := by exact Nat.lt_of_succ_lt k1bound
+      have nkeq: nₖ s1 t1 k1 = nₖ s2 t2 k1 := by
+        apply nₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
+      have nkeq': nₖ s1 t1 (k1 + 1) = nₖ s2 t2 (k1 + 1) := by
+        apply nₖ_inert a b c d s1 t1 s2 t2 (k1 + 1) det left1 right1 left2 right2 k1bound
+      have wkeq: wₖ s1 t1 k1 = wₖ s2 t2 k1 := by
+        apply wₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
+      have wkeq': wₖ s1 t1 (k1 + 1) = wₖ s2 t2 (k1 + 1) := by
+        apply wₖ_inert a b c d s1 t1 s2 t2 (k1 + 1) det left1 right1 left2 right2 k1bound
+      congr
+    · simp at nlt
+      have neq: n = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
+        apply le_antisymm nbound nlt
+      let neq2 := neq
+      rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
+        det left1 right1 abcd1 abcd2 boundlt] at neq
+      rw [← nₖ_inert a b c d s2 t2 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
+        det left2 right2 abcd1 abcd2 boundlt] at neq2
+      have keq: k1 = (a + c + 1: ℕ) * (b + d + 1) / 2 - 1 := by
+        unfold kₙ at k1eq
+        have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
+        unfold kceiled at kmem
+        rw [neq] at kmem
+        simp at kmem
+        have k11: k1 + 1 ∉ (kceiled s1 t1 n).toFinset := by
+          by_contra k11mem
+          obtain k11le := Finset.le_max k11mem
+          rw [k1eq] at k11le
+          have what: k1 + 1 ≤ k1 := by exact WithBot.coe_le_coe.mp k11le
+          simp at what
+        unfold kceiled at k11
+        rw [neq] at k11
+        simp at k11
+        apply (StrictMono.le_iff_le (nₖ_mono s1 t1)).mp at kmem
+        apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at k11
+        exact Eq.symm (Nat.eq_of_le_of_lt_succ kmem k11)
+      have kbound: k1 < (a + c + 1: ℕ) * (b + d + 1) / 2 := by exact lt_of_eq_of_lt keq boundlt
+      rw [← keq] at neq
+      rw [neq]
+      obtain ninert := nₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
+      rw [ninert]
+      simp
+      apply wₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
+  · simp at n1
+    obtain knot1 := kₙ_not_exist s1 t1 n n1
+    obtain knot2 := kₙ_not_exist s2 t2 n n1
+    rw [knot1, knot2]
