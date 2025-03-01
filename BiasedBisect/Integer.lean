@@ -675,9 +675,9 @@ lemma unique_pq' (s t: ℕ+) (pq pq': ℕ × ℕ)
   · exact Int.ofNat_inj.mp pp
   · exact Int.ofNat_inj.mp qeq
 
-lemma δₖ_unique_pq (s t: ℕ+) (k: ℕ)
-(coprime: PNat.Coprime s t) (kbound: 2 * (k + 1) < (s + 1) * (t + 1)):
-∃! pq: ℕ × ℕ, δₖ s t k = δₚ s t pq := by sorry
+--lemma δₖ_unique_pq (s t: ℕ+) (k: ℕ)
+--(coprime: PNat.Coprime s t) (kbound: 2 * (k + 1) < (s + 1) * (t + 1)):
+--∃! pq: ℕ × ℕ, δₖ s t k = δₚ s t pq := by sorry
 
 
 lemma slopeBound (a b c d s t: ℕ+) (det: a * d = b * c + 1) (left: c * t < d * s) (right: b * s < a * t):
@@ -916,11 +916,11 @@ lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
   obtain what := lt_of_le_of_lt pq2 r1
   simp at what
 
-lemma unique_pq (a b c d: ℕ+) (s t: ℝ) (pq pq': ℕ × ℕ)
-[PosReal s] [PosReal t]
-(det: a * d = b * c + 1)
-(left: a * t > b * s) (right: d * s > c * t)
-(eq: δₚ s t pq = δₚ s t pq') (bound: δₚ s t pq < (a + c) * (b + d)): pq = pq' := by sorry
+--lemma unique_pq (a b c d: ℕ+) (s t: ℝ) (pq pq': ℕ × ℕ)
+--[PosReal s] [PosReal t]
+--(det: a * d = b * c + 1)
+--(left: a * t > b * s) (right: d * s > c * t)
+--(eq: δₚ s t pq = δₚ s t pq') (bound: δₚ s t pq < (a + c) * (b + d)): pq = pq' := by sorry
 
 lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -1196,34 +1196,84 @@ noncomputable
 instance ΛtriangleUpperFintype (a b c d: ℕ+): Fintype (ΛtriangleUpper a b c d) := by
   refine Set.fintypeSubset _ (ΛtriangleUpperSubset a b c d)
 
-lemma ΛtriangeEquivToFun (a b c d: ℕ+) (h: (p, q) ∈ Λtriangle a b c d):
-  (b + d - p, a + c - q) ∈ ΛtriangleUpper a b c d := by sorry
-
-lemma ΛtriangeEquivInvFun (a b c d: ℕ+) (h: (p, q) ∈ ΛtriangleUpper a b c d):
-  (b + d - p, a + c - q) ∈ Λtriangle a b c d := by sorry
-
-
 lemma ΛtriangleCardEq (a b c d: ℕ+): (Λtriangle a b c d).toFinset.card = (ΛtriangleUpper a b c d).toFinset.card := by
-  apply Finset.card_bijective (fun ⟨p, q⟩ ↦ ⟨b + d - p, a + c - q⟩ )
-  · sorry
-  · rintro ⟨p, q⟩
-    unfold Λtriangle ΛtriangleUpper Λrectangle
-    simp
-    sorry
-  /-use fun ⟨⟨p, q⟩, h⟩ ↦ ⟨⟨b + d - p, a + c - q ⟩ , ΛtriangeEquivToFun a b c d h⟩
-  use fun ⟨⟨p, q⟩, h⟩ ↦ ⟨⟨b + d - p, a + c - q ⟩ , ΛtriangeEquivInvFun a b c d h⟩
-  · unfold Function.LeftInverse Λtriangle
-    simp
-    intro p q mem
+  have mem_decomp (p q: ℕ) (h: p * (a + c) + q * (b + d) < (a + c) * (b + d)):
+    p < b + d ∧ q < a + c := by
     constructor
-    · sorry
-    · sorry
-  · unfold Function.RightInverse Function.LeftInverse ΛtriangleUpper Λrectangle
+    · obtain h' := lt_of_add_lt_of_nonneg_left h (Nat.zero_le _)
+      rw [mul_comm] at h'
+      apply lt_of_mul_lt_mul_left h' (Nat.zero_le _)
+    · obtain h' := lt_of_add_lt_of_nonneg_right h (Nat.zero_le _)
+      apply lt_of_mul_lt_mul_right h' (Nat.zero_le _)
+  apply Finset.card_nbij (fun ⟨p, q⟩ ↦ ⟨b + d - p, a + c - q⟩ )
+  · unfold Λtriangle ΛtriangleUpper Λrectangle
+    rintro ⟨p, q⟩
     simp
-    intro p q mem pbound qbound
+    intro mem
     constructor
-    · sorry
-    · sorry-/
+    · obtain ⟨pb, qb⟩ := mem_decomp p q mem
+      rw [Nat.sub_mul, Nat.sub_mul]
+      rw [← Nat.add_sub_assoc]
+      · rw [← Nat.sub_add_comm]
+        · rw [Nat.sub_sub]
+          apply Nat.lt_sub_iff_add_lt.mpr
+          rw [mul_comm]
+          apply Nat.add_lt_add_left
+          nth_rw 3 [mul_comm]
+          exact mem
+        · refine Nat.mul_le_mul_right (a + c) ?_
+          exact Nat.le_of_lt pb
+      · refine Nat.mul_le_mul_right (b + d) ?_
+        exact Nat.le_of_lt qb
+    · constructor
+      · exact lt_of_le_of_lt (Nat.sub_le (b + d) p) (Nat.lt_add_one (b + d))
+      · exact lt_of_le_of_lt (Nat.sub_le (a + c) q) (Nat.lt_add_one (a + c))
+  · unfold Set.InjOn Λtriangle
+    simp
+    intro p q mem p2 q2 mem2 pp qq
+    obtain ⟨pb, qb⟩ := mem_decomp p q mem
+    obtain ⟨p2b, q2b⟩ := mem_decomp p2 q2 mem2
+    constructor
+    · zify at pp
+      rw [Nat.cast_sub (le_of_lt pb)] at pp
+      rw [Nat.cast_sub (le_of_lt p2b)] at pp
+      simp at pp
+      exact pp
+    · zify at qq
+      rw [Nat.cast_sub (le_of_lt qb)] at qq
+      rw [Nat.cast_sub (le_of_lt q2b)] at qq
+      simp at qq
+      exact qq
+  · unfold Set.SurjOn Λtriangle ΛtriangleUpper Λrectangle
+    rintro ⟨p, q⟩
+    simp
+    intro mem pb qb
+    use (b + d - p), (a + c - q)
+    constructor
+    · rw [Nat.sub_mul, Nat.sub_mul]
+      rw [← Nat.add_sub_assoc]
+      · rw [← Nat.sub_add_comm]
+        · rw [Nat.sub_sub]
+          apply Nat.sub_lt_right_of_lt_add
+          · apply add_le_add
+            · refine Nat.mul_le_mul_right (a + c) ?_
+              exact Nat.le_of_lt_succ pb
+            · refine Nat.mul_le_mul_right (b + d) ?_
+              exact Nat.le_of_lt_succ qb
+          · rw [mul_comm]
+            apply Nat.add_lt_add_left
+            exact mem
+        · refine Nat.mul_le_mul_right (a + c) ?_
+          exact Nat.le_of_lt_succ pb
+      · refine Nat.mul_le_mul_right (b + d) ?_
+        exact Nat.le_of_lt_succ qb
+    · constructor
+      · refine Eq.symm (Nat.eq_sub_of_add_eq' ?_)
+        refine Nat.sub_add_cancel ?_
+        exact Nat.le_of_lt_succ pb
+      · refine Eq.symm (Nat.eq_sub_of_add_eq' ?_)
+        refine Nat.sub_add_cancel ?_
+        exact Nat.le_of_lt_succ qb
 
 def ΛrectangleCut (a b c d: ℕ+) := (Λrectangle a b c d \ {((b:ℕ) + d, 0)}) \ {(0, (a:ℕ) + c)}
 
@@ -1247,6 +1297,31 @@ lemma ΛrectangleCutCard (a b c d: ℕ+): Fintype.card (ΛrectangleCut a b c d) 
   · unfold Λrectangle
     simp
 
+lemma abcdCoprime (a b c d: ℕ+) (det: a * d = b * c + 1):
+(a + c: ℕ).gcd (b + d) = 1 := by
+  let k := (a + c: ℕ).gcd (b + d)
+  have kac: k ∣ a + c := by apply Nat.gcd_dvd_left
+  have kbd: k ∣ b + d := by apply Nat.gcd_dvd_right
+  obtain ⟨u, ueq⟩ := kac
+  obtain ⟨v, veq⟩ := kbd
+  zify at ueq
+  zify at veq
+  have aeq: (a: ℤ) = k * u - c := by exact eq_sub_of_add_eq ueq
+  have beq: (b: ℤ) = k * v - d := by exact eq_sub_of_add_eq veq
+  have det': a * d - b * c = (1: ℤ) := by
+    rw [sub_eq_of_eq_add']
+    norm_cast
+  rw [aeq, beq] at det'
+  ring_nf at det'
+  rw [mul_assoc, mul_assoc] at det'
+  rw [← mul_sub] at det'
+  have k1: k = (1:ℤ) := by
+    refine Int.eq_one_of_dvd_one ?_ ?_
+    · simp
+    · exact Dvd.intro (u * d - c * v) det'
+  simp at k1
+  exact k1
+
 lemma ΛrectangleDecompose (a b c d: ℕ+) (det: a * d = b * c + 1):
 ΛrectangleCut a b c d = (Λtriangle a b c d).toFinset ∪ (ΛtriangleUpper a b c d).toFinset := by
   unfold ΛrectangleCut Λtriangle ΛtriangleUpper Λrectangle
@@ -1259,7 +1334,53 @@ lemma ΛrectangleDecompose (a b c d: ℕ+) (det: a * d = b * c + 1):
     simp at notlower
     constructor
     · apply lt_of_le_of_ne notlower
-      sorry
+      by_contra eq
+      by_cases p0: p = 0
+      · obtain q0 := qcut p0
+        rw [p0] at eq
+        simp at eq
+        rw [eq] at q0
+        contradiction
+      · by_cases q0: q = 0
+        · obtain p0 := imp_not_comm.mp pcut q0
+          rw [q0] at eq
+          simp at eq
+          rw [mul_comm] at eq
+          simp at eq
+          rw [eq] at p0
+          contradiction
+        · have eq': (a + c) * (b + d - p) = q * (b + d) := by
+            rw [Nat.mul_sub]
+            apply (Nat.sub_eq_iff_eq_add' ?_).mpr
+            · rw [mul_comm _ p]
+              exact eq
+            · apply (mul_le_mul_left ?_).mpr
+              · exact Nat.le_of_lt_succ pbound
+              · simp
+          have dvd: (a + c: ℕ) ∣ q * (b + d) := by
+            exact Dvd.intro _ eq'
+          have dvd_q: (a + c: ℕ) ∣ q := by
+            rw [← mul_one q]
+            rw [← abcdCoprime a b c d det]
+            apply Nat.dvd_mul_gcd_iff_dvd_mul.mpr
+            exact dvd
+          rcases dvd_q with ⟨k, keq⟩
+          match k with
+          | 0 =>
+            simp at keq
+            rw [keq] at q0
+            contradiction
+          | 1 =>
+            simp at keq
+            rw [keq] at eq
+            simp at eq
+            rw [eq] at p0
+            contradiction
+          | k' + 2 =>
+            rw [keq] at qbound
+            apply Nat.le_of_lt_add_one at qbound
+            simp at qbound
+
     · constructor
       · exact pbound
       · exact qbound
@@ -1328,6 +1449,157 @@ lemma ΛtriangleCard (a b c d: ℕ+) (det: a * d = b * c + 1):
   rw [mul_comm]
   rw [← reccard]
   simp
+
+instance abPos(a b: ℕ+): PosReal (a + b) where
+  pos := by norm_cast; simp
+
+lemma pqOfδₖ_abcd_exist(a b c d: ℕ+) (k: ℕ):
+∃ (pq: ℕ × ℕ), δₚ (a + c) (b + d) pq = δₖ (a + c) (b + d) k := by
+  obtain h := δₖ_in_Δ (a + c) (b + d) k
+  unfold Δ is_δ at h
+  simp at h
+  unfold δₚ
+  simp
+  exact h
+
+noncomputable
+def pqOfδₖ_abcd (a b c d: ℕ+) (k: ℕ) := (pqOfδₖ_abcd_exist a b c d k).choose
+
+lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (det: a * d = b * c + 1)
+(k: ℕ) (h: k < (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ)):
+(pqOfδₖ_abcd a b c d k).1 * (a + c) + (pqOfδₖ_abcd a b c d k).2 * (b + d) < (a + c) * (b + d) := by
+  by_contra oob
+  simp at oob
+  let Δtriangle := δₚ (a + c) (b + d) '' Λtriangle a b c d
+  have ΔtriangleCard: Δtriangle.toFinset.card = (Λtriangle a b c d).toFinset.card := by
+    unfold Δtriangle
+    let prot := (Λtriangle a b c d).toFinset.card
+    have h: prot = (Λtriangle a b c d).toFinset.card := by rfl
+    rw [← h]
+    simp
+    rw [h]
+    apply Finset.card_image_iff.mpr
+    unfold Set.InjOn
+    simp
+    intro p q mem p2 q2 mem2 eq
+    norm_cast at eq
+    obtain coprime := abcdCoprime a b c d det
+    norm_cast at coprime
+    unfold Λtriangle at mem
+    simp at mem
+    have mem': δₚ ↑↑(a + c) ↑↑(b + d) (p, q) < ↑↑(a + c) * ↑↑(b + d) := by
+      unfold δₚ
+      simp
+      norm_cast
+    obtain pqeq := unique_pq' (a + c) (b + d) (p, q) (p2, q2) coprime eq mem'
+    exact Prod.mk.inj_iff.mp pqeq
+
+  let kTriangle := (δₖ (a + c) (b + d)) ⁻¹' Δtriangle
+  have kTriangleFintype: Fintype kTriangle := by
+    refine Set.Finite.fintype ?_
+    refine Set.Finite.preimage ?_ ?_
+    · intro k1 m1 k2 m2 eq
+      apply (StrictMonoOn.eq_iff_eq (strictMonoOn_univ.mpr (δₖ_mono (a+c) (b+d))) ?_ ?_).mp eq
+      · simp
+      · simp
+    · exact Set.toFinite Δtriangle
+
+  have kTriangleCard: kTriangle.toFinset.card = Δtriangle.toFinset.card := by
+    unfold kTriangle
+    apply Finset.card_nbij (δₖ (a + c) (b + d))
+    · intro k mem
+      simp at mem
+      simp
+      exact mem
+    · intro d1 mem1 d2 mem2 eq
+      apply (StrictMonoOn.eq_iff_eq (strictMonoOn_univ.mpr (δₖ_mono (a+c) (b+d))) ?_ ?_).mp eq
+      · simp
+      · simp
+    · intro δ mem
+      simp at mem
+      simp
+      have δinΔ: δ ∈ Δ (a+c) (b+d) := by
+        unfold Δtriangle at mem
+        simp at mem
+        rcases mem with ⟨p, q, mem, mem2⟩
+        unfold Δ is_δ
+        simp
+        use p, q
+        unfold δₚ at mem2
+        simp at mem2
+        exact mem2
+      obtain ⟨k, keq⟩ := δₖ_surjΔ (a+c) (b+d) δ δinΔ
+      use k
+      constructor
+      · rw [keq]
+        exact mem
+      · exact keq
+
+  have kTriangleBound (kt: ℕ) (mem: kt ∈ kTriangle): kt < k := by
+    have δrel: δₖ (a+c) (b+d) kt < δₖ (a+c) (b+d) k := by
+      unfold kTriangle Δtriangle Λtriangle at mem
+      simp at mem
+      obtain ⟨p, q, pqBound, pqEq⟩ := mem
+      unfold δₚ at pqEq
+      simp at pqEq
+      rify at pqBound
+      rw [pqEq] at pqBound
+      apply lt_of_lt_of_le pqBound
+      rify at oob
+      convert oob
+      obtain kspec := Exists.choose_spec (pqOfδₖ_abcd_exist a b c d k)
+      unfold δₚ at kspec
+      simp at kspec
+      unfold pqOfδₖ_abcd
+      exact id (Eq.symm kspec)
+
+    apply (StrictMono.lt_iff_lt (δₖ_mono (a+c) (b+d))).mp δrel
+
+  have kTriangleCardBound: kTriangle.toFinset.card = (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) := by
+    rw [kTriangleCard]
+    rw [ΔtriangleCard]
+    exact ΛtriangleCard a b c d det
+
+  have kTriangleMaxBound (kt: ℕ) (mem: kt ∈ kTriangle): kt ≤ (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) - 2 := by
+    obtain le1: kt ≤ k - 1 := by exact Nat.le_sub_one_of_lt (kTriangleBound kt mem)
+    apply le_trans le1
+    obtain le2: k ≤ ((↑a + ↑c + 1) * (↑b + ↑d + 1) - 2) / 2 - 1 := by exact Nat.le_sub_one_of_lt h
+    exact Nat.sub_le_sub_right le2 1
+
+  have notSaturated: (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) ≥ 2 := by
+    apply Nat.le_div_two_iff_mul_two_le.mpr
+    norm_num
+    apply Nat.le_sub_of_add_le
+    norm_num
+    have sixNine: 6 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+    apply le_trans sixNine
+    gcongr
+    repeat exact NeZero.one_le
+
+  set N := (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) - 2
+  have n2: (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) = N + 2 := by
+    unfold N
+    rw [Nat.sub_add_cancel]
+    exact notSaturated
+
+  rw [n2] at kTriangleCardBound
+
+  have kTriangleCardBoundFromMax: kTriangle.toFinset.card ≤ N + 1 := by
+    let boundSet := Finset.range (N + 1)
+    have sub: kTriangle.toFinset ⊆ boundSet := by
+      unfold boundSet
+      simp
+      intro k mem
+      simp
+      apply Nat.lt_add_one_of_le
+      exact kTriangleMaxBound k mem
+    have boundCard: boundSet.card = N + 1 := by exact Finset.card_range (N + 1)
+    rw [← boundCard]
+    apply Finset.card_le_card sub
+
+  rw [kTriangleCardBound] at kTriangleCardBoundFromMax
+  simp at kTriangleCardBoundFromMax
+
 
 
 lemma nₖ_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
