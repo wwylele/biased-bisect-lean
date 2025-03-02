@@ -1458,116 +1458,113 @@ theorem wₘᵢₙ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(_h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
+(h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
 wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
   obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
   unfold wₘᵢₙ
-  by_cases n1: n ≥ 1
-  · rcases kₙ_exist s1 t1 n n1 with ⟨k1, k1eq⟩
-    rcases kₙ_exist s2 t2 n n1 with ⟨k2, k2eq⟩
-    rw [k1eq, k2eq]
-    simp
-    have keq: kₙ s1 t1 n = kₙ s2 t2 n := by
-      apply  kₙ_inert a b c d s1 t1 s2 t2 n det left1 right1 left2 right2 nbound
-    have keq': k1 = k2 := by
-      rw [← keq] at k2eq
-      rw [k1eq] at k2eq
-      exact ENat.coe_inj.mp k2eq
-    rw [← keq']
-    have boundlt: ((a + c + 1: ℕ) * (b + d + 1)) / 2 - 1 < ((a + c + 1) * (b + d + 1)) / 2 := by
-      refine Nat.sub_one_lt ?_
-      apply Nat.div_ne_zero_iff.mpr
-      constructor
-      · simp
-      · have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
-        apply le_trans twoNine
-        gcongr
-        repeat exact NeZero.one_le
-    by_cases nlt: n < nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)
-    · have k1bound: k1 + 1 < (a + c + 1) * (b + d + 1) / 2 := by
-        unfold kₙ at k1eq
-        have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
-        unfold kceiled at kmem
-        simp at kmem
-        obtain klt := lt_of_le_of_lt kmem nlt
-        simp at klt
-        rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
-          det left1 right1 abcd1 abcd2 boundlt] at klt
-        apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at klt
-        exact Nat.add_lt_of_lt_sub klt
-      congr 2
-      · show wₖ s1 t1 k1 = wₖ s2 t2 k1
-        apply wₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2
-        exact Nat.lt_of_succ_lt k1bound
-      · congr 2
-        show wₖ s1 t1 (k1 + 1) = wₖ s2 t2 (k1 + 1)
-        apply wₖ_inert a b c d s1 t1 s2 t2 (k1 + 1) det left1 right1 left2 right2
-        exact k1bound
-      · simp
-        show nₖ s1 t1 (k1 + 1) = nₖ s2 t2 (k1 + 1)
-        apply nₖ_inert a b c d s1 t1 s2 t2 (k1 + 1) det left1 right1 left2 right2
-        exact k1bound
-    · simp at nlt
-      have neq: n = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
-        apply le_antisymm nbound nlt
-      let neq2 := neq
+  have n1: n ≥ 1 := by apply ge_trans h; simp
+  rcases kₙ_exist s1 t1 n n1 with ⟨k1, k1eq⟩
+  rcases kₙ_exist s2 t2 n n1 with ⟨k2, k2eq⟩
+  rw [k1eq, k2eq]
+  simp
+  have keq: kₙ s1 t1 n = kₙ s2 t2 n := by
+    apply  kₙ_inert a b c d s1 t1 s2 t2 n det left1 right1 left2 right2 nbound
+  have keq': k1 = k2 := by
+    rw [← keq] at k2eq
+    rw [k1eq] at k2eq
+    exact ENat.coe_inj.mp k2eq
+  rw [← keq']
+  have boundlt: ((a + c + 1: ℕ) * (b + d + 1)) / 2 - 1 < ((a + c + 1) * (b + d + 1)) / 2 := by
+    refine Nat.sub_one_lt ?_
+    apply Nat.div_ne_zero_iff.mpr
+    constructor
+    · simp
+    · have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+      apply le_trans twoNine
+      gcongr
+      repeat exact NeZero.one_le
+  by_cases nlt: n < nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)
+  · have k1bound: k1 + 1 < (a + c + 1) * (b + d + 1) / 2 := by
+      unfold kₙ at k1eq
+      have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
+      unfold kceiled at kmem
+      simp at kmem
+      obtain klt := lt_of_le_of_lt kmem nlt
+      simp at klt
       rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
-        det left1 right1 abcd1 abcd2 boundlt] at neq
-      rw [← nₖ_inert a b c d s2 t2 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
-        det left2 right2 abcd1 abcd2 boundlt] at neq2
-      have keq: k1 = (a + c + 1: ℕ) * (b + d + 1) / 2 - 1 := by
-        unfold kₙ at k1eq
-        have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
-        unfold kceiled at kmem
-        rw [neq] at kmem
-        simp at kmem
-        have k11: k1 + 1 ∉ (kceiled s1 t1 n).toFinset := by
-          by_contra k11mem
-          obtain k11le := Finset.le_max k11mem
-          rw [k1eq] at k11le
-          have what: k1 + 1 ≤ k1 := by exact WithBot.coe_le_coe.mp k11le
-          simp at what
-        unfold kceiled at k11
-        rw [neq] at k11
-        simp at k11
-        apply (StrictMono.le_iff_le (nₖ_mono s1 t1)).mp at kmem
-        apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at k11
-        exact Eq.symm (Nat.eq_of_le_of_lt_succ kmem k11)
-      have kbound: k1 < (a + c + 1: ℕ) * (b + d + 1) / 2 := by exact lt_of_eq_of_lt keq boundlt
-      rw [← keq] at neq
-      rw [neq]
-      have min_left(s t: ℝ)[PosReal s] [PosReal t]: (wₖ s t k1 : ℝ) ⊔ ((wₖ s t (k1 + 1)) + (nₖ s t k1) - (nₖ s t (k1 + 1))) = wₖ s t k1 := by
-        apply max_eq_left
-        apply sub_left_le_of_le_add
-        have k1ge1 : k1 ≥ 1 := by
-          rw [keq]
-          apply Nat.le_sub_of_add_le
-          apply (Nat.le_div_iff_mul_le ?_).mpr ?_
-          · simp
-          · norm_num
-            have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
-            apply le_trans fourNine
-            gcongr
-            repeat exact NeZero.one_le
-        have k11ge1 : k1 + 1 ≥ 1 := by exact Nat.le_add_right_of_le k1ge1
-        rw [← wₖ_rec s t k1 k1ge1]
-        rw [← wₖ_rec s t (k1 + 1) k11ge1]
-        push_cast
-        have mono: (wₖ t s k1: ℝ) ≤ wₖ t s (k1 + 1) := by
-          norm_cast
-          apply wₖ_mono t s
-          simp
-        linarith
-      obtain ninert := nₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
-      nth_rw 2 [ninert]
-      rw [min_left s1 t1]
-      rw [min_left s2 t2]
-      simp
-      apply wₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
-  · simp at n1
-    obtain knot1 := kₙ_not_exist s1 t1 n n1
-    obtain knot2 := kₙ_not_exist s2 t2 n n1
-    rw [knot1, knot2]
+        det left1 right1 abcd1 abcd2 boundlt] at klt
+      apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at klt
+      exact Nat.add_lt_of_lt_sub klt
+    congr 2
+    · show wₖ s1 t1 k1 = wₖ s2 t2 k1
+      apply wₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2
+      exact Nat.lt_of_succ_lt k1bound
+    · congr 2
+      show wₖ s1 t1 (k1 + 1) = wₖ s2 t2 (k1 + 1)
+      apply wₖ_inert a b c d s1 t1 s2 t2 (k1 + 1) det left1 right1 left2 right2
+      exact k1bound
+    · simp
+      show nₖ s1 t1 (k1 + 1) = nₖ s2 t2 (k1 + 1)
+      apply nₖ_inert a b c d s1 t1 s2 t2 (k1 + 1) det left1 right1 left2 right2
+      exact k1bound
+  · simp at nlt
+    have neq: n = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
+      apply le_antisymm nbound nlt
+    let neq2 := neq
+    rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
+      det left1 right1 abcd1 abcd2 boundlt] at neq
+    rw [← nₖ_inert a b c d s2 t2 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
+      det left2 right2 abcd1 abcd2 boundlt] at neq2
+    have keq: k1 = (a + c + 1: ℕ) * (b + d + 1) / 2 - 1 := by
+      unfold kₙ at k1eq
+      have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
+      unfold kceiled at kmem
+      rw [neq] at kmem
+      simp at kmem
+      have k11: k1 + 1 ∉ (kceiled s1 t1 n).toFinset := by
+        by_contra k11mem
+        obtain k11le := Finset.le_max k11mem
+        rw [k1eq] at k11le
+        have what: k1 + 1 ≤ k1 := by exact WithBot.coe_le_coe.mp k11le
+        simp at what
+      unfold kceiled at k11
+      rw [neq] at k11
+      simp at k11
+      apply (StrictMono.le_iff_le (nₖ_mono s1 t1)).mp at kmem
+      apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at k11
+      exact Eq.symm (Nat.eq_of_le_of_lt_succ kmem k11)
+    have kbound: k1 < (a + c + 1: ℕ) * (b + d + 1) / 2 := by exact lt_of_eq_of_lt keq boundlt
+    rw [← keq] at neq
+    rw [neq]
+    have min_left(s t: ℝ)[PosReal s] [PosReal t]: (wₖ s t k1 : ℝ) ⊔ ((wₖ s t (k1 + 1)) + (nₖ s t k1) - (nₖ s t (k1 + 1))) = wₖ s t k1 := by
+      apply max_eq_left
+      apply sub_left_le_of_le_add
+      have k1ge1 : k1 ≥ 1 := by
+        rw [keq]
+        apply Nat.le_sub_of_add_le
+        apply (Nat.le_div_iff_mul_le ?_).mpr ?_
+        · simp
+        · norm_num
+          have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+          apply le_trans fourNine
+          gcongr
+          repeat exact NeZero.one_le
+      have k11ge1 : k1 + 1 ≥ 1 := by exact Nat.le_add_right_of_le k1ge1
+      rw [← wₖ_rec s t k1 k1ge1]
+      rw [← wₖ_rec s t (k1 + 1) k11ge1]
+      push_cast
+      have mono: (wₖ t s k1: ℝ) ≤ wₖ t s (k1 + 1) := by
+        norm_cast
+        apply wₖ_mono t s
+        simp
+      linarith
+    obtain ninert := nₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
+    nth_rw 2 [ninert]
+    rw [min_left s1 t1]
+    rw [min_left s2 t2]
+    simp
+    apply wₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
+
 
 theorem wₘₐₓ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -1685,3 +1682,246 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
     obtain knot1 := kₙ_not_exist s1 t1 n n1
     obtain knot2 := kₙ_not_exist s2 t2 n n1
     rw [knot1, knot2]
+
+
+lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
+[PosReal s] [PosReal t]
+(left: t > N * s)
+(kbound: k < ((N + 1): ℕ)):
+δₖ s t k = k * s := by
+  induction k with
+  | zero => rw [δ₀]; simp
+  | succ k prev =>
+    have kprevbound: k < N + 1 := by exact Nat.lt_of_succ_lt kbound
+    obtain prev := prev kprevbound
+    unfold δₖ
+    rw [prev]
+    unfold δnext
+    apply Set.IsWF.min_eq_of_le
+    · unfold Δfloored
+      constructor
+      · unfold Δ is_δ
+        simp
+        use k + 1, 0
+        simp
+      · simp
+        apply (mul_lt_mul_right PosReal.pos).mpr ?_
+        · apply lt_add_one
+    · unfold Δfloored Δ is_δ
+      simp
+      intro δ p q eq mem
+      rw [← eq]
+      rw [← eq] at mem
+      by_cases q0: q = 0
+      · rw [q0] at mem; simp at mem
+        rw [q0]; simp
+        apply (mul_lt_mul_right PosReal.pos).mp at mem
+        simp at mem
+        apply (mul_le_mul_right PosReal.pos).mpr
+        norm_cast
+      · have kbound': k + 1 ≤ N := by exact Nat.le_of_lt_succ kbound
+        have h: (k + 1) * s ≤ N * s := by
+          apply (mul_le_mul_right PosReal.pos).mpr
+          norm_cast
+        apply le_trans h
+        apply le_trans (le_of_lt left)
+        have q1: 1 ≤ q := by exact Nat.one_le_iff_ne_zero.mpr q0
+        have tle: t ≤ q * t := by
+          nth_rw 1 [← one_mul t]
+          gcongr
+          · apply le_of_lt PosReal.pos
+          · norm_cast
+        apply le_trans tle
+        nth_rw 1 [← zero_add (q * t)]
+        gcongr
+        apply mul_nonneg
+        · simp
+        · apply le_of_lt PosReal.pos
+
+lemma nₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
+[PosReal s] [PosReal t]
+(left: t > N * s)
+(kbound: k < ((N + 2): ℕ)):
+nₖ s t k = k + 1 := by
+  rw [nₖ_accum]
+  by_cases k0: k = 0
+  · rw [k0]
+    simp
+  · simp [k0]
+    rw [add_comm]
+    congr 1
+    have k1: k - 1 < N + 1 := by
+      refine Nat.sub_one_lt_of_le ?_ ?_
+      · exact Nat.zero_lt_of_ne_zero k0
+      · exact Nat.le_of_lt_succ kbound
+    rw [δₖ_inert_edge N s t (k - 1) left k1]
+    unfold Jceiled
+    have Λeq: (Λceiled s t (↑(k - 1) * s)).toFinset = (Finset.Icc 0 (k - 1)).product {0} := by
+      ext pq
+      unfold Λceiled
+      simp
+      constructor
+      · intro mem
+        use pq.1
+        have q0: pq.2 = 0 := by
+          have h: 0 ≤ pq.1 * s := by
+            apply mul_nonneg
+            · simp
+            · exact (le_of_lt PosReal.pos)
+          obtain bound := le_of_add_le_of_nonneg_right mem h
+          have right: (k - 1: ℕ) * s ≤ N * s := by
+            apply mul_le_mul_of_nonneg_right
+            · norm_cast
+              exact Nat.le_of_lt_succ k1
+            · exact le_of_lt PosReal.pos
+          obtain bound' := le_trans bound right
+          obtain bound'' := lt_of_le_of_lt bound' left
+          nth_rw 2 [← one_mul t] at bound''
+          obtain qb := lt_of_mul_lt_mul_of_nonneg_right bound'' (le_of_lt PosReal.pos)
+          simp at qb
+          exact qb
+        rw [q0] at mem
+        simp at mem
+        constructor
+        · rify
+          exact le_of_mul_le_mul_of_pos_right mem PosReal.pos
+        · rw [← q0]
+      · simp
+        intro p pb eq
+        rw [← eq]
+        simp
+        rify at pb
+        exact mul_le_mul_of_nonneg_right pb (le_of_lt PosReal.pos)
+    rw [Λeq]
+    unfold Jₚ
+    simp
+    exact Nat.succ_pred_eq_of_ne_zero k0
+
+lemma wₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
+[PosReal s] [PosReal t]
+(left: t > N * s)
+(kbound: k < ((N + 2): ℕ)):
+wₖ s t k = 1 := by
+  rw [wₖ_accum]
+  by_cases k0: k = 0
+  · rw [k0]
+    simp
+  · simp [k0]
+    unfold Jceiled
+    convert Finset.sum_empty
+    have k1: k - 1 < N + 1 := by
+      refine Nat.sub_one_lt_of_le ?_ ?_
+      · exact Nat.zero_lt_of_ne_zero k0
+      · exact Nat.le_of_lt_succ kbound
+    rw [δₖ_inert_edge N s t (k - 1) left k1]
+    unfold Λceiled
+    simp
+    ext pq
+    simp
+    have right: 0 ≤ pq.1 * s + pq.2 * t := by
+      apply add_nonneg
+      repeat
+        apply mul_nonneg
+        · simp
+        · exact le_of_lt PosReal.pos
+    refine lt_of_lt_of_le ?_ right
+    apply sub_lt_zero.mpr
+    apply lt_of_le_of_lt ?_ left
+    apply mul_le_mul_of_nonneg_right
+    · norm_cast
+      exact Nat.le_of_lt_succ k1
+    · exact le_of_lt PosReal.pos
+
+theorem wₘᵢₙ_inert_edge (N: ℕ+) (s t n: ℝ)
+[PosReal s] [PosReal t]
+(left: t > N * s)
+(h: n ≥ 2) (nbound: n ≤ N + 2):
+wₘᵢₙ s t n = 1 := by
+  have hN: N + (2:ℕ) = N + 1 + 1 := by ring
+  unfold wₘᵢₙ
+  have n1: n ≥ 1 := by apply ge_trans h; simp
+  rcases kₙ_exist s t n n1 with ⟨k, keq⟩
+  rw [keq]
+  simp
+  by_cases nbound': n < N + 2
+  · unfold kₙ at keq
+    have kmem: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
+    unfold kceiled at kmem
+    simp at kmem
+    obtain nₖrel := lt_of_le_of_lt kmem nbound'
+    norm_cast at nₖrel
+    push_cast at nₖrel
+    have kbound: k + 1 < N + 2 := by
+      rw [hN]
+      rw [hN] at nₖrel
+      rw [← nₖ_inert_edge N s t (N + 1) left (Nat.lt_add_one _)] at nₖrel
+      apply (StrictMono.lt_iff_lt (nₖ_mono s t)).mp at nₖrel
+      exact Nat.add_lt_add_right nₖrel 1
+    have kbound': k < N + 2 := by
+      exact Nat.lt_of_succ_lt kbound
+    rw [wₖ_inert_edge N s t k left kbound']
+    rw [wₖ_inert_edge N s t (k + 1) left kbound]
+    rw [nₖ_inert_edge N s t (k + 1) left kbound]
+    simp
+    show n ≤ k + 1 + 1
+    apply le_of_lt
+    by_contra ntoolarge
+    simp at ntoolarge
+    have anothermem: k + 1 ∈ (kceiled s t n).toFinset := by
+      unfold kceiled
+      simp
+      rw [nₖ_inert_edge N s t (k + 1) left kbound]
+      push_cast
+      exact ntoolarge
+    have what: k + 1 ≤ k := by exact Finset.le_max_of_eq anothermem keq
+    simp at what
+  · simp at nbound'
+    have nN: n = N + 2 := by apply le_antisymm nbound nbound'
+    have bound: (N + 1: ℕ) < N + 2 := by simp
+    have kv: k = N + 1 := by
+      unfold kₙ at keq
+      rw [nN] at keq
+      apply le_antisymm
+      · obtain memmax := Finset.mem_of_max keq
+        unfold kceiled at memmax
+        simp at memmax
+        norm_cast at memmax
+        push_cast at memmax
+        rw [hN] at memmax
+        rw [← nₖ_inert_edge N s t (N + 1) left bound] at memmax
+        exact (StrictMono.le_iff_le (nₖ_mono s t)).mp memmax
+      · by_contra ntoolarge
+        simp at ntoolarge
+        have anothermem: k + 1 ∈ (kceiled s t (N + 2)).toFinset := by
+          unfold kceiled
+          simp
+          norm_cast
+          push_cast
+          rw [hN]
+          rw [← nₖ_inert_edge N s t (N + 1) left bound]
+          apply (StrictMono.le_iff_le (nₖ_mono s t)).mpr
+          exact ntoolarge
+        have what: k + 1 ≤ k := by exact Finset.le_max_of_eq anothermem keq
+        simp at what
+    rw [kv]
+    have neq: n = (nₖ s t (N + 1)) := by
+      rw [nN]
+      rw [nₖ_inert_edge N s t (N + 1) left bound]
+      norm_cast
+    rw [neq]
+    have min_left: (wₖ s t (N + 1) : ℝ) ⊔ ((wₖ s t ((N + 1) + 1)) + (nₖ s t (N + 1)) - (nₖ s t ((N + 1) + 1))) = wₖ s t (N + 1) := by
+      apply max_eq_left
+      apply sub_left_le_of_le_add
+      have k1ge1 : (N + 1) ≥ 1 := by exact PNat.one_le (N + 1)
+      have k11ge1 : (N + 1) + 1 ≥ 1 := by exact PNat.one_le (N + 1 + 1)
+      rw [← wₖ_rec s t (N + 1) k1ge1]
+      rw [← wₖ_rec s t ((N + 1) + 1) k11ge1]
+      push_cast
+      have mono: (wₖ t s (N + 1): ℝ) ≤ wₖ t s ((N + 1) + 1) := by
+        norm_cast
+        apply wₖ_mono t s
+        simp
+      linarith
+    rw [min_left]
+    rw [wₖ_inert_edge N s t (N + 1) left bound]
+    simp
