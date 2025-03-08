@@ -102,7 +102,7 @@ HasDerivAt (fun x ↦ Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) / (
     rw [MulOneClass.mul_one]
   nth_rw 2 [right]
   apply HasDerivAt.const_mul
-  refine HasDerivAt.sub_const ?_ c
+  apply HasDerivAt.sub_const c
   exact hasDerivAt_id' x
 
 lemma exp_integ(f σ a b: ℝ) (σ0: σ > 0):

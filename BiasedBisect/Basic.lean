@@ -2768,7 +2768,7 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
       rw [n₁]
       exact n2
     apply Finset.le_max_of_eq mem keq
-  have k0: k ≠ 0 := by exact Nat.not_eq_zero_of_lt k1
+  have k0: k ≠ 0 := by exact Nat.ne_zero_of_lt k1
   have k2: k + 1 ≥ 1 := by exact Nat.le_add_right_of_le k1
   unfold wₗᵢ
   rw [kₙ_symm t s]

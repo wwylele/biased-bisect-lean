@@ -2,6 +2,7 @@ import BiasedBisect.Basic
 import BiasedBisect.Inv
 
 import Mathlib.Data.Complex.ExponentialBounds
+import Mathlib.LinearAlgebra.Lagrange
 
 /-
 
@@ -514,12 +515,190 @@ HasSum (fun pq ↦ ↑(Jₚ pq) * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))) (1 - (x
       · apply le_of_lt; apply lt_trans bound; norm_num
       · simp
 
+noncomputable
+def ξPolynomial(s t: ℕ+) :=
+  Polynomial.monomial s (1:ℂ) + Polynomial.monomial t (1:ℂ) - Polynomial.C 1
+
+lemma ξPolynomialDerivative(s t: ℕ+):
+(ξPolynomial s t).derivative = Polynomial.monomial (s - 1) (s:ℂ) + Polynomial.monomial (t - 1) (t:ℂ) := by
+  unfold ξPolynomial
+  simp
+  rw [Polynomial.derivative_monomial, Polynomial.derivative_monomial]
+  simp
+
+
+lemma ξPolynomialFactorizeMulti(s t: ℕ+):
+ξPolynomial s t = Polynomial.C (ξPolynomial s t).leadingCoeff * ((ξPolynomial s t).roots.map (Polynomial.X - Polynomial.C ·)).prod := by
+  exact Polynomial.eq_prod_roots_of_splits_id (Complex.isAlgClosed.splits (ξPolynomial s t))
+
+noncomputable
+def ξSet(s t: ℕ+) := (ξPolynomial s t).roots.toFinset
+
+lemma ξPolynomialFactorize(s t: ℕ+):
+ξPolynomial s t = Polynomial.C (ξPolynomial s t).leadingCoeff * Lagrange.nodal (ξSet s t) id := by
+  unfold Lagrange.nodal
+  nth_rw 1 [ξPolynomialFactorizeMulti]
+  apply mul_eq_mul_left_iff.mpr
+  left
+  unfold ξSet
+  simp
+  rw [Finset.prod_multiset_map_count]
+  apply Finset.prod_congr rfl
+  intro r rmem
+  obtain rmem' := Multiset.mem_dedup.mp rmem
+  have root1: Multiset.count r (ξPolynomial s t).roots = 1 := by
+    apply le_antisymm
+    · unfold Polynomial.roots
+      have n0: ξPolynomial s t ≠ 0 := by
+        exact Polynomial.ne_zero_of_mem_roots rmem'
+      simp [n0]
+      obtain ⟨_,multiEq⟩ := Exists.choose_spec (Polynomial.exists_multiset_roots n0)
+      rw [multiEq r]
+      by_contra ge2
+      simp at ge2
+      apply Nat.succ_le_iff.mpr at ge2
+      apply (Polynomial.le_rootMultiplicity_iff n0).mp at ge2
+      simp at ge2
+      obtain ⟨factor, feq⟩ := dvd_iff_exists_eq_mul_left.mp ge2
+      obtain der := ξPolynomialDerivative s t
+      rw [feq] at der
+      simp at der
+      rw [Polynomial.derivative_pow] at der
+      have square: (Polynomial.X - Polynomial.C r) ^ 2 = (Polynomial.X - Polynomial.C r) * (Polynomial.X - Polynomial.C r) := by
+        ring
+      rw [square] at der
+      simp at der
+      rw [← mul_assoc, ← mul_assoc, ← add_mul] at der
+      have dvd: Polynomial.X - Polynomial.C r ∣ Polynomial.monomial (s - 1) (s:ℂ) + Polynomial.monomial (t - 1) (t:ℂ) := by
+        exact
+          Dvd.intro_left
+            (Polynomial.derivative factor * (Polynomial.X - Polynomial.C r) +
+              factor * Polynomial.C 2)
+            der
+      obtain req_of_der := Polynomial.eval_dvd dvd (x := r)
+      simp at req_of_der
+      obtain req_of_pol := Polynomial.isRoot_of_mem_roots rmem'
+      unfold ξPolynomial at req_of_pol
+      simp at req_of_pol
+      obtain req_of_pol' := eq_of_sub_eq_zero req_of_pol
+      have req_of_der': (s * r ^ (s - 1:ℕ) + t * r ^ (t - 1:ℕ)) * r = 0 := by
+        apply mul_eq_zero.mpr; left; exact req_of_der
+      rw [add_mul] at req_of_der'
+      rw [mul_assoc, mul_assoc] at req_of_der'
+      rw [← pow_succ, ← pow_succ] at req_of_der'
+      have s1: (1:ℕ) ≤ s := by exact NeZero.one_le
+      have t1: (1:ℕ) ≤ t := by exact NeZero.one_le
+      rw [Nat.sub_add_cancel s1, Nat.sub_add_cancel t1] at req_of_der'
+      have rs: r ^ (s:ℕ) = 1 - r ^ (t:ℕ) := eq_sub_of_add_eq req_of_pol'
+      have rt: r ^ (t:ℕ) = 1 - r ^ (s:ℕ) := eq_sub_of_add_eq' req_of_pol'
+      have req_of_der'' := req_of_der'
+      rw [rs] at req_of_der'
+      rw [rt] at req_of_der''
+      have rs': s = (s - t) * r ^ (t:ℕ) := by
+        apply eq_of_sub_eq_zero
+        rw [sub_mul]
+        rw [← sub_add]
+        nth_rw 1 [← mul_one (s:ℂ)]
+        rw [← mul_sub]
+        exact req_of_der'
+      have rt': t = (t - s) * r ^ (s:ℕ) := by
+        apply eq_of_sub_eq_zero
+        rw [sub_mul]
+        rw [← sub_add]
+        nth_rw 1 [← mul_one (t:ℂ)]
+        rw [← mul_sub]
+        rw [add_comm]
+        exact req_of_der''
+      by_cases seqt: (s:ℂ) = t
+      · rw [seqt] at rs'
+        simp at rs'
+      · have snet: (s - t: ℂ) ≠ 0 := sub_ne_zero_of_ne seqt
+        have tnes: (t - s: ℂ) ≠ 0 := by
+          refine sub_ne_zero_of_ne ?_
+          symm
+          exact seqt
+        rw [mul_comm] at rs'
+        rw [mul_comm] at rt'
+        obtain rs'' := (div_eq_iff snet).mpr rs'
+        obtain rt'' := (div_eq_iff tnes).mpr rt'
+        have sside: (s / (s - t)) ^(s:ℕ) = r ^(s * t: ℕ) := by
+          rw [mul_comm]
+          rw [pow_mul]
+          rw [rs'']
+        have tside: (t / (t - s)) ^(t:ℕ) = r ^(s * t: ℕ) := by
+          rw [pow_mul]
+          rw [rt'']
+        obtain what: ((s:ℂ) / (s - t)) ^(s:ℕ) = (t / (t - s)) ^(t:ℕ) := by
+          rw [sside, tside]
+        rw [div_pow, div_pow] at what
+        obtain ts0: (s - t: ℂ) ^ (s: ℕ) ≠ 0 := pow_ne_zero _ snet
+        obtain st0: (t - s: ℂ) ^ (t: ℕ) ≠ 0 := pow_ne_zero _ tnes
+        obtain what := mul_eq_mul_of_div_eq_div _ _ ts0 st0 what
+        have whathalf(S T: ℕ) (Spos: 0 < S) (Tpos: 0 < T) (h: S < T)(what: (S ^ S * (T - S) ^ T: ℂ) = T ^ T * (S - T) ^ S): False := by
+          norm_cast at what
+          obtain what := abs_eq_abs.mpr (Or.inl what)
+          rw [abs_mul, abs_mul] at what
+          simp at what
+          have tsubs: |Int.subNatNat T S| = (T - S:ℕ) := by
+            rw [Int.subNatNat_of_le (le_of_lt h)]
+            exact Int.abs_natCast (T - S)
+          have ssubt: |Int.subNatNat S T| = (T - S:ℕ) := by
+            rw [Int.subNatNat_eq_coe]
+            push_cast [h]
+            nth_rw 2 [← neg_sub]
+            refine abs_of_neg ?_
+            refine Int.sub_neg_of_lt ?_
+            norm_cast
+          rw [tsubs, ssubt] at what
+          set D:ℕ := T - S
+          have D0: D ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr h
+          have Teq: T = D + S := by
+            unfold D
+            refine Eq.symm (Nat.sub_add_cancel ?_)
+            exact Nat.le_of_succ_le h
+          rw [Teq] at what
+          rw [npow_add, npow_add] at what
+          rw [← mul_assoc] at what
+          rw [mul_eq_mul_right_iff] at what
+          rw [mul_comm] at what
+          have ds0: ¬ (D:ℤ)^S = 0 := by
+            simp
+            exact fun a ↦ False.elim (D0 a)
+          rw [or_iff_left ds0] at what
+          have conflict:  (D:ℤ) ^ D * S ^ S ≠ (D + S) ^ D * (D + S) ^ S := by
+            apply ne_of_lt
+            gcongr
+            · show (D:ℤ) < D + S
+              apply (lt_add_iff_pos_right (D:ℤ)).mpr
+              exact Int.ofNat_pos.mpr Spos
+            · show (S:ℤ) < D + S
+              apply (lt_add_iff_pos_left (S:ℤ)).mpr
+              refine Int.ofNat_pos.mpr ?_
+              exact Nat.zero_lt_sub_of_lt h
+          contradiction
+        have snet': (s:ℕ) ≠ t := by
+          norm_cast at seqt
+          norm_cast
+        rcases ne_iff_lt_or_gt.mp snet' with lt|gt
+        · exact whathalf s t s1 t1 lt what
+        · exact whathalf t s t1 s1 gt what.symm
+    · exact Multiset.one_le_count_iff_mem.mpr rmem'
+  rw [root1]
+  simp
+
 /-
 A main theorem: the generating function Z{Φ}(x) converges to a rational function
 The bound here is not sharp, but it should be sufficient for future reasoning over complex plane
 -/
 theorem ZΦ_sum (s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
-HasSum (fun i:ℕ ↦ Φ s t i * x ^ i) ((1 - x)⁻¹ + (1 - (x ^ (s:ℕ) + x ^ (t:ℕ)))⁻¹ * (1 - x)⁻¹) := by
+HasSum (fun i:ℕ ↦ Φ s t i * x ^ i) ((((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹):= by
+  unfold ξPolynomial
+  simp
+  rw [← neg_sub 1 _]
+  rw [← neg_inv]
+  rw [sub_neg_eq_add]
+  rw [add_mul]
+  rw [one_mul]
   have bound2: ‖x‖ < 1 := by
     apply lt_trans bound
     norm_num
@@ -580,15 +759,157 @@ HasSum (fun i:ℕ ↦ Φ s t i * x ^ i) ((1 - x)⁻¹ + (1 - (x ^ (s:ℕ) + x ^ 
     simp
     apply Finset.hasSum
 
+lemma PartialFractionDecompostion [Field F] [DecidableEq F]
+(x: F) (roots: Finset F) (hasroots: roots.Nonempty) (notroot: x ∉ roots):
+((Lagrange.nodal roots id).eval x)⁻¹ = ∑ r ∈ roots, (x - r)⁻¹ * ((Polynomial.derivative (Lagrange.nodal roots id)).eval r)⁻¹ := by
+  apply DivisionMonoid.inv_eq_of_mul
+  rw [Finset.mul_sum]
+  have h0 (r: F) (h: r ∈ roots): (Polynomial.derivative (Lagrange.nodal roots id)).eval r
+    = Polynomial.eval r (∏ r' ∈ roots.erase r, (Polynomial.X - Polynomial.C r')) := by
+    rw [Lagrange.derivative_nodal]
+    rw [Polynomial.eval_finset_sum]
+    unfold Lagrange.nodal
+    simp
+    apply Finset.sum_eq_single r
+    · intro r' r'mem r'ne
+      rw [Polynomial.eval_prod]
+      apply Finset.prod_eq_zero_iff.mpr
+      use r
+      constructor
+      · exact Finset.mem_erase_of_ne_of_mem (id (Ne.symm r'ne)) h
+      · simp
+    · exact fun a ↦ False.elim (a h)
+
+  have h1 :
+     ∑ r ∈ roots, ((Lagrange.nodal roots id).eval x) * ((x - r)⁻¹ * ((Polynomial.derivative (Lagrange.nodal roots id)).eval r)⁻¹)
+   = ∑ r ∈ roots, (Lagrange.basis roots id r).eval x := by
+    apply Finset.sum_congr rfl
+    intro r rmem
+    rw [h0 r rmem]
+    unfold Lagrange.nodal
+    rw [Polynomial.eval_prod]
+    simp
+    have notroot': x - r ≠ 0 := by
+      refine sub_ne_zero_of_ne ?_
+      exact Ne.symm (ne_of_mem_of_not_mem rmem notroot)
+    rw [← mul_assoc]
+    rw [← Finset.mul_prod_erase roots _ rmem]
+    nth_rw 2 [mul_comm]
+    rw [← mul_assoc]
+    rw [inv_mul_cancel₀ notroot']
+    rw [one_mul]
+    unfold Lagrange.basis
+    rw [Polynomial.eval_prod]
+    rw [Polynomial.eval_prod]
+    unfold Lagrange.basisDivisor
+    rw [← Finset.prod_inv_distrib]
+    rw [← Finset.prod_mul_distrib]
+    apply Finset.prod_congr rfl
+    intro r' r'mem
+    simp
+    rw [mul_comm]
+  rw [h1]
+  rw [← Polynomial.eval_finset_sum]
+  rw [Lagrange.sum_basis (Set.injOn_id _) hasroots]
+  simp
+
+lemma PartialFractionDecompostion2 [Field F] [DecidableEq F]
+(x: F) (roots: Finset F) (coef: F)
+(hasroots: roots.Nonempty) (notroot: x ∉ roots) (not1: x ≠ 1) (onenotroot: 1 ∉ roots):
+(((Polynomial.C coef * Lagrange.nodal roots id).eval 1)⁻¹ - ((Polynomial.C coef * Lagrange.nodal roots id).eval x)⁻¹) * (1 - x)⁻¹
+ = ∑ r ∈ roots, (x - r)⁻¹ * (r - 1)⁻¹ * ((Polynomial.derivative (Polynomial.C coef * Lagrange.nodal roots id)).eval r)⁻¹ := by
+  rw [Polynomial.derivative_C_mul]
+  rw [Polynomial.eval_mul, Polynomial.eval_mul]
+  simp
+  rw [← sub_mul]
+  nth_rw 2 [mul_comm]
+  rw [mul_assoc]
+
+  rw [PartialFractionDecompostion x roots hasroots notroot]
+  rw [PartialFractionDecompostion 1 roots hasroots onenotroot]
+  rw [← Finset.sum_sub_distrib]
+  rw [Finset.sum_mul]
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro r rmem
+  rw [← sub_mul]
+  rw [mul_right_comm]
+  rw [mul_comm]
+  rw [mul_assoc]
+  apply mul_eq_mul_right_iff.mpr
+  left
+  have x1: 1 - x ≠ 0 := sub_ne_zero_of_ne (id (Ne.symm not1))
+  have xr: x - r ≠ 0 := sub_ne_zero_of_ne (Ne.symm (ne_of_mem_of_not_mem rmem notroot))
+  have r1: r - 1 ≠ 0 := sub_ne_zero_of_ne (ne_of_mem_of_not_mem rmem onenotroot)
+  apply (mul_inv_eq_iff_eq_mul₀ x1).mpr
+  rw [mul_assoc]
+  apply (eq_inv_mul_iff_mul_eq₀ xr).mpr
+  apply (eq_inv_mul_iff_mul_eq₀ r1).mpr
+  rw [mul_sub]
+  rw [Field.mul_inv_cancel _ xr]
+  rw [← neg_sub r 1]
+  rw [← neg_inv]
+  rw [mul_neg]
+  rw [mul_sub]
+  rw [mul_neg]
+  rw [mul_comm (x - r)]
+  rw [← mul_assoc]
+  rw [Field.mul_inv_cancel _ r1]
+  simp
 
 
-noncomputable
-def ξPolynomial(s t: ℕ+) :=
-  Polynomial.monomial s (1:ℂ) + Polynomial.monomial t (1:ℂ) + Polynomial.monomial 0 (-1:ℂ)
-
-noncomputable
-def ξSet(s t: ℕ+) := (ξPolynomial s t).roots
-
-lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ):
-((1 - x)⁻¹ + (1 - (x ^ (s:ℕ) + x ^ (t:ℕ)))⁻¹ * (1 - x)⁻¹) =
-(Multiset.map (fun ξ ↦ (1 - x * ξ⁻¹)⁻¹*(1 - ξ)⁻¹*(s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹) (ξSet s t)).sum := by sorry
+lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
+(((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹ =
+∑ ξ ∈ ξSet s t, (x - ξ)⁻¹ * (ξ - 1)⁻¹*(s * ξ^(s - 1:ℕ) + t * ξ^(t - 1:ℕ))⁻¹ := by
+  rw [ξPolynomialFactorize]
+  have nonempty: (ξSet s t).Nonempty := by
+    by_contra empty
+    simp at empty
+    obtain factorize := ξPolynomialFactorize s t
+    rw [empty] at factorize
+    simp at factorize
+    obtain eval: (ξPolynomial s t).eval 0 = (ξPolynomial s t).eval 1 := by
+      rw [factorize]
+      simp
+    unfold ξPolynomial at eval
+    simp at eval
+    norm_num at eval
+  have xnotroot: x ∉ ξSet s t := by
+    unfold ξSet
+    simp
+    rw [imp_iff_not_or]
+    right
+    unfold ξPolynomial
+    simp
+    apply sub_ne_zero.mpr
+    have h: ‖x ^ (s:ℕ) + x ^ (t:ℕ)‖ ≠ ‖(1:ℂ)‖ := by
+      apply ne_of_lt
+      apply lt_of_le_of_lt (norm_add_le _ _)
+      have right: ‖(1:ℂ)‖ = 2⁻¹ + 2⁻¹ := by norm_num
+      rw [right]
+      gcongr
+      repeat
+      · simp
+        refine lt_of_le_of_lt ?_ bound
+        refine pow_le_of_le_one ?_ ?_ ?_
+        · simp
+        · apply le_trans (le_of_lt bound)
+          norm_num
+        · simp
+    exact fun a ↦ h (congrArg norm a)
+  have xnotone: x ≠ 1 := by
+    contrapose bound with one
+    simp at one
+    rw [one]
+    norm_num
+  have onenotroot: 1 ∉ ξSet s t := by
+    by_contra isroot
+    unfold ξSet at isroot
+    simp at isroot
+    rcases isroot with ⟨_, eval⟩
+    unfold ξPolynomial at eval
+    simp at eval
+  rw [PartialFractionDecompostion2 _ _ _ nonempty xnotroot xnotone onenotroot]
+  rw [← ξPolynomialFactorize]
+  rw [ξPolynomialDerivative]
+  simp

@@ -1,6 +1,25 @@
 import BiasedBisect.Basic
 
+/-
+In this file, we prove a family of "inert" theorems.
+The w function, along with many underlying structures, demonstrate a behavior
+where for a fixed n, the function value doesn't change along s/t line within a small interval
+Such interval is always between a pair of Farey neighbours.
 
+To be specific, for positive integers a, b, c, and d such that ad - bc = 1,
+and for all s and t usch that c/d < s/t < a/b,
+the w function is a constant as long as n isn't too large (we will find the bound for n soon)
+
+We will use such tuple (a, b, c, d) a lot in the following theorems, which we call an inert interval.
+
+Intuitively, changing s/t slightly is to rotate the scanning line over Λ a little bit.
+When such rotation doesn't hit any lattice points, a lot of functions we have constructed stay constant.
+-/
+
+/-
+We start with a simple lemma: for rational s/t, the scanning line can pass multiple points,
+but this can only happen after the (s * t) threshold.
+-/
 lemma unique_pq (s t: ℕ+) (pq pq': ℕ × ℕ)
 (coprime: PNat.Coprime s t) (eq: δₚ s t pq = δₚ s t pq') (bound: δₚ s t pq < s * t): pq = pq' := by
   unfold δₚ at eq
@@ -82,6 +101,7 @@ lemma unique_pq (s t: ℕ+) (pq pq': ℕ × ℕ)
   · exact Int.ofNat_inj.mp pp
   · exact Int.ofNat_inj.mp qeq
 
+/- The property of Farey neighbors: a new fraction between a Farey neighbor must have a large denominator -/
 lemma slopeBound (a b c d s t: ℕ+) (det: a * d = b * c + 1) (left: c * t < d * s) (right: b * s < a * t):
 t ≥ b + d := by
   have left': c * t + 1 ≤ d * s := by exact left
@@ -104,6 +124,15 @@ t ≥ b + d := by
   simp at all
   exact all
 
+/-
+Some inert theorems on Λceiled:
+below the threshold, one can slightly rotate the ceiling without changing the set members.
+
+We divide the proof into three parts:
+ - Λceiled_inert_half: only look at one side of the delta area
+ - Λceiled_inert: prove for the full set, but requires an ordering between two ceilings
+ - Λceiled_inert': remove the requirement on the ordering
+-/
 theorem Λceiled_inert_half (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ) [PosReal s1] [PosReal t1]
 [PosReal s2] [PosReal t2] (det: a * d = b * c + 1)
 (left: a * t1 > b * s1) (mid: s1 * t2 > s2 * t1) (right: d * s2 > c * t2)
@@ -176,8 +205,6 @@ p' * s1 + q' * t1 ≤ p * s1 + q * t1 ↔ p' * s2 + q' * t2 ≤ p * s2 + q * t2 
     apply (div_lt_div_iff₀ PosReal.pos PosReal.pos).mpr at mid
     apply le_of_lt
     exact lt_of_le_of_lt le2 mid
-
-
 
 lemma Λceiled_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -277,6 +304,10 @@ lemma Λceiled_inert' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
     apply Λceiled_homo s1 t1 (p * s1 + q * t1) l
   · exact Λceiled_inert a b c d s1 t1 s2 t2 p q det left1 gt right2 pBound qBound
 
+/-
+The δₚ evaluation is inert within the threshold,
+as in the ordering doesn't change for changing s/t
+-/
 lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -318,6 +349,10 @@ lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
   obtain what := lt_of_le_of_lt pq2 r1
   simp at what
 
+/-
+A variation of Λceiled_inert, concering about a ceiling created by lattice point below ℕ
+This will be used for w related theories
+-/
 lemma Λceiled_inert_t (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -407,7 +442,7 @@ lemma Λceiled_inert_t (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
           · simp
           · apply le_of_lt PosReal.pos
 
-
+/- again Λceiled_inert_t' removes the ordering requirement -/
 lemma Λceiled_inert_t' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -444,6 +479,9 @@ lemma Λceiled_inert_t' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
     apply Λceiled_homo s1 t1 (p * s1 - t1) l
   · exact Λceiled_inert_t a b c d s1 t1 s2 t2 p det left1 gt right2 pBound
 
+/-
+The mediant of Farey neighbors is within the inert interval
+-/
 lemma abcdLeftRight (a b c d: ℕ+) (det: a * d = b * c + 1):
 (a: ℝ) * (b + d) > b * (a + c) ∧ (d: ℝ) * (a + c) > c * (b + d) := by
   constructor
@@ -464,6 +502,11 @@ lemma abcdLeftRight (a b c d: ℕ+) (det: a * d = b * c + 1):
     rw [← add_assoc]
     exact PNat.lt_add_right (b * c + d * c) 1
 
+/-
+δₖ sequence is inert within an inert interval.
+This version is a bit primitive, where it requires a sequence of lattice points
+that generates δₖ to exist first, and we don't have an explicit bound yet
+-/
 lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ → ℕ × ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -660,8 +703,12 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       have what := gt_of_ge_of_gt inFloor' preserveLt
       simp at what
 
-def FintypeIcc (L: ℕ): Type := Set.Icc 0 L
+/-
+Here we have series of little lemma to eventually prove the cardinality of
+all lattice points in an inert interval
+-/
 
+def FintypeIcc (L: ℕ): Type := Set.Icc 0 L
 
 def Λrectangle (a b c d: ℕ+) :=
   (Finset.range (b + d + 1)) ×ˢ (Finset.range (a + c + 1))
@@ -676,35 +723,58 @@ lemma Λrectangle_card (a b c d: ℕ+): Fintype.card (Λrectangle a b c d) = (b 
 
 def Λtriangle (a b c d: ℕ+) := {pq: ℕ × ℕ | pq.1 * (a + c) + pq.2 * (b + d) < (a + c) * (b + d)}
 
-lemma ΛtriangleSubset (a b c d: ℕ+): Λtriangle a b c d ⊆ Λrectangle a b c d := by
-  unfold Λtriangle Λrectangle
+def ΛtriangleFinset (a b c d: ℕ+) :=
+  Finset.biUnion (Finset.range (b + d)) (fun p ↦ {p} ×ˢ Finset.range ((((a + c) * (b + d - p) + (b + d - 1))) / (b + d)))
+
+/- We could have just use the finiteness, but having a computable one is useful -/
+instance ΛtriangleFintype (a b c d: ℕ+): Fintype (Λtriangle a b c d) := by
+  apply Fintype.ofFinset (ΛtriangleFinset a b c d)
+  intro pq
+  unfold Λtriangle ΛtriangleFinset
   simp
-  rintro ⟨p, q⟩
-  intro mem
-  simp at mem
   constructor
-  · simp
-    refine lt_add_of_lt_of_pos ?_ Nat.one_pos
-    have lt: p * (a + c) < (a + c) * (b + d) := by
-      apply lt_of_add_lt_of_nonneg_left mem (mul_nonneg ?_ ?_)
+  · rintro ⟨p', p'b, q', ⟨q'b, eq⟩⟩
+    rw [← eq]
+    simp
+    have qb: q' * (b + d) < (a + c) * (b + d - p') + (b + d - 1) - (b + d - 1) := by
+      apply (Nat.lt_div_iff_mul_lt ?_).mp q'b
+      simp
+    have qb2: q' * (b + d) < (a + c) * (b + d - p') := by
+      convert qb using 1
+      symm
+      apply Nat.add_sub_self_right
+    have h: p' * (a + c) + q' * (b + d) < p' * (a + c) + (a + c) * (b + d - p') := by
+      exact Nat.add_lt_add_left qb2 (p' * (a + c))
+    nth_rw 3 [mul_comm] at h
+    rw [← mul_add] at h
+    convert h using 2
+    zify [p'b]
+    ring
+  · intro mem
+    use pq.1
+    constructor
+    · apply Nat.lt_of_add_right_lt at mem
+      rw [mul_comm] at mem
+      exact Nat.lt_of_mul_lt_mul_left mem
+    · use pq.2
+      constructor
+      · rw [mul_comm] at mem
+        rw [add_comm] at mem
+        apply Nat.lt_sub_of_add_lt at mem
+        rw [← Nat.mul_sub] at mem
+        have h: ((a + c) * (b + d - pq.1): ℕ) = (a + c) * (b + d - pq.1) + (b + d - 1) - (b + d - 1) := by
+          symm
+          apply Nat.add_sub_self_right
+        rw [h] at mem
+        apply (Nat.lt_div_iff_mul_lt ?_).mpr ?_
+        · simp
+        · exact mem
       · simp
-      · simp
-    rw [mul_comm] at lt
-    apply Nat.lt_of_mul_lt_mul_left lt
-  · refine lt_add_of_lt_of_pos ?_ Nat.one_pos
-    have lt: q * (b + d) < (a + c) * (b + d) := by
-      apply lt_of_add_lt_of_nonneg_right mem (mul_nonneg ?_ ?_)
-      · simp
-      · simp
-    apply Nat.lt_of_mul_lt_mul_right lt
 
 noncomputable
 instance ΛtriangleDecidable (a b c d: ℕ+): DecidablePred fun x ↦ x ∈ Λtriangle a b c d := by
   apply Classical.decPred
 
-noncomputable
-instance ΛtriangleFintype (a b c d: ℕ+): Fintype (Λtriangle a b c d) := by
-  refine Set.fintypeSubset _ (ΛtriangleSubset a b c d)
 
 def ΛtriangleUpper (a b c d: ℕ+) := {pq: ℕ × ℕ | pq.1 * (a + c) + pq.2 * (b + d) > (a + c) * (b + d)} ∩ (Λrectangle a b c d)
 
@@ -962,6 +1032,9 @@ lemma ΛrectangleDisjoint (a b c d: ℕ+): (Λtriangle a b c d).toFinset ∩ (Λ
   simp
   apply le_of_lt mem
 
+/-
+Here we finally get the value of the cardinality, which we will use to character rise the bound of n
+-/
 lemma ΛtriangleCard (a b c d: ℕ+) (det: a * d = b * c + 1):
 (Λtriangle a b c d).toFinset.card = (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) := by
   obtain reccard := ΛrectangleCutCard a b c d
@@ -978,6 +1051,8 @@ lemma ΛtriangleCard (a b c d: ℕ+) (det: a * d = b * c + 1):
 instance abPos(a b: ℕ+): PosReal (a + b) where
   pos := by norm_cast; simp
 
+
+/- We define the the sequence of lattice points that will generate δₖ -/
 lemma pqOfδₖ_abcd_exist(a b c d: ℕ+) (k: ℕ):
 ∃ (pq: ℕ × ℕ), δₚ (a + c) (b + d) pq = δₖ (a + c) (b + d) k := by
   obtain h := δₖ_in_Δ (a + c) (b + d) k
@@ -1125,7 +1200,10 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
   rw [kTriangleCardBound] at kTriangleCardBoundFromMax
   simp at kTriangleCardBoundFromMax
 
-
+/-
+Now we can prove a stronger version of δₖ_inert, because we know the sequence of lattice points
+always exists, and we have the explicit bound
+-/
 lemma δₖ_inert_fixed (a b c d: ℕ+) (s t: ℝ) (k: ℕ)
 [PosReal s] [PosReal t]
 (det: a * d = b * c + 1)
@@ -1159,7 +1237,9 @@ lemma δₖ_inert_fixed (a b c d: ℕ+) (s t: ℝ) (k: ℕ)
     exact Nat.lt_of_le_pred bound1 mem
   · exact Nat.le_sub_one_of_lt kbound
 
-
+/-
+From δₖ, we can prove nₖ is inert
+-/
 lemma nₖ_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -1193,6 +1273,10 @@ nₖ s1 t1 k = nₖ s2 t2 k := by
     obtain ⟨pb, qb⟩ := BoundDecomposite _ _ pqBound
     apply Λceiled_inert' a b c d s1 t1 s2 t2 _ _ det left1 right1 left2 right2 pb qb
 
+/-
+...and wₖ is inert. This prove is longer because one need to consider
+some wₖ might corresponds to a ceiling generated by a lattice point below ℕ
+-/
 lemma wₖ_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -1241,11 +1325,16 @@ wₖ s1 t1 k = wₖ s2 t2 k := by
       rw [add_sub_assoc, add_sub_assoc, shift1, shift2]
       apply Λceiled_inert' a b c d s1 t1 s2 t2 _ _ det left1 right1 left2 right2 pb qb'
 
-noncomputable
-def nBranching (a b c d: ℕ+) := nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1)
+/-
+We define the bound for n
+The first definition explicit for computation, but we also immediately prove a formula that's
+more useful for theorem proving
+-/
+def nBranching (a b c d: ℕ+) := 1 + ∑pq ∈ (Λtriangle a b c d).toFinset, Jₚ pq
 
 theorem nBranchingFormula (a b c d: ℕ+) (det: a * d = b * c + 1):
-nBranching a b c d = 1 + ∑pq ∈ (Λtriangle a b c d).toFinset, Jₚ pq := by
+nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
+  symm
   have twoBound: (2:ℕ)  ≤ (a + c + 1) * (b + d + 1) := by
     have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
     apply le_trans twoNine
@@ -1393,7 +1482,9 @@ nBranching a b c d = 1 + ∑pq ∈ (Λtriangle a b c d).toFinset, Jₚ pq := by
     obtain chain := lt_trans chain lkrel
     simp at chain
 
-
+/-
+kceiled is inert within the bound of n
+-/
 lemma kceiled_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -1401,7 +1492,7 @@ lemma kceiled_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
 (nbound: n ≤ nBranching a b c d):
 kceiled s1 t1 n = kceiled s2 t2 n := by
-  unfold nBranching at nbound
+  rw [nBranchingFormula a b c d det] at nbound
   unfold kceiled
   ext k
   simp
@@ -1440,6 +1531,9 @@ kceiled s1 t1 n = kceiled s2 t2 n := by
     rw [nₖ_inert a b c d s1 t1 s2 t2 k det left1 right1 left2 right2 kInBound']
     exact h
 
+/-
+... so is kₙ
+-/
 lemma kₙ_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -1452,7 +1546,9 @@ kₙ s1 t1 n = kₙ s2 t2 n := by
   simp
   apply kceiled_inert a b c d s1 t1 s2 t2 n det left1 right1 left2 right2 nbound
 
-
+/-
+Here come our main theorems: wₘᵢₙ, wₘₐₓ, and wₗᵢ are all inert
+-/
 theorem wₘᵢₙ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -1509,6 +1605,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
       exact k1bound
   · simp at nlt
     have neq: n = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
+      rw [nBranchingFormula a b c d det] at nbound
       apply le_antisymm nbound nlt
     let neq2 := neq
     rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
@@ -1573,7 +1670,7 @@ theorem wₘₐₓ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
 (h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
 wₘₐₓ s1 t1 n = wₘₐₓ s2 t2 n := by
-  unfold nBranching at nbound
+  rw [nBranchingFormula a b c d det] at nbound
   obtain rec1 := eq_sub_of_add_eq' (wₘₘ_rec t1 s1 n h)
   obtain rec2 := eq_sub_of_add_eq' (wₘₘ_rec t2 s2 n h)
   rw [rec1, rec2]
@@ -1591,6 +1688,7 @@ wₘₐₓ s1 t1 n = wₘₐₓ s2 t2 n := by
   rw [nboundeq] at nbound
   rw [mul_comm a d] at det
   rw [mul_comm b c] at det
+  rw [← nBranchingFormula d c b a det] at nbound
   apply wₘᵢₙ_inert d c b a t1 s1 t2 s2 n det right1 left1 right2 left2 h nbound
 
 theorem wₗᵢ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
@@ -1647,6 +1745,7 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
       congr
     · simp at nlt
       have neq: n = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
+        rw [nBranchingFormula a b c d det] at nbound
         apply le_antisymm nbound nlt
       let neq2 := neq
       rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
@@ -1683,6 +1782,14 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
     obtain knot2 := kₙ_not_exist s2 t2 n n1
     rw [knot1, knot2]
 
+/-
+We start proving another family ot theorems: inert at edge
+These are essentially saying w functions are inert for (a=1,b=N,c=0,d=1) and for (a=1,b=0,c=N,d=1)
+But as we have been developing our theory for positive inters only, these need special treatment.
+
+We will also prove stronger theorems where we find the value of w explicity.
+In fact, they are at the edge 1 or n - 1, hence the name.
+-/
 
 lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
 [PosReal s] [PosReal t]
@@ -1909,7 +2016,7 @@ wₘᵢₙ s t n = 1 := by
       rw [nₖ_inert_edge N s t (N + 1) left bound]
       norm_cast
     rw [neq]
-    have min_left: (wₖ s t (N + 1) : ℝ) ⊔ ((wₖ s t ((N + 1) + 1)) + (nₖ s t (N + 1)) - (nₖ s t ((N + 1) + 1))) = wₖ s t (N + 1) := by
+    have max_left: (wₖ s t (N + 1) : ℝ) ⊔ ((wₖ s t ((N + 1) + 1)) + (nₖ s t (N + 1)) - (nₖ s t ((N + 1) + 1))) = wₖ s t (N + 1) := by
       apply max_eq_left
       apply sub_left_le_of_le_add
       have k1ge1 : (N + 1) ≥ 1 := by exact PNat.one_le (N + 1)
@@ -1922,6 +2029,150 @@ wₘᵢₙ s t n = 1 := by
         apply wₖ_mono t s
         simp
       linarith
-    rw [min_left]
+    rw [max_left]
     rw [wₖ_inert_edge N s t (N + 1) left bound]
     simp
+
+theorem wₘₐₓ_inert_edge (N: ℕ+) (s t n: ℝ)
+[PosReal s] [PosReal t]
+(left: t > N * s)
+(h: n ≥ 2) (nbound: n ≤ N + 2):
+wₘₐₓ s t n = 1 := by
+  have hN: N + (2:ℕ) = N + 1 + 1 := by ring
+  unfold wₘₐₓ
+  have n1: n ≥ 1 := by apply ge_trans h; simp
+  rcases kₙ_exist s t n n1 with ⟨k, keq⟩
+  rw [keq]
+  simp
+  by_cases nbound': n < N + 2
+  · unfold kₙ at keq
+    have kmem: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
+    unfold kceiled at kmem
+    simp at kmem
+    obtain nₖrel := lt_of_le_of_lt kmem nbound'
+    norm_cast at nₖrel
+    push_cast at nₖrel
+    have kbound: k + 1 < N + 2 := by
+      rw [hN]
+      rw [hN] at nₖrel
+      rw [← nₖ_inert_edge N s t (N + 1) left (Nat.lt_add_one _)] at nₖrel
+      apply (StrictMono.lt_iff_lt (nₖ_mono s t)).mp at nₖrel
+      exact Nat.add_lt_add_right nₖrel 1
+    have kbound': k < N + 2 := by
+      exact Nat.lt_of_succ_lt kbound
+    rw [wₖ_inert_edge N s t k left kbound']
+    rw [wₖ_inert_edge N s t (k + 1) left kbound]
+    rw [nₖ_inert_edge N s t k left kbound']
+    simp
+    show 1 ≤ 1 + n - (k + 1)
+    apply le_sub_right_of_add_le
+    apply add_le_add_left
+    by_contra ntoosmall
+    simp at ntoosmall
+    have notmem: k ∉ (kceiled s t n).toFinset := by
+      unfold kceiled
+      simp
+      rw [nₖ_inert_edge N s t k left kbound']
+      push_cast
+      exact ntoosmall
+    have mem: k ∈ (kceiled s t n).toFinset := by exact Set.mem_toFinset.mpr kmem
+    contradiction
+  · simp at nbound'
+    have nN: n = N + 2 := by apply le_antisymm nbound nbound'
+    have bound: (N + 1: ℕ) < N + 2 := by simp
+    have kv: k = N + 1 := by
+      unfold kₙ at keq
+      rw [nN] at keq
+      apply le_antisymm
+      · obtain memmax := Finset.mem_of_max keq
+        unfold kceiled at memmax
+        simp at memmax
+        norm_cast at memmax
+        push_cast at memmax
+        rw [hN] at memmax
+        rw [← nₖ_inert_edge N s t (N + 1) left bound] at memmax
+        exact (StrictMono.le_iff_le (nₖ_mono s t)).mp memmax
+      · by_contra ntoolarge
+        simp at ntoolarge
+        have anothermem: k + 1 ∈ (kceiled s t (N + 2)).toFinset := by
+          unfold kceiled
+          simp
+          norm_cast
+          push_cast
+          rw [hN]
+          rw [← nₖ_inert_edge N s t (N + 1) left bound]
+          apply (StrictMono.le_iff_le (nₖ_mono s t)).mpr
+          exact ntoolarge
+        have what: k + 1 ≤ k := by exact Finset.le_max_of_eq anothermem keq
+        simp at what
+    rw [kv]
+    have neq: n = (nₖ s t (N + 1)) := by
+      rw [nN]
+      rw [nₖ_inert_edge N s t (N + 1) left bound]
+      norm_cast
+    rw [neq]
+    simp
+    have min_right: (wₖ s t (N + 1 + 1): ℝ) ⊓ ((wₖ s t (N + 1))) = wₖ s t (N + 1) := by
+      simp
+      apply wₖ_mono s t
+      simp
+    rw [min_right]
+    rw [wₖ_inert_edge N s t (N + 1) left bound]
+    simp
+
+theorem wₗᵢ_inert_edge (N: ℕ+) (s t n: ℝ)
+[PosReal s] [PosReal t]
+(left: t > N * s)
+(h: n ≥ 2) (nbound: n ≤ N + 2):
+wₗᵢ s t n = 1 := by
+  obtain ⟨l, r⟩ := wₗᵢ_range s t n
+  apply le_antisymm
+  · rw [← wₘₐₓ_inert_edge N s t n left h nbound]
+    exact r
+  · rw [← wₘᵢₙ_inert_edge N s t n left h nbound]
+    exact l
+
+theorem wₘᵢₙ_inert_edge' (N: ℕ+) (s t n: ℝ)
+[PosReal s] [PosReal t]
+(left: s > N * t)
+(h: n ≥ 2) (nbound: n ≤ N + 2):
+wₘᵢₙ s t n = n - 1 := by
+  nth_rw 2 [← wₘₘ_rec s t n h]
+  rw [wₘₐₓ_inert_edge N t s n left h nbound]
+  simp
+
+theorem wₘₐₓ_inert_edge' (N: ℕ+) (s t n: ℝ)
+[PosReal s] [PosReal t]
+(left: s > N * t)
+(h: n ≥ 2) (nbound: n ≤ N + 2):
+wₘₐₓ s t n = n - 1 := by
+  nth_rw 2 [← wₘₘ_rec t s n h]
+  rw [wₘᵢₙ_inert_edge N t s n left h nbound]
+  simp
+
+theorem wₗᵢ_inert_edge' (N: ℕ+) (s t n: ℝ)
+[PosReal s] [PosReal t]
+(left: s > N * t)
+(h: n ≥ 2) (nbound: n ≤ N + 2):
+wₗᵢ s t n = n - 1 := by
+  nth_rw 2 [← wₗᵢ_rec t s n h]
+  rw [wₗᵢ_inert_edge N t s n left h nbound]
+  simp
+
+def genNode(n: ℕ+) (input: List (ℕ+ × ℕ+)): List (ℕ+ × ℕ+) := match input with
+| .nil => .nil
+| .cons head tail => match genNode n tail with
+  | .nil => [head]
+  | .cons prevhead prevtail =>
+    if nBranching head.1 head.2 prevhead.1 prevhead.2 < n then
+      [head, (head.1 + prevhead.1, head.2 + prevhead.2), prevhead] ++ prevtail
+    else
+      [head, prevhead] ++ prevtail
+
+def nodeList(n: ℕ+): List (ℕ+ × ℕ+) :=
+PNat.recOn n [] (fun prevn prev ↦
+  if prevn < 2 then [] else if prevn = 2 then [(1, 1)] else
+  genNode (prevn + 1) ([((prevn - 1), 1)] ++ prev ++ [(1, (prevn - 1))])
+)
+
+#eval nodeList 30
