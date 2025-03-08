@@ -691,7 +691,7 @@ A main theorem: the generating function Z{Φ}(x) converges to a rational functio
 The bound here is not sharp, but it should be sufficient for future reasoning over complex plane
 -/
 theorem ZΦ_sum (s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
-HasSum (fun i:ℕ ↦ Φ s t i * x ^ i) ((((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹):= by
+HasSum (fun i:ℕ ↦ x ^ i * Φ s t i) ((((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹):= by
   unfold ξPolynomial
   simp
   rw [← neg_sub 1 _]
@@ -706,9 +706,10 @@ HasSum (fun i:ℕ ↦ Φ s t i * x ^ i) ((((ξPolynomial s t).eval 1)⁻¹ - ((�
   unfold Φ Jceiled_int Jceiled
   push_cast
 
-  have h: (fun i:ℕ ↦ (1 + ∑ p ∈ (Λceiled s t i).toFinset, ↑(Jₚ p)) * x ^ i)
+  have h: (fun i:ℕ ↦ x ^ i * (1 + ∑ p ∈ (Λceiled s t i).toFinset, ↑(Jₚ p)))
    = fun i:ℕ ↦ (x ^ i + (∑ p ∈ (Λceiled s t i).toFinset, ↑(Jₚ p)) * x ^ i) := by
      ext i
+     rw [mul_comm]
      rw [add_mul]
      simp
   rw [h]
@@ -913,3 +914,174 @@ lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
   rw [← ξPolynomialFactorize]
   rw [ξPolynomialDerivative]
   simp
+
+
+lemma ZΦ_sum2 (s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
+HasSum (fun i:ℕ ↦ x ^ i * (∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ * (s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹ ))
+((((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹):= by
+  rw [ΦX_sum_eq s t x bound]
+  have rw_fun: (fun i:ℕ ↦ x ^ i *(∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ * (s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹ ) )
+   = fun i:ℕ ↦ (∑ξ ∈ ξSet s t, (x * ξ⁻¹)^i * (1 - ξ)⁻¹ * ξ⁻¹*(s * ξ^(s - 1:ℕ) + t * ξ^(t - 1:ℕ))⁻¹ ) := by
+    ext i
+    rw [Finset.mul_sum]
+    congr 1
+    ext ξ
+    rw [← mul_assoc, ← mul_assoc]
+    rw [← mul_pow]
+    rw [mul_assoc _ ξ⁻¹]
+    congr
+    rw [← mul_inv]
+    rw [mul_add]
+    congr 2
+    repeat
+      rw [mul_comm ξ]
+      rw [mul_assoc]
+      nth_rw 3 [← pow_one ξ]
+      rw [← pow_add]
+      congr
+      exact Eq.symm (PNat.natPred_add_one _)
+
+  rw [rw_fun]
+  apply hasSum_sum
+  intro ξ mem
+  unfold ξSet ξPolynomial at mem
+  simp at mem
+  obtain ⟨_, polyeq⟩ := mem
+  have ξ0: ξ ≠ 0 := by
+    by_contra zero
+    rw [zero] at polyeq
+    simp at polyeq
+  apply HasSum.mul_right
+  have rw_sum: (x - ξ)⁻¹ * (ξ - 1)⁻¹ = (1 - x * ξ⁻¹)⁻¹ * (1 - ξ)⁻¹ * ξ⁻¹ := by
+    rw [← neg_sub ξ , ← neg_inv]
+    rw [← neg_sub 1 , ← neg_inv]
+    rw [neg_mul_neg]
+    rw [mul_right_comm]
+    rw [← mul_inv _ ξ]
+    congr
+    rw [sub_mul]
+    rw [mul_assoc]
+    rw [inv_mul_cancel₀ ξ0]
+    simp
+
+  rw [rw_sum]
+  apply HasSum.mul_right
+  apply HasSum.mul_right
+  apply hasSum_geometric_of_norm_lt_one
+  show ‖x * ξ⁻¹‖ < 1
+  rw [norm_mul]
+  rw [norm_inv]
+  have ξgt0: 0 < ‖ξ‖ := by
+    simp
+    exact ξ0
+  apply (mul_inv_lt_iff₀ ξgt0).mpr
+  simp
+  apply lt_of_lt_of_le bound
+  contrapose polyeq
+  simp at polyeq
+  apply sub_ne_zero_of_ne
+  have nomr_ne: ‖ξ ^ (s:ℕ) + ξ ^ (t:ℕ)‖ ≠ ‖(1:ℂ)‖ := by
+    apply ne_of_lt
+    apply lt_of_le_of_lt (norm_add_le _ _)
+    have right: ‖(1:ℂ)‖ = 2⁻¹ + 2⁻¹ := by norm_num
+    rw [right]
+    gcongr
+    repeat
+    · simp
+      refine lt_of_le_of_lt ?_ polyeq
+      refine pow_le_of_le_one ?_ ?_ ?_
+      · simp
+      · apply le_trans (le_of_lt polyeq)
+        norm_num
+      · simp
+  exact fun a ↦ nomr_ne (congrArg norm a)
+
+
+theorem ΦFormula (s t: ℕ+) (i: ℕ):
+Φ s t i = ∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ * (s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹ := by
+  let fmsL: FormalMultilinearSeries ℂ ℂ ℂ :=
+    fun i ↦ ContinuousMultilinearMap.mkPiRing ℂ (Fin i) (Φ s t i)
+  have hasFmsL: HasFPowerSeriesAt (fun x ↦ (((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹) fmsL 0 := by
+    apply hasFPowerSeriesAt_iff.mpr
+    unfold fmsL FormalMultilinearSeries.coeff
+    simp
+    unfold Filter.Eventually
+    apply mem_nhds_iff.mpr
+    use {x:ℂ | ‖x‖ <2⁻¹}
+    simp
+    constructor
+    · apply ZΦ_sum
+    · exact isOpen_lt continuous_norm continuous_const
+  let fmsR: FormalMultilinearSeries ℂ ℂ ℂ :=
+    fun i ↦ ContinuousMultilinearMap.mkPiRing ℂ (Fin i) (∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ * (s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹)
+  have hasFmsR: HasFPowerSeriesAt (fun x ↦ (((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹) fmsR 0 := by
+    apply hasFPowerSeriesAt_iff.mpr
+    unfold fmsR FormalMultilinearSeries.coeff
+    simp
+    unfold Filter.Eventually
+    apply mem_nhds_iff.mpr
+    use {x:ℂ | ‖x‖ <2⁻¹}
+    simp
+    constructor
+    · obtain ZΦ_sum2 := ZΦ_sum2
+      simp at ZΦ_sum2
+      apply ZΦ_sum2
+    · exact isOpen_lt continuous_norm continuous_const
+  obtain fmsEq := HasFPowerSeriesAt.eq_formalMultilinearSeries hasFmsL hasFmsR
+  have coeffL: Φ s t i = fmsL.coeff i := by
+    unfold fmsL FormalMultilinearSeries.coeff
+    simp
+  have coeffR: ∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ * (s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹ = fmsR.coeff i := by
+    unfold fmsR FormalMultilinearSeries.coeff
+    simp
+  rw [coeffL, coeffR]
+  rw [fmsEq]
+
+
+noncomputable
+def ξPolynomialℝ(s t: ℕ+) :=
+  Polynomial.monomial s (1:ℝ) + Polynomial.monomial t (1:ℝ) - Polynomial.C 1
+
+lemma ξPolynomialℝ_mono(s t: ℕ+): StrictMonoOn ((ξPolynomialℝ s t).eval ·) (Set.Ici 0) := by
+  have powmono (a: ℕ+): StrictMonoOn (fun (x:ℝ) ↦ x ^ (a: ℕ)) (Set.Ici 0) := by
+    have rwfun: (fun (x:ℝ) ↦ x ^ (a: ℕ)) = fun (x:ℝ) ↦ x ^ (a: ℝ) := by
+      ext
+      symm
+      apply Real.rpow_natCast
+    rw [rwfun]
+    refine Real.strictMonoOn_rpow_Ici_of_exponent_pos ?_
+    simp
+  unfold ξPolynomialℝ
+  simp
+  apply StrictMonoOn.add_const
+  apply StrictMonoOn.add
+  repeat apply powmono
+
+lemma ξPolynomialℝUniqueRoot(s t: ℕ+):
+∃!ξ > 0, (ξPolynomialℝ s t).eval ξ = 0 := by
+  apply existsUnique_of_exists_of_unique
+  · apply (Set.mem_image _ _ _).mp
+    set f := ((ξPolynomialℝ s t).eval ·)
+    apply Set.mem_of_mem_of_subset
+    · show 0 ∈ Set.Ioo (f 0) (f 1)
+      unfold f
+      unfold ξPolynomialℝ
+      simp
+    · apply subset_trans
+      · show Set.Ioo (f 0) (f 1) ⊆ f '' Set.Ioo 0 1
+        have zeroOne: (0:ℝ) ≤ 1 := by norm_num
+        apply intermediate_value_Ioo zeroOne
+        unfold f
+        apply Polynomial.continuousOn_aeval
+      · apply Set.image_mono
+        intro x xmem
+        rcases xmem with ⟨zero, one⟩
+        exact zero
+  · rintro x y ⟨xmem, xzero⟩ ⟨ymem, yzero⟩
+    refine ((ξPolynomialℝ_mono s t).eq_iff_eq ?_ ?_).mp ?_
+    · exact Set.mem_Ici_of_Ioi xmem
+    · exact Set.mem_Ici_of_Ioi ymem
+    · rw [xzero, yzero]
+
+noncomputable
+def ξ₀ (s t: ℕ+) := (ξPolynomialℝUniqueRoot s t).choose
