@@ -535,6 +535,116 @@ lemma ξPolynomialFactorizeMulti(s t: ℕ+):
 noncomputable
 def ξSet(s t: ℕ+) := (ξPolynomial s t).roots.toFinset
 
+lemma ξNonMult(s t: ℕ+) (r: ℂ) (rmem: r ∈ ξSet s t):
+s * r ^ (s - 1: ℕ) + t * r ^ (↑t - 1: ℕ) ≠ 0 := by
+  obtain rmem' := Multiset.mem_dedup.mp rmem
+  obtain req_of_pol := Polynomial.isRoot_of_mem_roots rmem'
+  unfold ξPolynomial at req_of_pol
+  simp at req_of_pol
+  obtain req_of_pol' := eq_of_sub_eq_zero req_of_pol
+  by_contra req_of_der
+  have req_of_der': (s * r ^ (s - 1:ℕ) + t * r ^ (t - 1:ℕ)) * r = 0 := by
+    apply mul_eq_zero.mpr; left; exact req_of_der
+  rw [add_mul] at req_of_der'
+  rw [mul_assoc, mul_assoc] at req_of_der'
+  rw [← pow_succ, ← pow_succ] at req_of_der'
+  have s1: (1:ℕ) ≤ s := by exact NeZero.one_le
+  have t1: (1:ℕ) ≤ t := by exact NeZero.one_le
+  have rs: r ^ (s:ℕ) = 1 - r ^ (t:ℕ) := eq_sub_of_add_eq req_of_pol'
+  have rt: r ^ (t:ℕ) = 1 - r ^ (s:ℕ) := eq_sub_of_add_eq' req_of_pol'
+  rw [Nat.sub_add_cancel s1, Nat.sub_add_cancel t1] at req_of_der'
+  have req_of_der'' := req_of_der'
+  rw [rs] at req_of_der'
+  rw [rt] at req_of_der''
+  have rs': s = (s - t) * r ^ (t:ℕ) := by
+    apply eq_of_sub_eq_zero
+    rw [sub_mul]
+    rw [← sub_add]
+    nth_rw 1 [← mul_one (s:ℂ)]
+    rw [← mul_sub]
+    exact req_of_der'
+  have rt': t = (t - s) * r ^ (s:ℕ) := by
+    apply eq_of_sub_eq_zero
+    rw [sub_mul]
+    rw [← sub_add]
+    nth_rw 1 [← mul_one (t:ℂ)]
+    rw [← mul_sub]
+    rw [add_comm]
+    exact req_of_der''
+  by_cases seqt: (s:ℂ) = t
+  · rw [seqt] at rs'
+    simp at rs'
+  · have snet: (s - t: ℂ) ≠ 0 := sub_ne_zero_of_ne seqt
+    have tnes: (t - s: ℂ) ≠ 0 := by
+      refine sub_ne_zero_of_ne ?_
+      symm
+      exact seqt
+    rw [mul_comm] at rs'
+    rw [mul_comm] at rt'
+    obtain rs'' := (div_eq_iff snet).mpr rs'
+    obtain rt'' := (div_eq_iff tnes).mpr rt'
+    have sside: (s / (s - t)) ^(s:ℕ) = r ^(s * t: ℕ) := by
+      rw [mul_comm]
+      rw [pow_mul]
+      rw [rs'']
+    have tside: (t / (t - s)) ^(t:ℕ) = r ^(s * t: ℕ) := by
+      rw [pow_mul]
+      rw [rt'']
+    obtain what: ((s:ℂ) / (s - t)) ^(s:ℕ) = (t / (t - s)) ^(t:ℕ) := by
+      rw [sside, tside]
+    rw [div_pow, div_pow] at what
+    obtain ts0: (s - t: ℂ) ^ (s: ℕ) ≠ 0 := pow_ne_zero _ snet
+    obtain st0: (t - s: ℂ) ^ (t: ℕ) ≠ 0 := pow_ne_zero _ tnes
+    obtain what := mul_eq_mul_of_div_eq_div _ _ ts0 st0 what
+    have whathalf(S T: ℕ) (Spos: 0 < S) (Tpos: 0 < T) (h: S < T)(what: (S ^ S * (T - S) ^ T: ℂ) = T ^ T * (S - T) ^ S): False := by
+      norm_cast at what
+      obtain what := abs_eq_abs.mpr (Or.inl what)
+      rw [abs_mul, abs_mul] at what
+      simp at what
+      have tsubs: |Int.subNatNat T S| = (T - S:ℕ) := by
+        rw [Int.subNatNat_of_le (le_of_lt h)]
+        exact Int.abs_natCast (T - S)
+      have ssubt: |Int.subNatNat S T| = (T - S:ℕ) := by
+        rw [Int.subNatNat_eq_coe]
+        push_cast [h]
+        nth_rw 2 [← neg_sub]
+        refine abs_of_neg ?_
+        refine Int.sub_neg_of_lt ?_
+        norm_cast
+      rw [tsubs, ssubt] at what
+      set D:ℕ := T - S
+      have D0: D ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr h
+      have Teq: T = D + S := by
+        unfold D
+        refine Eq.symm (Nat.sub_add_cancel ?_)
+        exact Nat.le_of_succ_le h
+      rw [Teq] at what
+      rw [npow_add, npow_add] at what
+      rw [← mul_assoc] at what
+      rw [mul_eq_mul_right_iff] at what
+      rw [mul_comm] at what
+      have ds0: ¬ (D:ℤ)^S = 0 := by
+        simp
+        exact fun a ↦ False.elim (D0 a)
+      rw [or_iff_left ds0] at what
+      have conflict:  (D:ℤ) ^ D * S ^ S ≠ (D + S) ^ D * (D + S) ^ S := by
+        apply ne_of_lt
+        gcongr
+        · show (D:ℤ) < D + S
+          apply (lt_add_iff_pos_right (D:ℤ)).mpr
+          exact Int.ofNat_pos.mpr Spos
+        · show (S:ℤ) < D + S
+          apply (lt_add_iff_pos_left (S:ℤ)).mpr
+          refine Int.ofNat_pos.mpr ?_
+          exact Nat.zero_lt_sub_of_lt h
+      contradiction
+    have snet': (s:ℕ) ≠ t := by
+      norm_cast at seqt
+      norm_cast
+    rcases ne_iff_lt_or_gt.mp snet' with lt|gt
+    · exact whathalf s t s1 t1 lt what
+    · exact whathalf t s t1 s1 gt what.symm
+
 lemma ξPolynomialFactorize(s t: ℕ+):
 ξPolynomial s t = Polynomial.C (ξPolynomial s t).leadingCoeff * Lagrange.nodal (ξSet s t) id := by
   unfold Lagrange.nodal
@@ -581,108 +691,8 @@ lemma ξPolynomialFactorize(s t: ℕ+):
       obtain req_of_pol := Polynomial.isRoot_of_mem_roots rmem'
       unfold ξPolynomial at req_of_pol
       simp at req_of_pol
-      obtain req_of_pol' := eq_of_sub_eq_zero req_of_pol
-      have req_of_der': (s * r ^ (s - 1:ℕ) + t * r ^ (t - 1:ℕ)) * r = 0 := by
-        apply mul_eq_zero.mpr; left; exact req_of_der
-      rw [add_mul] at req_of_der'
-      rw [mul_assoc, mul_assoc] at req_of_der'
-      rw [← pow_succ, ← pow_succ] at req_of_der'
-      have s1: (1:ℕ) ≤ s := by exact NeZero.one_le
-      have t1: (1:ℕ) ≤ t := by exact NeZero.one_le
-      rw [Nat.sub_add_cancel s1, Nat.sub_add_cancel t1] at req_of_der'
-      have rs: r ^ (s:ℕ) = 1 - r ^ (t:ℕ) := eq_sub_of_add_eq req_of_pol'
-      have rt: r ^ (t:ℕ) = 1 - r ^ (s:ℕ) := eq_sub_of_add_eq' req_of_pol'
-      have req_of_der'' := req_of_der'
-      rw [rs] at req_of_der'
-      rw [rt] at req_of_der''
-      have rs': s = (s - t) * r ^ (t:ℕ) := by
-        apply eq_of_sub_eq_zero
-        rw [sub_mul]
-        rw [← sub_add]
-        nth_rw 1 [← mul_one (s:ℂ)]
-        rw [← mul_sub]
-        exact req_of_der'
-      have rt': t = (t - s) * r ^ (s:ℕ) := by
-        apply eq_of_sub_eq_zero
-        rw [sub_mul]
-        rw [← sub_add]
-        nth_rw 1 [← mul_one (t:ℂ)]
-        rw [← mul_sub]
-        rw [add_comm]
-        exact req_of_der''
-      by_cases seqt: (s:ℂ) = t
-      · rw [seqt] at rs'
-        simp at rs'
-      · have snet: (s - t: ℂ) ≠ 0 := sub_ne_zero_of_ne seqt
-        have tnes: (t - s: ℂ) ≠ 0 := by
-          refine sub_ne_zero_of_ne ?_
-          symm
-          exact seqt
-        rw [mul_comm] at rs'
-        rw [mul_comm] at rt'
-        obtain rs'' := (div_eq_iff snet).mpr rs'
-        obtain rt'' := (div_eq_iff tnes).mpr rt'
-        have sside: (s / (s - t)) ^(s:ℕ) = r ^(s * t: ℕ) := by
-          rw [mul_comm]
-          rw [pow_mul]
-          rw [rs'']
-        have tside: (t / (t - s)) ^(t:ℕ) = r ^(s * t: ℕ) := by
-          rw [pow_mul]
-          rw [rt'']
-        obtain what: ((s:ℂ) / (s - t)) ^(s:ℕ) = (t / (t - s)) ^(t:ℕ) := by
-          rw [sside, tside]
-        rw [div_pow, div_pow] at what
-        obtain ts0: (s - t: ℂ) ^ (s: ℕ) ≠ 0 := pow_ne_zero _ snet
-        obtain st0: (t - s: ℂ) ^ (t: ℕ) ≠ 0 := pow_ne_zero _ tnes
-        obtain what := mul_eq_mul_of_div_eq_div _ _ ts0 st0 what
-        have whathalf(S T: ℕ) (Spos: 0 < S) (Tpos: 0 < T) (h: S < T)(what: (S ^ S * (T - S) ^ T: ℂ) = T ^ T * (S - T) ^ S): False := by
-          norm_cast at what
-          obtain what := abs_eq_abs.mpr (Or.inl what)
-          rw [abs_mul, abs_mul] at what
-          simp at what
-          have tsubs: |Int.subNatNat T S| = (T - S:ℕ) := by
-            rw [Int.subNatNat_of_le (le_of_lt h)]
-            exact Int.abs_natCast (T - S)
-          have ssubt: |Int.subNatNat S T| = (T - S:ℕ) := by
-            rw [Int.subNatNat_eq_coe]
-            push_cast [h]
-            nth_rw 2 [← neg_sub]
-            refine abs_of_neg ?_
-            refine Int.sub_neg_of_lt ?_
-            norm_cast
-          rw [tsubs, ssubt] at what
-          set D:ℕ := T - S
-          have D0: D ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr h
-          have Teq: T = D + S := by
-            unfold D
-            refine Eq.symm (Nat.sub_add_cancel ?_)
-            exact Nat.le_of_succ_le h
-          rw [Teq] at what
-          rw [npow_add, npow_add] at what
-          rw [← mul_assoc] at what
-          rw [mul_eq_mul_right_iff] at what
-          rw [mul_comm] at what
-          have ds0: ¬ (D:ℤ)^S = 0 := by
-            simp
-            exact fun a ↦ False.elim (D0 a)
-          rw [or_iff_left ds0] at what
-          have conflict:  (D:ℤ) ^ D * S ^ S ≠ (D + S) ^ D * (D + S) ^ S := by
-            apply ne_of_lt
-            gcongr
-            · show (D:ℤ) < D + S
-              apply (lt_add_iff_pos_right (D:ℤ)).mpr
-              exact Int.ofNat_pos.mpr Spos
-            · show (S:ℤ) < D + S
-              apply (lt_add_iff_pos_left (S:ℤ)).mpr
-              refine Int.ofNat_pos.mpr ?_
-              exact Nat.zero_lt_sub_of_lt h
-          contradiction
-        have snet': (s:ℕ) ≠ t := by
-          norm_cast at seqt
-          norm_cast
-        rcases ne_iff_lt_or_gt.mp snet' with lt|gt
-        · exact whathalf s t s1 t1 lt what
-        · exact whathalf t s t1 s1 gt what.symm
+      obtain noneq := ξNonMult s t r rmem
+      contradiction
     · exact Multiset.one_le_count_iff_mem.mpr rmem'
   rw [root1]
   simp
@@ -1254,3 +1264,126 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
   norm_cast
   obtain unique := ξ₀unique ξℝ ξℝuniqueCond
   exact unique
+
+
+theorem ΦAsymptotic (s t: ℕ+) (coprime: s.Coprime t):
+Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * (1 - (ξ₀ s t)) * (s * (ξ₀ s t)^(s:ℕ) + t * (ξ₀ s t)^(t:ℕ)))) Filter.atTop (nhds 1) := by
+  obtain ⟨⟨ξ₀pos, ξ₀eq⟩, ξ₀unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
+  have funrw:
+    (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * (1 - (ξ₀ s t)) * (s * (ξ₀ s t)^(s:ℕ) + t * (ξ₀ s t)^(t:ℕ)))) =
+    (fun (i:ℕ) ↦ 1 +
+    ∑ ξ ∈ (ξSet s t).erase ↑(ξ₀ s t),
+      (↑(ξ₀ s t) / ξ) ^ i *
+        ((1 - ξ)⁻¹ * (s * ξ ^ (s:ℕ) + t * ξ ^ (t:ℕ))⁻¹ * (1 - (ξ₀ s t)) * (s * (ξ₀ s t) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ)))) := by
+    ext i
+    rw [ΦFormula]
+    rw [Finset.sum_mul]
+    have mem: (ξ₀ s t: ℂ) ∈ ξSet s t := by
+      unfold ξSet
+      simp
+      constructor
+      · by_contra poly0
+        have ev1: (ξPolynomial s t).eval 1 = 1 := by
+          unfold ξPolynomial
+          simp
+        rw [poly0] at ev1
+        simp at ev1
+      · unfold ξPolynomial
+        simp
+        norm_cast
+        unfold ξ₀ ξPolynomialℝ
+        simp
+        unfold ξPolynomialℝ at ξ₀eq
+        simp at ξ₀eq
+        exact ξ₀eq
+    rw [← Finset.add_sum_erase _ _ mem]
+    have left: ((ξ₀ s t: ℂ))⁻¹ ^ i * (1 - (ξ₀ s t: ℂ))⁻¹ * (s * (ξ₀ s t: ℂ) ^ (s:ℕ) + t * (ξ₀ s t: ℂ) ^ (t:ℕ))⁻¹ *
+      ((ξ₀ s t: ℂ) ^ i * (1 - (ξ₀ s t: ℂ)) * (s * (ξ₀ s t: ℂ) ^ (s:ℕ) + t * (ξ₀ s t: ℂ) ^ (t:ℕ))) = 1 := by
+      simp
+      field_simp
+      apply div_self
+      simp
+      constructor
+      · constructor
+        · rw [imp_iff_not_or]
+          left
+          show ξ₀ s t ≠ 0
+          by_contra ξ0
+          rw [ξ0] at mem
+          unfold ξSet ξPolynomial at mem
+          simp at mem
+        · show 1 - (ξ₀ s t : ℂ) ≠ 0
+          by_contra ξ1
+          apply eq_of_sub_eq_zero at ξ1
+          rw [← ξ1] at mem
+          unfold ξSet ξPolynomial at mem
+          simp at mem
+      · show (s * (ξ₀ s t: ℂ) ^ (s:ℕ) + t * (ξ₀ s t: ℂ) ^ (t:ℕ)) ≠ 0
+        obtain noneq := ξNonMult s t (ξ₀ s t:ℂ) mem
+        contrapose noneq with eq0
+        simp at eq0; simp
+        have h: s * (ξ₀ s t:ℂ) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ) =
+          (s * (ξ₀ s t) ^ (s - 1:ℕ) + t * (ξ₀ s t) ^ (t - 1:ℕ)) * (ξ₀ s t) := by
+          rw [add_mul]
+          rw [mul_assoc, mul_assoc]
+          rw [← pow_succ, ← pow_succ]
+          congr
+          repeat exact Eq.symm (PNat.natPred_add_one _)
+        rw [h] at eq0
+        apply mul_eq_zero.mp at eq0
+        have h2: (ξ₀ s t:ℂ) ≠ 0 := by
+          by_contra ξ0
+          rw [ξ0] at mem
+          unfold ξSet ξPolynomial at mem
+          simp at mem
+        simp [h2] at eq0
+        exact eq0
+    rw [left]
+    have right:
+      ∑ ξ ∈ (ξSet s t).erase ↑(ξ₀ s t), ξ⁻¹ ^ i * (1 - ξ)⁻¹ * (s * ξ ^ (s:ℕ) + t * ξ ^ (t:ℕ))⁻¹ *
+      ((ξ₀ s t) ^ i * (1 - (ξ₀ s t)) * (s * (ξ₀ s t) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ))) =
+      ∑ ξ ∈ (ξSet s t).erase ↑(ξ₀ s t), (ξ₀ s t / ξ)^ i * ((1 - ξ)⁻¹ * (s * ξ ^ (s:ℕ) + t * ξ ^ (t:ℕ))⁻¹ * (1 - (ξ₀ s t)) * (s * (ξ₀ s t) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ))) := by
+      congr 1
+      ext ξ
+      rw [← mul_assoc, ← mul_assoc, ← mul_assoc, ← mul_assoc, ← mul_assoc]
+      rw [mul_right_comm _ _ ((ξ₀ s t: ℂ) ^ i)]
+      rw [mul_right_comm _ _ ((ξ₀ s t: ℂ) ^ i)]
+      congr
+      rw [← mul_pow]
+      congr 1
+      exact inv_mul_eq_div ξ ↑(ξ₀ s t)
+    rw [right]
+
+  rw [funrw]
+
+  have limrw: nhds (1:ℂ) = nhds (1 + 0) := by simp
+  rw [limrw]
+  apply Filter.Tendsto.add (by simp)
+
+  have limrw2: nhds (0:ℂ) = nhds (∑ ξ ∈ (ξSet s t).erase (ξ₀ s t), 0) := by simp
+  rw [limrw2]
+  apply tendsto_finset_sum
+  intro ξ mem
+  simp at mem
+  rcases mem with ⟨ne, mem⟩
+
+  have limrw3: nhds (0:ℂ) = nhds (0 * ((1 - ξ)⁻¹ * (s * ξ ^ (s:ℕ) + t * ξ ^ (t:ℕ))⁻¹ * (1 - (ξ₀ s t)) * (s * (ξ₀ s t) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ)))) := by simp
+  rw [limrw3]
+  apply Filter.Tendsto.mul_const
+  apply tendsto_pow_atTop_nhds_zero_of_norm_lt_one
+  rw [norm_div]
+  refine (div_lt_one ?_).mpr ?_
+  · simp
+    by_contra ξ0
+    rw [ξ0] at mem
+    unfold ξSet ξPolynomial at mem
+    simp at mem
+  · have rwl: ‖(ξ₀ s t: ℂ)‖ = ξ₀ s t := by
+      simp
+      apply le_of_lt
+      unfold ξ₀
+      exact ξ₀pos
+    rw [rwl]
+    apply ξ₀Smallest s t coprime
+    · exact mem
+    · exact ne
