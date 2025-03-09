@@ -3,6 +3,7 @@ import BiasedBisect.Inv
 
 import Mathlib.Data.Complex.ExponentialBounds
 import Mathlib.LinearAlgebra.Lagrange
+import Mathlib.RingTheory.Int.Basic
 
 /-
 
@@ -1042,20 +1043,21 @@ noncomputable
 def ξPolynomialℝ(s t: ℕ+) :=
   Polynomial.monomial s (1:ℝ) + Polynomial.monomial t (1:ℝ) - Polynomial.C 1
 
+lemma PowMono (a: ℕ+): StrictMonoOn (fun (x:ℝ) ↦ x ^ (a: ℕ)) (Set.Ici 0) := by
+  have rwfun: (fun (x:ℝ) ↦ x ^ (a: ℕ)) = fun (x:ℝ) ↦ x ^ (a: ℝ) := by
+    ext
+    symm
+    apply Real.rpow_natCast
+  rw [rwfun]
+  refine Real.strictMonoOn_rpow_Ici_of_exponent_pos ?_
+  simp
+
 lemma ξPolynomialℝ_mono(s t: ℕ+): StrictMonoOn ((ξPolynomialℝ s t).eval ·) (Set.Ici 0) := by
-  have powmono (a: ℕ+): StrictMonoOn (fun (x:ℝ) ↦ x ^ (a: ℕ)) (Set.Ici 0) := by
-    have rwfun: (fun (x:ℝ) ↦ x ^ (a: ℕ)) = fun (x:ℝ) ↦ x ^ (a: ℝ) := by
-      ext
-      symm
-      apply Real.rpow_natCast
-    rw [rwfun]
-    refine Real.strictMonoOn_rpow_Ici_of_exponent_pos ?_
-    simp
   unfold ξPolynomialℝ
   simp
   apply StrictMonoOn.add_const
   apply StrictMonoOn.add
-  repeat apply powmono
+  repeat apply PowMono
 
 lemma ξPolynomialℝUniqueRoot(s t: ℕ+):
 ∃!ξ > 0, (ξPolynomialℝ s t).eval ξ = 0 := by
@@ -1085,3 +1087,170 @@ lemma ξPolynomialℝUniqueRoot(s t: ℕ+):
 
 noncomputable
 def ξ₀ (s t: ℕ+) := (ξPolynomialℝUniqueRoot s t).choose
+
+theorem Complex.arg_pow_coe_angle {x : ℂ} {n: ℕ} : ((x ^ n).arg : Real.Angle) = n • (x.arg : Real.Angle) := by
+  by_cases x0: x = 0
+  · rw [x0]
+    by_cases n0: n = 0
+    repeat simp [n0]
+  · induction n with
+    | zero => simp [x0]
+    | succ n prev =>
+      have xn0: x ^ n ≠ 0 := pow_ne_zero n x0
+      rw [pow_succ]
+      rw [Complex.arg_mul_coe_angle xn0 x0]
+      rw [prev]
+      rfl
+
+lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
+∀ξ ∈ ξSet s t, ξ ≠ ξ₀ s t → ξ₀ s t < ‖ξ‖ := by
+  obtain ⟨⟨ξ₀pos, ξ₀eq⟩, ξ₀unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
+  unfold ξPolynomialℝ at ξ₀eq
+  simp at ξ₀eq
+  intro ξ mem' ne
+  unfold ξSet ξPolynomial at mem'
+  simp at mem'
+  rcases mem' with ⟨_, mem'⟩
+  obtain mem := eq_of_sub_eq_zero mem'
+  obtain memnorm := congrArg norm mem
+  have normle: 1 ≤ ‖ξ‖ ^ (s:ℕ) + ‖ξ‖ ^ (t:ℕ)  := by
+    rw [← norm_pow, ← norm_pow]
+    convert norm_add_le (ξ ^ (s:ℕ)) (ξ ^ (t:ℕ))
+    rw [memnorm]
+    simp
+  let ξPoly' := Polynomial.monomial s (1:ℝ) + Polynomial.monomial t (1:ℝ)
+  let ξPoly'F := (ξPoly'.eval ·)
+  have normle': ξPoly'F (ξ₀ s t) ≤ ξPoly'F ‖ξ‖  := by
+    unfold ξPoly'F ξPoly' ξ₀ ξPolynomialℝ
+    simp
+    convert normle
+    obtain ξ₀eq := eq_of_sub_eq_zero ξ₀eq
+    rw [ξ₀eq]
+  have mono: StrictMonoOn ξPoly'F (Set.Ici 0) := by
+    unfold ξPoly'F ξPoly'
+    simp
+    apply StrictMonoOn.add
+    repeat apply PowMono
+  have normleFromMono: ξ₀ s t ≤ ‖ξ‖ := by
+    refine (mono.le_iff_le ?_ ?_).mp normle'
+    · simp
+      apply le_of_lt
+      apply gt_iff_lt.mp
+      exact ξ₀pos
+    · simp
+  apply lt_of_le_of_ne normleFromMono
+  contrapose ne with eq
+  simp;
+  unfold ξ₀ ξPolynomialℝ at eq
+  simp at eq
+  rw [eq] at ξ₀eq
+  simp at memnorm
+  rw [← memnorm] at ξ₀eq
+  rw [← norm_pow, ← norm_pow] at ξ₀eq
+  obtain ξ₀eq := eq_of_sub_eq_zero ξ₀eq
+  obtain arg_eq := Complex.norm_add_eq_iff.mp ξ₀eq.symm
+  have ξnon0: ξ ≠ 0 := by
+    by_contra ξ0
+    rw [ξ0] at mem
+    simp at mem
+  have s0: ¬ ξ ^ (s:ℕ) = 0 := by simp; exact ξnon0
+  have t0: ¬ ξ ^ (t:ℕ) = 0 := by simp; exact ξnon0
+  simp [s0, t0] at arg_eq
+  obtain same_ray: SameRay ℝ (ξ ^ (s:ℕ)) (ξ ^ (t:ℕ)) := by
+    apply Complex.sameRay_iff.mpr
+    right; right; exact arg_eq
+  obtain same_ray1: SameRay ℝ (ξ ^ (s:ℕ)) 1 := by
+    rw [← mem]
+    apply SameRay.add_right
+    · rfl
+    · exact same_ray
+  obtain arg0s := Complex.sameRay_iff.mp same_ray1
+  simp [s0] at arg0s
+  obtain arg0t := (Complex.sameRay_iff.mp same_ray)
+  simp [s0, t0] at arg0t
+  rw [arg0s] at arg0t
+  obtain angles := congrArg (fun (a:ℝ) ↦ (a:Real.Angle)) arg0s
+  obtain anglet := congrArg (fun (a:ℝ) ↦ (a:Real.Angle)) arg0t.symm
+  rw [Complex.arg_pow_coe_angle, ← Real.Angle.natCast_mul_eq_nsmul] at angles
+  rw [Complex.arg_pow_coe_angle, ← Real.Angle.natCast_mul_eq_nsmul] at anglet
+  obtain ⟨ks, kseq⟩ := Real.Angle.coe_eq_zero_iff.mp angles
+  obtain ⟨kt, kteq⟩ := Real.Angle.coe_eq_zero_iff.mp anglet
+  simp at kseq
+  simp at kteq
+  rw [mul_comm _ ξ.arg] at kseq
+  rw [mul_comm _ ξ.arg] at kteq
+  have twopi0 : (2 * Real.pi) ≠ 0 := by exact ne_of_gt (Real.two_pi_pos)
+  have s0r: (s:ℝ) ≠ 0 := by exact Ne.symm (NeZero.ne' (s:ℝ))
+  have t0r: (t:ℝ) ≠ 0 := by exact Ne.symm (NeZero.ne' (t:ℝ))
+  obtain kseq' := (div_eq_div_iff s0r twopi0).mpr kseq
+  obtain kteq' := (div_eq_div_iff t0r twopi0).mpr kteq
+  have keq: (ks / s: ℝ) = kt / t := by
+    rw [kseq', kteq']
+  apply (div_eq_div_iff s0r t0r).mp at keq
+  norm_cast at keq
+  have sdvd: (s:ℤ) ∣ (ks * t) := by
+    exact Dvd.intro_left kt (id (Eq.symm keq))
+  have dvd: (s:ℤ) ∣ ks := by
+    refine IsCoprime.dvd_of_dvd_mul_right ?_ sdvd
+    apply Int.isCoprime_iff_nat_coprime.mpr
+    simp
+    exact coprime
+  obtain ⟨factor, feq⟩ := dvd
+  rw [feq] at kseq'
+  simp at kseq'
+  obtain ktwopi: factor * (2 * Real.pi) = ξ.arg := (eq_div_iff twopi0).mp kseq'
+  have factor0: factor = 0 := by
+    apply le_antisymm
+    · by_contra pos
+      simp at pos
+      have : 2 * Real.pi ≤ ξ.arg := by
+        rw [← one_mul (2 * Real.pi)]
+        rw [← ktwopi]
+        rw [mul_le_mul_right]
+        · exact Int.cast_one_le_of_pos pos
+        · exact Real.two_pi_pos
+      obtain what := le_trans this (Complex.arg_le_pi ξ)
+      nth_rw 2 [← one_mul Real.pi] at what
+      apply (mul_le_mul_right Real.pi_pos).mp at what
+      simp at what
+    · by_contra neg
+      simp at neg
+      have : ξ.arg ≤ -(2 * Real.pi) := by
+        rw [neg_eq_neg_one_mul]
+        rw [← ktwopi]
+        rw [mul_le_mul_right]
+        · exact Int.cast_le_neg_one_of_neg neg
+        · exact Real.two_pi_pos
+      obtain what := lt_of_lt_of_le (Complex.neg_pi_lt_arg ξ) this
+      apply neg_lt_neg_iff.mp at what
+      nth_rw 2 [← one_mul Real.pi] at what
+      apply (mul_lt_mul_right Real.pi_pos).mp at what
+      simp at what
+  rw [factor0] at ktwopi
+  simp at ktwopi
+  obtain ⟨ξre, ξim⟩ := Complex.arg_eq_zero_iff.mp ktwopi.symm
+  obtain ⟨ξℝ, ξeq⟩ := Complex.canLift.prf ξ ξim
+  have ξℝpos: 0 ≤ ξℝ := by
+    convert ξre
+    rw [← ξeq]
+    simp
+  have ξℝeval: (ξPolynomialℝ s t).eval ξℝ = 0 := by
+    unfold ξPolynomialℝ
+    simp
+    rw [← ξeq] at mem'
+    norm_cast at mem'
+  have ξℝpos': 0 < ξℝ  := by
+    apply lt_of_le_of_ne ξℝpos
+    by_contra eq0
+    rw [← eq0] at ξℝeval
+    unfold ξPolynomialℝ at ξℝeval
+    simp at ξℝeval
+  have ξℝuniqueCond: (fun ξ ↦ ξ > 0 ∧ Polynomial.eval ξ (ξPolynomialℝ s t) = 0) ξℝ := by
+    simp
+    constructor
+    · exact ξℝpos'
+    · exact ξℝeval
+  rw [← ξeq]
+  norm_cast
+  obtain unique := ξ₀unique ξℝ ξℝuniqueCond
+  exact unique
