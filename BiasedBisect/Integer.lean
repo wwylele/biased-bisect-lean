@@ -24,13 +24,13 @@ When s and t are positive integers, Δ collaps to a subset of l * gcd(s, t)
 -/
 theorem Δ_int (s t: ℕ+):
 Δ s t ⊆ {δ: ℝ | ∃l: ℕ, δ = l * PNat.gcd s t} := by
-  simp
+  simp only [PNat.gcd_coe]
   intro δ mem
   unfold Δ at mem
   unfold is_δ at mem
-  simp at mem
+  simp only [Set.mem_setOf_eq] at mem
   rcases mem with ⟨p, ⟨q, pq⟩⟩
-  simp
+  simp only [Set.mem_setOf_eq]
   use p * (s / (PNat.gcd s t)) + q * (t / (PNat.gcd s t))
   push_cast
   rw [add_mul]
@@ -59,7 +59,7 @@ We will also start
 theorem δlift (s t: ℕ+) (δ: ℝ) (mem: δ ∈ Δ s t): ∃d: ℤ, d = δ := by
   unfold Δ at mem
   unfold is_δ at mem
-  simp at mem
+  simp only [Set.mem_setOf_eq] at mem
   rcases mem with ⟨p, ⟨q, pq⟩⟩
   use p * s + q * t
   push_cast
@@ -82,7 +82,7 @@ lemma δnext_int_larger (s t: ℕ+) (δ: ℤ): δnext s t δ >= δ + 1 := by
   have h: ((δ + 1): ℤ) ≤ (d': ℝ) := by
     exact Int.cast_le.mpr larger
   rw [Int.cast_add] at h
-  simp at h
+  simp only [Int.cast_one] at h
   exact h
 
 /-
@@ -98,7 +98,7 @@ lemma δₖ_int_agree (s t: ℕ+) (k: ℕ): δₖ_int s t k = δₖ s t k := by
   | zero =>
     unfold δₖ_int
     unfold δₖ
-    simp
+    simp only [Int.cast_zero]
   | succ k prev =>
     unfold δₖ_int
     unfold δₖ
@@ -130,41 +130,41 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
   · have eq': ((δ + 1): ℤ) = δnext s t δ := by
       rw [← eq]
       push_cast
-      simp
+      simp only
     rw [eq']
     apply Jceiled_accum
   · have ceiled_nogrow: Jceiled s t δ = Jceiled s t (δ + 1) := by
       apply Jceiled_gap
-      · simp
+      · simp only [le_add_iff_nonneg_right, zero_le_one]
       · exact lt
     have line_empty: (Λline s t (δ + 1)).toFinset = ∅ := by
-      simp
+      simp only [Set.toFinset_eq_empty]
       unfold Λline
       refine Set.preimage_eq_empty ?_
       apply Set.disjoint_of_subset
       · show {(δ:ℝ) + 1} ⊆ {(δ:ℝ) + 1}
-        simp
+        simp only [subset_refl]
       · show Set.range (δₚ s t) ⊆ Δ s t
         refine Set.range_subset_iff.mpr ?_
         intro ⟨p, q⟩
         unfold δₚ; unfold Δ; unfold is_δ
-        simp
-      · simp
+        simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+      · simp only [Set.disjoint_singleton_left]
         contrapose lt with isOnΛ
-        simp; simp at isOnΛ
+        simp only [not_lt]; simp only [not_not] at isOnΛ
         unfold δnext
         apply le_of_not_gt
         apply Set.IsWF.not_lt_min
         unfold Δfloored
         constructor
         · exact isOnΛ
-        · simp
+        · simp only [gt_iff_lt, Set.mem_setOf_eq, lt_add_iff_pos_right, zero_lt_one]
     have line_empty': Jline s t (δ + 1) = 0 := by
       unfold Jline
       rw [line_empty]
       apply Finset.sum_empty
     rw [ceiled_nogrow]
-    simp
+    simp only [Int.cast_add, Int.cast_one, add_right_eq_self]
     exact line_empty'
 
 /-
@@ -181,12 +181,12 @@ lemma dE_int_agree (s t: ℕ+) (n: ℝ): dE_int s t n = dE s t n := by
   by_cases n1: n ≥ 1
   · rcases kₙ_exist s t n n1 with ⟨k, keq⟩
     rw [keq]
-    simp
+    simp only
     exact δₖ_int_agree s t k
-  · simp at n1
+  · simp only [ge_iff_le, not_le] at n1
     rcases kₙ_not_exist s t n n1 with keq
     rw [keq]
-    simp
+    simp only [Int.cast_zero]
 
 
 /-
@@ -208,16 +208,16 @@ lemma Φ_agree (s t: ℕ+) (δ: ℤ): Φ s t δ = φ s t δ := by
 
 theorem Φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): Φ s t δ = 1 := by
   unfold Φ
-  simp
+  simp only [add_right_eq_self]
   unfold Jceiled_int
   unfold Jceiled
   have line_empty: (Λceiled s t δ).toFinset = ∅ := by
-    simp
+    simp only [Set.toFinset_eq_empty]
     unfold Λceiled
-    simp
+    simp only
     apply Set.eq_empty_iff_forall_not_mem.mpr
     rintro ⟨p, q⟩
-    simp
+    simp only [Set.mem_setOf_eq, not_le]
     apply lt_of_lt_of_le
     · show (δ:ℝ) < 0
       exact Int.cast_lt_zero.mpr dpos
@@ -235,22 +235,22 @@ theorem Φ_rec (s t: ℕ+) (δ: ℤ) (dpos: δ ≥ 0):
 Φ s t δ = Φ s t (δ - s) + Φ s t (δ - t) := by
   have alt: 0 ≤ δ → Φ s t δ = Φ s t (δ - s) + Φ s t (δ - t) := by
     apply Int.le_induction
-    · simp
-      have sneg: -(s:ℤ) < 0 := by simp
-      have tneg: -(t:ℤ) < 0 := by simp
+    · simp only [zero_sub]
+      have sneg: -(s:ℤ) < 0 := by simp only [Left.neg_neg_iff, Nat.cast_pos, PNat.pos]
+      have tneg: -(t:ℤ) < 0 := by simp only [Left.neg_neg_iff, Nat.cast_pos, PNat.pos]
       rw [Φ_neg s t (-(s:ℤ)) sneg]
       rw [Φ_neg s t (-(t:ℤ)) tneg]
       unfold Φ
-      have zero: 0 = (-1) + 1 := by simp
+      have zero: 0 = (-1) + 1 := by simp only [Int.reduceNeg, neg_add_cancel]
       rw [zero]
       rw [← (Jceiled_int_accum s t (-1))]
       unfold Jline_int
-      simp
+      simp only [Int.reduceNeg, neg_add_cancel, Int.cast_zero, Nat.reduceAdd]
       rw [Jline₀]
       nth_rw 2 [add_comm]
       rw [← Φ]
       rw [Φ_neg]
-      simp
+      simp only [Int.reduceNeg, Left.neg_neg_iff, zero_lt_one]
     · unfold Φ
       intro δ dpos prev
       rw [add_sub_right_comm]
@@ -275,7 +275,7 @@ lemma ΔceiledByΦ_agree (s t: ℕ+) (n: ℝ):
 Int.cast '' (ΔceiledByΦ s t n) = δceiledByφ s t n ∩ (Int.cast '' Set.univ) := by
   ext δ
   unfold ΔceiledByΦ δceiledByφ
-  simp
+  simp only [Set.mem_image, Set.mem_setOf_eq, Set.image_univ, Set.mem_inter_iff, Set.mem_range]
   constructor
   · rintro ⟨d, ⟨h1, h2⟩⟩
     constructor
@@ -294,13 +294,14 @@ Int.cast '' (ΔceiledByΦ s t n) = δceiledByφ s t n ∩ (Int.cast '' Set.univ)
 lemma dE_int_range_agree (s t: ℕ+) (n: ℝ):
 Int.cast '' Set.Iic (dE_int s t n - 1) = Set.Iio (dE s t n) ∩ (Int.cast '' Set.univ) := by
   ext m
-  simp
+  simp only [Set.mem_image, Set.mem_Iic, Set.image_univ, Set.mem_inter_iff, Set.mem_Iio,
+    Set.mem_range]
   constructor
   · rintro ⟨x, ⟨h1, h2⟩⟩
     constructor
     · rw [← dE_int_agree]
       rw [← h2]
-      simp
+      simp only [Int.cast_lt]
       exact Int.lt_of_le_sub_one h1
     · use x
   · rintro ⟨h1, ⟨x, h2⟩⟩
@@ -308,7 +309,7 @@ Int.cast '' Set.Iic (dE_int s t n - 1) = Set.Iio (dE s t n) ∩ (Int.cast '' Set
     constructor
     · rw [← dE_int_agree] at h1
       rw [← h2] at h1
-      simp at h1
+      simp only [Int.cast_lt] at h1
       exact Int.le_sub_one_of_lt h1
     · exact h2
 
@@ -337,24 +338,26 @@ We start with a few lemma that will help us to reason about the summation
 lemma ΛexchangeMem (s t: ℕ+) (pq :(ℕ × ℕ)) (i: ℕ):
 pq ∈ (Λceiled s t (i + pq.1 * s + pq.2 * t: ℕ)).toFinset := by
   unfold Λceiled
-  simp
+  simp only [Nat.cast_add, Nat.cast_mul, Set.mem_toFinset, Set.mem_setOf_eq, add_le_add_iff_right,
+    le_add_iff_nonneg_left, Nat.cast_nonneg]
 
 def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t i).toFinset) where
   toFun | ⟨pq, i⟩ => ⟨i + pq.1 * s + pq.2 * t, ⟨pq, ΛexchangeMem s t pq i⟩⟩
   invFun | ⟨i, ⟨pq, le⟩ ⟩ => ⟨pq, i - (pq.1 * s + pq.2 * t)⟩
   left_inv := by
     unfold Function.LeftInverse
-    simp
+    simp only [Prod.forall, Prod.mk.injEq, true_and]
     intro p q i
     zify
-    simp
+    simp only [add_le_add_iff_right, le_add_iff_nonneg_left, zero_le, Nat.cast_sub, Nat.cast_add,
+      Nat.cast_mul, add_sub_add_right_eq_sub, add_sub_cancel_right]
   right_inv := by
     unfold Function.RightInverse Function.LeftInverse
-    simp
+    simp only
     rintro ⟨i, ⟨pq, le⟩⟩
-    simp
+    simp only [Sigma.mk.injEq]
     unfold Λceiled at le
-    simp at le
+    simp only [Set.mem_toFinset, Set.mem_setOf_eq] at le
     constructor
     · rw [add_assoc]
       refine Nat.sub_add_cancel ?_
@@ -363,7 +366,7 @@ def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t
     · refine (Subtype.heq_iff_coe_eq ?_).mpr rfl
       rintro ⟨p, q⟩
       unfold Λceiled
-      simp
+      simp only [Nat.cast_add, Nat.cast_mul, Set.mem_toFinset, Set.mem_setOf_eq]
       have cast: ((i - (pq.1 * ↑s + pq.2 * ↑t)): ℕ) = ((i:ℝ) - (pq.1 * ↑s + pq.2 * ↑t:ℕ)) := by
         refine Nat.cast_sub ?_
         rify
@@ -377,7 +380,7 @@ def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t
 Λdecomp: the bijection to domcompose ℕ × ℕ lattice to slices of 45°
 -/
 lemma ΛdecompMem (p q: ℕ): p ∈ Finset.range (p + q + 1) := by
-  simp
+  simp only [Finset.mem_range]
   linarith
 
 def Λdecomp: ((j:ℕ) × Finset.range (j + 1)) ≃ (ℕ × ℕ) where
@@ -385,10 +388,10 @@ def Λdecomp: ((j:ℕ) × Finset.range (j + 1)) ≃ (ℕ × ℕ) where
   invFun | ⟨p, q⟩ => ⟨p + q, ⟨p, ΛdecompMem p q⟩⟩
   left_inv := by
     unfold Function.LeftInverse
-    simp
+    simp only
     rintro ⟨j, ⟨n, nmem⟩⟩
-    simp at nmem
-    simp
+    simp only [Finset.mem_range] at nmem
+    simp only [Sigma.mk.injEq]
     constructor
     · rw [add_comm]
       rw [Nat.sub_add_cancel]
@@ -401,7 +404,7 @@ def Λdecomp: ((j:ℕ) × Finset.range (j + 1)) ≃ (ℕ × ℕ) where
 
   right_inv := by
     unfold Function.RightInverse Function.LeftInverse
-    simp
+    simp only [add_tsub_cancel_left, Prod.mk.eta, implies_true]
 
 /-
 A gross bound for Jₚ to dompose it to a product of f(p) and g(q)
@@ -412,14 +415,14 @@ lemma Jₚ_bound: ∀p, ∀q, Jₚ (p, q) ≤ 2^p * 2^q := by
   | zero =>
     intro q
     unfold Jₚ
-    simp
+    simp only [zero_add, Nat.choose_zero_right, pow_zero, one_mul]
     exact Nat.one_le_two_pow
   | succ p prev =>
     intro q
     induction q with
     | zero =>
       unfold Jₚ
-      simp
+      simp only [add_zero, Nat.choose_self, pow_zero, mul_one]
       exact Nat.one_le_two_pow
     | succ q prev' =>
       rw [Jₚ_rec]
@@ -437,7 +440,7 @@ lemma pqx_sum [RCLike K]
 HasSum (fun pq ↦ ↑(Jₚ pq) * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))) (1 - (x ^ (s:ℕ) + x ^ (t:ℕ)))⁻¹ := by
   apply (Equiv.hasSum_iff Λdecomp).mp
   unfold Λdecomp Function.comp
-  simp
+  simp only [Equiv.coe_fn_mk]
 
   let term := fun (⟨j, c⟩:(j:ℕ) × Finset.range (j + 1)) ↦ ((Jₚ (c, j - c)) * x ^ (c * s + (j - c) * t: ℕ ))
   have binom: ∀(j:ℕ), HasSum (fun (c:Finset.range (j + 1)) ↦ term ⟨j, c⟩ ) ((x ^ (s:ℕ) + x ^ (t:ℕ))^j) := by
@@ -448,15 +451,15 @@ HasSum (fun pq ↦ ↑(Jₚ pq) * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))) (1 - (x
       unfold term f Jₚ
       ext c
       rcases c with ⟨c, mem⟩
-      simp at mem
-      simp
+      simp only [Finset.mem_range] at mem
+      simp only [Function.comp_apply]
       rw [← pow_mul, ← pow_mul]
       rw [← pow_add]
       nth_rw 4 [mul_comm]
       congr 2
       · congr
         rw [← Nat.add_sub_assoc]
-        · simp
+        · simp only [add_tsub_cancel_left]
         · exact Nat.le_of_lt_succ mem
       · ring
     have left': ∀ c, (fun c ↦ term ⟨j, c⟩) c = ((fun (c:Finset.range (j + 1)) ↦ f c) ∘ (↑)) c := by
@@ -468,7 +471,7 @@ HasSum (fun pq ↦ ↑(Jₚ pq) * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))) (1 - (x
   apply HasSum.sigma_of_hasSum ?_ binom
   · apply (Equiv.summable_iff Λdecomp.symm).mp
     unfold term Λdecomp Function.comp
-    simp
+    simp only [Equiv.toFun_as_coe, Equiv.coe_fn_symm_mk, add_tsub_cancel_left, Prod.mk.eta]
     show Summable fun (pq: ℕ × ℕ) ↦ Jₚ pq * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))
     let termBound := fun (pq: ℕ × ℕ) ↦ ‖(2 * x ^ (s:ℕ)) ^ pq.1 * (2 * x ^ (t:ℕ)) ^ pq.2‖
     have raise(pq: ℕ × ℕ): ‖Jₚ pq * x ^ (pq.1 * s + pq.2 * t)‖ ≤ termBound pq := by
@@ -481,40 +484,42 @@ HasSum (fun pq ↦ ↑(Jₚ pq) * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))) (1 - (x
       rw [norm_mul, norm_mul]
       apply mul_le_mul
       · have left: ‖(Jₚ pq: K)‖ = Jₚ pq := by
-          simp
+          simp only [RCLike.norm_natCast]
         have right: ‖(2: K) ^ pq.1 * (2: K) ^ pq.2‖ = (2 ^ pq.1 * 2 ^ pq.2: ℕ) := by
-          simp
+          simp only [norm_mul, norm_pow, RCLike.norm_ofNat, Nat.cast_mul, Nat.cast_pow,
+            Nat.cast_ofNat]
         rw [left, right]
         apply Nat.cast_le.mpr
         apply Jₚ_bound
-      · simp
+      · simp only [norm_pow, le_refl]
       · apply norm_nonneg
       · apply norm_nonneg
     apply Summable.of_norm_bounded termBound ?_ raise
     · show Summable termBound
       apply Summable.mul_norm
       repeat
-        simp
+        simp only [norm_pow, norm_mul, RCLike.norm_ofNat, summable_geometric_iff_norm_lt_one,
+          Real.norm_ofNat, norm_norm]
         apply (lt_inv_mul_iff₀ ?_).mp
-        · simp
+        · simp only [mul_one]
           apply lt_of_le_of_lt ?_ bound
           apply pow_le_of_le_one
-          · simp
+          · simp only [norm_nonneg]
           · apply le_of_lt; apply lt_trans bound; norm_num
-          · simp
-        · simp
+          · simp only [ne_eq, PNat.ne_zero, not_false_eq_true]
+        · simp only [Nat.ofNat_pos]
   · apply hasSum_geometric_of_norm_lt_one
     apply lt_of_le_of_lt (norm_add_le _ _)
     have half: (1:ℝ) = 2⁻¹ + 2⁻¹ := by norm_num
     rw [half]
     apply add_lt_add
     repeat
-      simp
+      simp only [norm_pow]
       apply lt_of_le_of_lt ?_ bound
       apply pow_le_of_le_one
-      · simp
+      · simp only [norm_nonneg]
       · apply le_of_lt; apply lt_trans bound; norm_num
-      · simp
+      · simp only [ne_eq, PNat.ne_zero, not_false_eq_true]
 
 noncomputable
 def ξPolynomial(s t: ℕ+) :=
@@ -523,9 +528,10 @@ def ξPolynomial(s t: ℕ+) :=
 lemma ξPolynomialDerivative(s t: ℕ+):
 (ξPolynomial s t).derivative = Polynomial.monomial (s - 1) (s:ℂ) + Polynomial.monomial (t - 1) (t:ℂ) := by
   unfold ξPolynomial
-  simp
+  simp only [map_one, Polynomial.derivative_sub, Polynomial.derivative_add,
+    Polynomial.derivative_one, sub_zero]
   rw [Polynomial.derivative_monomial, Polynomial.derivative_monomial]
-  simp
+  simp only [one_mul]
 
 
 lemma ξPolynomialFactorizeMulti(s t: ℕ+):
@@ -540,7 +546,8 @@ s * r ^ (s - 1: ℕ) + t * r ^ (↑t - 1: ℕ) ≠ 0 := by
   obtain rmem' := Multiset.mem_dedup.mp rmem
   obtain req_of_pol := Polynomial.isRoot_of_mem_roots rmem'
   unfold ξPolynomial at req_of_pol
-  simp at req_of_pol
+  simp only [map_one, Polynomial.IsRoot.def, Polynomial.eval_sub, Polynomial.eval_add,
+    Polynomial.eval_monomial, one_mul, Polynomial.eval_one] at req_of_pol
   obtain req_of_pol' := eq_of_sub_eq_zero req_of_pol
   by_contra req_of_der
   have req_of_der': (s * r ^ (s - 1:ℕ) + t * r ^ (t - 1:ℕ)) * r = 0 := by
@@ -573,7 +580,7 @@ s * r ^ (s - 1: ℕ) + t * r ^ (↑t - 1: ℕ) ≠ 0 := by
     exact req_of_der''
   by_cases seqt: (s:ℂ) = t
   · rw [seqt] at rs'
-    simp at rs'
+    simp only [sub_self, zero_mul, Nat.cast_eq_zero, PNat.ne_zero] at rs'
   · have snet: (s - t: ℂ) ≠ 0 := sub_ne_zero_of_ne seqt
     have tnes: (t - s: ℂ) ≠ 0 := by
       refine sub_ne_zero_of_ne ?_
@@ -600,7 +607,7 @@ s * r ^ (s - 1: ℕ) + t * r ^ (↑t - 1: ℕ) ≠ 0 := by
       norm_cast at what
       obtain what := abs_eq_abs.mpr (Or.inl what)
       rw [abs_mul, abs_mul] at what
-      simp at what
+      simp only [Nat.cast_pow, abs_pow, Nat.abs_cast] at what
       have tsubs: |Int.subNatNat T S| = (T - S:ℕ) := by
         rw [Int.subNatNat_of_le (le_of_lt h)]
         exact Int.abs_natCast (T - S)
@@ -624,7 +631,7 @@ s * r ^ (s - 1: ℕ) + t * r ^ (↑t - 1: ℕ) ≠ 0 := by
       rw [mul_eq_mul_right_iff] at what
       rw [mul_comm] at what
       have ds0: ¬ (D:ℤ)^S = 0 := by
-        simp
+        simp only [pow_eq_zero_iff', Nat.cast_eq_zero, ne_eq, not_and, Decidable.not_not]
         exact fun a ↦ False.elim (D0 a)
       rw [or_iff_left ds0] at what
       have conflict:  (D:ℤ) ^ D * S ^ S ≠ (D + S) ^ D * (D + S) ^ S := by
@@ -652,7 +659,7 @@ lemma ξPolynomialFactorize(s t: ℕ+):
   apply mul_eq_mul_left_iff.mpr
   left
   unfold ξSet
-  simp
+  simp only [id_eq]
   rw [Finset.prod_multiset_map_count]
   apply Finset.prod_congr rfl
   intro r rmem
@@ -662,23 +669,24 @@ lemma ξPolynomialFactorize(s t: ℕ+):
     · unfold Polynomial.roots
       have n0: ξPolynomial s t ≠ 0 := by
         exact Polynomial.ne_zero_of_mem_roots rmem'
-      simp [n0]
+      simp only [n0, ↓reduceDIte, ge_iff_le]
       obtain ⟨_,multiEq⟩ := Exists.choose_spec (Polynomial.exists_multiset_roots n0)
       rw [multiEq r]
       by_contra ge2
-      simp at ge2
+      simp only [not_le] at ge2
       apply Nat.succ_le_iff.mpr at ge2
       apply (Polynomial.le_rootMultiplicity_iff n0).mp at ge2
-      simp at ge2
+      simp only [Nat.succ_eq_add_one, Nat.reduceAdd] at ge2
       obtain ⟨factor, feq⟩ := dvd_iff_exists_eq_mul_left.mp ge2
       obtain der := ξPolynomialDerivative s t
       rw [feq] at der
-      simp at der
+      simp only [Polynomial.derivative_mul] at der
       rw [Polynomial.derivative_pow] at der
       have square: (Polynomial.X - Polynomial.C r) ^ 2 = (Polynomial.X - Polynomial.C r) * (Polynomial.X - Polynomial.C r) := by
         ring
       rw [square] at der
-      simp at der
+      simp only [Nat.cast_ofNat, Nat.add_one_sub_one, pow_one, Polynomial.derivative_sub,
+        Polynomial.derivative_X, Polynomial.derivative_C, sub_zero, mul_one] at der
       rw [← mul_assoc, ← mul_assoc, ← add_mul] at der
       have dvd: Polynomial.X - Polynomial.C r ∣ Polynomial.monomial (s - 1) (s:ℂ) + Polynomial.monomial (t - 1) (t:ℂ) := by
         exact
@@ -687,15 +695,18 @@ lemma ξPolynomialFactorize(s t: ℕ+):
               factor * Polynomial.C 2)
             der
       obtain req_of_der := Polynomial.eval_dvd dvd (x := r)
-      simp at req_of_der
+      simp only [Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C, sub_self,
+        Polynomial.eval_add, Polynomial.eval_monomial, GroupWithZero.dvd_iff,
+        forall_const] at req_of_der
       obtain req_of_pol := Polynomial.isRoot_of_mem_roots rmem'
       unfold ξPolynomial at req_of_pol
-      simp at req_of_pol
+      simp only [map_one, Polynomial.IsRoot.def, Polynomial.eval_sub, Polynomial.eval_add,
+        Polynomial.eval_monomial, one_mul, Polynomial.eval_one] at req_of_pol
       obtain noneq := ξNonMult s t r rmem
       contradiction
     · exact Multiset.one_le_count_iff_mem.mpr rmem'
   rw [root1]
-  simp
+  simp only [pow_one]
 
 /-
 A main theorem: the generating function Z{Φ}(x) converges to a rational function
@@ -704,7 +715,8 @@ The bound here is not sharp, but it should be sufficient for future reasoning ov
 theorem ZΦ_sum (s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
 HasSum (fun i:ℕ ↦ x ^ i * Φ s t i) ((((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹):= by
   unfold ξPolynomial
-  simp
+  simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_pow,
+    mul_one, Polynomial.eval_one, add_sub_cancel_right, inv_one, one_mul]
   rw [← neg_sub 1 _]
   rw [← neg_inv]
   rw [sub_neg_eq_add]
@@ -722,7 +734,7 @@ HasSum (fun i:ℕ ↦ x ^ i * Φ s t i) ((((ξPolynomial s t).eval 1)⁻¹ - ((�
      ext i
      rw [mul_comm]
      rw [add_mul]
-     simp
+     simp only [one_mul]
   rw [h]
   apply HasSum.add
   · apply hasSum_geometric_of_norm_lt_one
@@ -737,7 +749,7 @@ HasSum (fun i:ℕ ↦ x ^ i * Φ s t i) ((((ξPolynomial s t).eval 1)⁻¹ - ((�
       apply (Equiv.hasSum_iff (Λexchange s t)).mp
       unfold Λexchange
       unfold Function.comp
-      simp
+      simp only
       let f (pq: ℕ × ℕ) := (Jₚ pq) * x ^ (pq.1 * s + pq.2 * t)
       let g (i: ℕ) := x ^ i
       have eqInside: (fun pqi: ((ℕ × ℕ) × ℕ) ↦ ↑(Jₚ pqi.1) * x ^ (pqi.2 + pqi.1.1 * s + pqi.1.2 * t))
@@ -756,19 +768,19 @@ HasSum (fun i:ℕ ↦ x ^ i * Φ s t i) ((((ξPolynomial s t).eval 1)⁻¹ - ((�
         exact bound2
       · apply summable_mul_of_summable_norm
         · unfold f
-          simp
+          simp only [Complex.norm_mul, Complex.norm_natCast, norm_pow]
           unfold Summable
           use (1 - (‖x‖ ^ (s: ℕ) + ‖x‖ ^ (t: ℕ)))⁻¹
           apply pqx_sum s t ‖x‖
-          simp
+          simp only [norm_norm]
           exact bound
         · unfold g
-          simp
+          simp only [norm_pow, summable_geometric_iff_norm_lt_one, norm_norm]
           exact bound2
 
     apply HasSum.sigma totalSum
     intro i
-    simp
+    simp only
     apply Finset.hasSum
 
 lemma PartialFractionDecompostion [Field F] [DecidableEq F]
@@ -781,7 +793,7 @@ lemma PartialFractionDecompostion [Field F] [DecidableEq F]
     rw [Lagrange.derivative_nodal]
     rw [Polynomial.eval_finset_sum]
     unfold Lagrange.nodal
-    simp
+    simp only [id_eq]
     apply Finset.sum_eq_single r
     · intro r' r'mem r'ne
       rw [Polynomial.eval_prod]
@@ -789,7 +801,7 @@ lemma PartialFractionDecompostion [Field F] [DecidableEq F]
       use r
       constructor
       · exact Finset.mem_erase_of_ne_of_mem (id (Ne.symm r'ne)) h
-      · simp
+      · simp only [Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C, sub_self]
     · exact fun a ↦ False.elim (a h)
 
   have h1 :
@@ -800,7 +812,7 @@ lemma PartialFractionDecompostion [Field F] [DecidableEq F]
     rw [h0 r rmem]
     unfold Lagrange.nodal
     rw [Polynomial.eval_prod]
-    simp
+    simp only [id_eq, Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C]
     have notroot': x - r ≠ 0 := by
       refine sub_ne_zero_of_ne ?_
       exact Ne.symm (ne_of_mem_of_not_mem rmem notroot)
@@ -818,12 +830,13 @@ lemma PartialFractionDecompostion [Field F] [DecidableEq F]
     rw [← Finset.prod_mul_distrib]
     apply Finset.prod_congr rfl
     intro r' r'mem
-    simp
+    simp only [Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C, id_eq,
+      Polynomial.eval_mul]
     rw [mul_comm]
   rw [h1]
   rw [← Polynomial.eval_finset_sum]
   rw [Lagrange.sum_basis (Set.injOn_id _) hasroots]
-  simp
+  simp only [Polynomial.eval_one]
 
 lemma PartialFractionDecompostion2 [Field F] [DecidableEq F]
 (x: F) (roots: Finset F) (coef: F)
@@ -832,7 +845,7 @@ lemma PartialFractionDecompostion2 [Field F] [DecidableEq F]
  = ∑ r ∈ roots, (x - r)⁻¹ * (r - 1)⁻¹ * ((Polynomial.derivative (Polynomial.C coef * Lagrange.nodal roots id)).eval r)⁻¹ := by
   rw [Polynomial.derivative_C_mul]
   rw [Polynomial.eval_mul, Polynomial.eval_mul]
-  simp
+  simp only [Polynomial.eval_C, mul_inv_rev, Polynomial.eval_mul]
   rw [← sub_mul]
   nth_rw 2 [mul_comm]
   rw [mul_assoc]
@@ -867,7 +880,7 @@ lemma PartialFractionDecompostion2 [Field F] [DecidableEq F]
   rw [mul_comm (x - r)]
   rw [← mul_assoc]
   rw [Field.mul_inv_cancel _ r1]
-  simp
+  simp only [one_mul, neg_sub, mul_one, sub_sub_sub_cancel_left]
 
 
 lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
@@ -876,23 +889,26 @@ lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
   rw [ξPolynomialFactorize]
   have nonempty: (ξSet s t).Nonempty := by
     by_contra empty
-    simp at empty
+    simp only [Finset.not_nonempty_iff_eq_empty] at empty
     obtain factorize := ξPolynomialFactorize s t
     rw [empty] at factorize
-    simp at factorize
+    simp only [Lagrange.nodal_empty, mul_one] at factorize
     obtain eval: (ξPolynomial s t).eval 0 = (ξPolynomial s t).eval 1 := by
       rw [factorize]
-      simp
+      simp only [Polynomial.eval_C]
     unfold ξPolynomial at eval
-    simp at eval
+    simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, ne_eq,
+      PNat.ne_zero, not_false_eq_true, zero_pow, mul_zero, add_zero, Polynomial.eval_one, zero_sub,
+      one_pow, mul_one, add_sub_cancel_right] at eval
     norm_num at eval
   have xnotroot: x ∉ ξSet s t := by
     unfold ξSet
-    simp
+    simp only [Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, Polynomial.IsRoot.def, not_and]
     rw [imp_iff_not_or]
     right
     unfold ξPolynomial
-    simp
+    simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_mul,
+      Polynomial.eval_one]
     apply sub_ne_zero.mpr
     have h: ‖x ^ (s:ℕ) + x ^ (t:ℕ)‖ ≠ ‖(1:ℂ)‖ := by
       apply ne_of_lt
@@ -901,30 +917,31 @@ lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
       rw [right]
       gcongr
       repeat
-      · simp
+      · simp only [norm_pow]
         refine lt_of_le_of_lt ?_ bound
         refine pow_le_of_le_one ?_ ?_ ?_
-        · simp
+        · simp only [norm_nonneg]
         · apply le_trans (le_of_lt bound)
           norm_num
-        · simp
+        · simp only [ne_eq, PNat.ne_zero, not_false_eq_true]
     exact fun a ↦ h (congrArg norm a)
   have xnotone: x ≠ 1 := by
     contrapose bound with one
-    simp at one
+    simp only [ne_eq, Decidable.not_not] at one
     rw [one]
     norm_num
   have onenotroot: 1 ∉ ξSet s t := by
     by_contra isroot
     unfold ξSet at isroot
-    simp at isroot
+    simp only [Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, Polynomial.IsRoot.def] at isroot
     rcases isroot with ⟨_, eval⟩
     unfold ξPolynomial at eval
-    simp at eval
+    simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_pow,
+      mul_one, Polynomial.eval_one, add_sub_cancel_right, one_ne_zero] at eval
   rw [PartialFractionDecompostion2 _ _ _ nonempty xnotroot xnotone onenotroot]
   rw [← ξPolynomialFactorize]
   rw [ξPolynomialDerivative]
-  simp
+  simp only [Polynomial.eval_add, Polynomial.eval_monomial]
 
 
 lemma ZΦ_sum2 (s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
@@ -956,12 +973,15 @@ HasSum (fun i:ℕ ↦ x ^ i * (∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ 
   apply hasSum_sum
   intro ξ mem
   unfold ξSet ξPolynomial at mem
-  simp at mem
+  simp only [map_one, Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, Polynomial.IsRoot.def,
+    Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_mul,
+    Polynomial.eval_one] at mem
   obtain ⟨_, polyeq⟩ := mem
   have ξ0: ξ ≠ 0 := by
     by_contra zero
     rw [zero] at polyeq
-    simp at polyeq
+    simp only [ne_eq, PNat.ne_zero, not_false_eq_true, zero_pow, add_zero, zero_sub, neg_eq_zero,
+      one_ne_zero] at polyeq
   apply HasSum.mul_right
   have rw_sum: (x - ξ)⁻¹ * (ξ - 1)⁻¹ = (1 - x * ξ⁻¹)⁻¹ * (1 - ξ)⁻¹ * ξ⁻¹ := by
     rw [← neg_sub ξ , ← neg_inv]
@@ -973,7 +993,7 @@ HasSum (fun i:ℕ ↦ x ^ i * (∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ 
     rw [sub_mul]
     rw [mul_assoc]
     rw [inv_mul_cancel₀ ξ0]
-    simp
+    simp only [one_mul, mul_one]
 
   rw [rw_sum]
   apply HasSum.mul_right
@@ -983,13 +1003,13 @@ HasSum (fun i:ℕ ↦ x ^ i * (∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ 
   rw [norm_mul]
   rw [norm_inv]
   have ξgt0: 0 < ‖ξ‖ := by
-    simp
+    simp only [norm_pos_iff, ne_eq]
     exact ξ0
   apply (mul_inv_lt_iff₀ ξgt0).mpr
-  simp
+  simp only [one_mul]
   apply lt_of_lt_of_le bound
   contrapose polyeq
-  simp at polyeq
+  simp only [not_le] at polyeq
   apply sub_ne_zero_of_ne
   have nomr_ne: ‖ξ ^ (s:ℕ) + ξ ^ (t:ℕ)‖ ≠ ‖(1:ℂ)‖ := by
     apply ne_of_lt
@@ -998,13 +1018,13 @@ HasSum (fun i:ℕ ↦ x ^ i * (∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ 
     rw [right]
     gcongr
     repeat
-    · simp
+    · simp only [norm_pow]
       refine lt_of_le_of_lt ?_ polyeq
       refine pow_le_of_le_one ?_ ?_ ?_
-      · simp
+      · simp only [norm_nonneg]
       · apply le_trans (le_of_lt polyeq)
         norm_num
-      · simp
+      · simp only [ne_eq, PNat.ne_zero, not_false_eq_true]
   exact fun a ↦ nomr_ne (congrArg norm a)
 
 
@@ -1015,11 +1035,13 @@ theorem ΦFormula (s t: ℕ+) (i: ℕ):
   have hasFmsL: HasFPowerSeriesAt (fun x ↦ (((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹) fmsL 0 := by
     apply hasFPowerSeriesAt_iff.mpr
     unfold fmsL FormalMultilinearSeries.coeff
-    simp
+    simp only [ContinuousMultilinearMap.mkPiRing_apply, Pi.one_apply, Finset.prod_const_one,
+      smul_eq_mul, one_mul, zero_add]
     unfold Filter.Eventually
     apply mem_nhds_iff.mpr
     use {x:ℂ | ‖x‖ <2⁻¹}
-    simp
+    simp only [Set.setOf_subset_setOf, Set.mem_setOf_eq, norm_zero, inv_pos, Nat.ofNat_pos,
+      and_true]
     constructor
     · apply ZΦ_sum
     · exact isOpen_lt continuous_norm continuous_const
@@ -1028,23 +1050,27 @@ theorem ΦFormula (s t: ℕ+) (i: ℕ):
   have hasFmsR: HasFPowerSeriesAt (fun x ↦ (((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹) fmsR 0 := by
     apply hasFPowerSeriesAt_iff.mpr
     unfold fmsR FormalMultilinearSeries.coeff
-    simp
+    simp only [inv_pow, ContinuousMultilinearMap.mkPiRing_apply, Pi.one_apply,
+      Finset.prod_const_one, smul_eq_mul, one_mul, zero_add]
     unfold Filter.Eventually
     apply mem_nhds_iff.mpr
     use {x:ℂ | ‖x‖ <2⁻¹}
-    simp
+    simp only [Set.setOf_subset_setOf, Set.mem_setOf_eq, norm_zero, inv_pos, Nat.ofNat_pos,
+      and_true]
     constructor
     · obtain ZΦ_sum2 := ZΦ_sum2
-      simp at ZΦ_sum2
+      simp only [inv_pow] at ZΦ_sum2
       apply ZΦ_sum2
     · exact isOpen_lt continuous_norm continuous_const
   obtain fmsEq := HasFPowerSeriesAt.eq_formalMultilinearSeries hasFmsL hasFmsR
   have coeffL: Φ s t i = fmsL.coeff i := by
     unfold fmsL FormalMultilinearSeries.coeff
-    simp
+    simp only [ContinuousMultilinearMap.mkPiRing_apply, Pi.one_apply, Finset.prod_const_one,
+      smul_eq_mul, one_mul]
   have coeffR: ∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ * (s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹ = fmsR.coeff i := by
     unfold fmsR FormalMultilinearSeries.coeff
-    simp
+    simp only [inv_pow, ContinuousMultilinearMap.mkPiRing_apply, Pi.one_apply,
+      Finset.prod_const_one, smul_eq_mul, one_mul]
   rw [coeffL, coeffR]
   rw [fmsEq]
 
@@ -1060,11 +1086,12 @@ lemma PowMono (a: ℕ+): StrictMonoOn (fun (x:ℝ) ↦ x ^ (a: ℕ)) (Set.Ici 0)
     apply Real.rpow_natCast
   rw [rwfun]
   refine Real.strictMonoOn_rpow_Ici_of_exponent_pos ?_
-  simp
+  simp only [Nat.cast_pos, PNat.pos]
 
 lemma ξPolynomialℝ_mono(s t: ℕ+): StrictMonoOn ((ξPolynomialℝ s t).eval ·) (Set.Ici 0) := by
   unfold ξPolynomialℝ
-  simp
+  simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_mul,
+    Polynomial.eval_one]
   apply StrictMonoOn.add_const
   apply StrictMonoOn.add
   repeat apply PowMono
@@ -1078,7 +1105,10 @@ lemma ξPolynomialℝUniqueRoot(s t: ℕ+):
     · show 0 ∈ Set.Ioo (f 0) (f 1)
       unfold f
       unfold ξPolynomialℝ
-      simp
+      simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, ne_eq,
+        PNat.ne_zero, not_false_eq_true, zero_pow, mul_zero, add_zero, Polynomial.eval_one,
+        zero_sub, one_pow, mul_one, add_sub_cancel_right, Set.mem_Ioo, Left.neg_neg_iff,
+        zero_lt_one, and_self]
     · apply subset_trans
       · show Set.Ioo (f 0) (f 1) ⊆ f '' Set.Ioo 0 1
         have zeroOne: (0:ℝ) ≤ 1 := by norm_num
@@ -1098,6 +1128,24 @@ lemma ξPolynomialℝUniqueRoot(s t: ℕ+):
 noncomputable
 def ξ₀ (s t: ℕ+) := (ξPolynomialℝUniqueRoot s t).choose
 
+lemma ξ₀min (s t: ℕ+): ξ₀ s t > 0 := by
+  obtain ⟨⟨range, ev⟩, unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
+  exact range
+
+lemma ξ₀max (s t: ℕ+): ξ₀ s t < 1 := by
+  obtain ⟨⟨range, ev⟩, unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
+  have leftmem: ξ₀ s t ∈ (Set.Ici 0) := by exact Set.mem_Ici_of_Ioi range
+  have rightmem: (1:ℝ) ∈ (Set.Ici 0) := by simp only [Set.mem_Ici, zero_le_one]
+  have leftrw: Polynomial.eval (ξ₀ s t) (ξPolynomialℝ s t) = 0 := by
+    unfold ξ₀ ξPolynomialℝ
+    exact ev
+  apply ((ξPolynomialℝ_mono s t).lt_iff_lt leftmem rightmem).mp
+  rw [leftrw]
+  unfold ξPolynomialℝ
+  simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_pow,
+    mul_one, Polynomial.eval_one, add_sub_cancel_right, zero_lt_one]
+
+
 theorem Complex.arg_pow_coe_angle {x : ℂ} {n: ℕ} : ((x ^ n).arg : Real.Angle) = n • (x.arg : Real.Angle) := by
   by_cases x0: x = 0
   · rw [x0]
@@ -1116,10 +1164,13 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
 ∀ξ ∈ ξSet s t, ξ ≠ ξ₀ s t → ξ₀ s t < ‖ξ‖ := by
   obtain ⟨⟨ξ₀pos, ξ₀eq⟩, ξ₀unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
   unfold ξPolynomialℝ at ξ₀eq
-  simp at ξ₀eq
+  simp only [gt_iff_lt, map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial,
+    one_mul, Polynomial.eval_one, and_imp] at ξ₀eq
   intro ξ mem' ne
   unfold ξSet ξPolynomial at mem'
-  simp at mem'
+  simp only [map_one, Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, Polynomial.IsRoot.def,
+    Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_mul,
+    Polynomial.eval_one] at mem'
   rcases mem' with ⟨_, mem'⟩
   obtain mem := eq_of_sub_eq_zero mem'
   obtain memnorm := congrArg norm mem
@@ -1127,34 +1178,36 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
     rw [← norm_pow, ← norm_pow]
     convert norm_add_le (ξ ^ (s:ℕ)) (ξ ^ (t:ℕ))
     rw [memnorm]
-    simp
+    simp only [norm_one]
   let ξPoly' := Polynomial.monomial s (1:ℝ) + Polynomial.monomial t (1:ℝ)
   let ξPoly'F := (ξPoly'.eval ·)
   have normle': ξPoly'F (ξ₀ s t) ≤ ξPoly'F ‖ξ‖  := by
     unfold ξPoly'F ξPoly' ξ₀ ξPolynomialℝ
-    simp
+    simp only [gt_iff_lt, map_one, Polynomial.eval_sub, Polynomial.eval_add,
+      Polynomial.eval_monomial, one_mul, Polynomial.eval_one, and_imp]
     convert normle
     obtain ξ₀eq := eq_of_sub_eq_zero ξ₀eq
     rw [ξ₀eq]
   have mono: StrictMonoOn ξPoly'F (Set.Ici 0) := by
     unfold ξPoly'F ξPoly'
-    simp
+    simp only [Polynomial.eval_add, Polynomial.eval_monomial, one_mul]
     apply StrictMonoOn.add
     repeat apply PowMono
   have normleFromMono: ξ₀ s t ≤ ‖ξ‖ := by
     refine (mono.le_iff_le ?_ ?_).mp normle'
-    · simp
+    · simp only [Set.mem_Ici]
       apply le_of_lt
       apply gt_iff_lt.mp
       exact ξ₀pos
-    · simp
+    · simp only [Set.mem_Ici, norm_nonneg]
   apply lt_of_le_of_ne normleFromMono
   contrapose ne with eq
-  simp;
+  simp only [ne_eq, Decidable.not_not];
   unfold ξ₀ ξPolynomialℝ at eq
-  simp at eq
+  simp only [gt_iff_lt, map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial,
+    one_mul, Polynomial.eval_one, and_imp, ne_eq, Decidable.not_not] at eq
   rw [eq] at ξ₀eq
-  simp at memnorm
+  simp only [norm_one] at memnorm
   rw [← memnorm] at ξ₀eq
   rw [← norm_pow, ← norm_pow] at ξ₀eq
   obtain ξ₀eq := eq_of_sub_eq_zero ξ₀eq
@@ -1162,10 +1215,14 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
   have ξnon0: ξ ≠ 0 := by
     by_contra ξ0
     rw [ξ0] at mem
-    simp at mem
-  have s0: ¬ ξ ^ (s:ℕ) = 0 := by simp; exact ξnon0
-  have t0: ¬ ξ ^ (t:ℕ) = 0 := by simp; exact ξnon0
-  simp [s0, t0] at arg_eq
+    simp only [ne_eq, PNat.ne_zero, not_false_eq_true, zero_pow, add_zero, zero_ne_one] at mem
+  have s0: ¬ ξ ^ (s:ℕ) = 0 := by
+    simp only [ne_eq, PNat.ne_zero, not_false_eq_true, pow_eq_zero_iff]
+    exact ξnon0
+  have t0: ¬ ξ ^ (t:ℕ) = 0 := by
+    simp only [ne_eq, PNat.ne_zero, not_false_eq_true, pow_eq_zero_iff]
+    exact ξnon0
+  simp only [s0, t0, false_or] at arg_eq
   obtain same_ray: SameRay ℝ (ξ ^ (s:ℕ)) (ξ ^ (t:ℕ)) := by
     apply Complex.sameRay_iff.mpr
     right; right; exact arg_eq
@@ -1175,9 +1232,9 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
     · rfl
     · exact same_ray
   obtain arg0s := Complex.sameRay_iff.mp same_ray1
-  simp [s0] at arg0s
+  simp only [s0, one_ne_zero, Complex.arg_one, false_or] at arg0s
   obtain arg0t := (Complex.sameRay_iff.mp same_ray)
-  simp [s0, t0] at arg0t
+  simp only [s0, t0, false_or] at arg0t
   rw [arg0s] at arg0t
   obtain angles := congrArg (fun (a:ℝ) ↦ (a:Real.Angle)) arg0s
   obtain anglet := congrArg (fun (a:ℝ) ↦ (a:Real.Angle)) arg0t.symm
@@ -1185,8 +1242,8 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
   rw [Complex.arg_pow_coe_angle, ← Real.Angle.natCast_mul_eq_nsmul] at anglet
   obtain ⟨ks, kseq⟩ := Real.Angle.coe_eq_zero_iff.mp angles
   obtain ⟨kt, kteq⟩ := Real.Angle.coe_eq_zero_iff.mp anglet
-  simp at kseq
-  simp at kteq
+  simp only [zsmul_eq_mul] at kseq
+  simp only [zsmul_eq_mul] at kteq
   rw [mul_comm _ ξ.arg] at kseq
   rw [mul_comm _ ξ.arg] at kteq
   have twopi0 : (2 * Real.pi) ≠ 0 := by exact ne_of_gt (Real.two_pi_pos)
@@ -1203,16 +1260,17 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
   have dvd: (s:ℤ) ∣ ks := by
     refine IsCoprime.dvd_of_dvd_mul_right ?_ sdvd
     apply Int.isCoprime_iff_nat_coprime.mpr
-    simp
+    simp only [Int.natAbs_ofNat, PNat.coprime_coe]
     exact coprime
   obtain ⟨factor, feq⟩ := dvd
   rw [feq] at kseq'
-  simp at kseq'
+  simp only [Int.cast_mul, Int.cast_natCast, ne_eq, Nat.cast_eq_zero, PNat.ne_zero,
+    not_false_eq_true, mul_div_cancel_left₀] at kseq'
   obtain ktwopi: factor * (2 * Real.pi) = ξ.arg := (eq_div_iff twopi0).mp kseq'
   have factor0: factor = 0 := by
     apply le_antisymm
     · by_contra pos
-      simp at pos
+      simp only [not_le] at pos
       have : 2 * Real.pi ≤ ξ.arg := by
         rw [← one_mul (2 * Real.pi)]
         rw [← ktwopi]
@@ -1222,9 +1280,9 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
       obtain what := le_trans this (Complex.arg_le_pi ξ)
       nth_rw 2 [← one_mul Real.pi] at what
       apply (mul_le_mul_right Real.pi_pos).mp at what
-      simp at what
+      simp only [Nat.not_ofNat_le_one] at what
     · by_contra neg
-      simp at neg
+      simp only [not_le] at neg
       have : ξ.arg ≤ -(2 * Real.pi) := by
         rw [neg_eq_neg_one_mul]
         rw [← ktwopi]
@@ -1235,18 +1293,19 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
       apply neg_lt_neg_iff.mp at what
       nth_rw 2 [← one_mul Real.pi] at what
       apply (mul_lt_mul_right Real.pi_pos).mp at what
-      simp at what
+      simp only [Nat.not_ofNat_lt_one] at what
   rw [factor0] at ktwopi
-  simp at ktwopi
+  simp only [Int.cast_zero, zero_mul] at ktwopi
   obtain ⟨ξre, ξim⟩ := Complex.arg_eq_zero_iff.mp ktwopi.symm
   obtain ⟨ξℝ, ξeq⟩ := Complex.canLift.prf ξ ξim
   have ξℝpos: 0 ≤ ξℝ := by
     convert ξre
     rw [← ξeq]
-    simp
+    simp only [Complex.ofReal_re]
   have ξℝeval: (ξPolynomialℝ s t).eval ξℝ = 0 := by
     unfold ξPolynomialℝ
-    simp
+    simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_mul,
+      Polynomial.eval_one]
     rw [← ξeq] at mem'
     norm_cast at mem'
   have ξℝpos': 0 < ξℝ  := by
@@ -1254,9 +1313,11 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
     by_contra eq0
     rw [← eq0] at ξℝeval
     unfold ξPolynomialℝ at ξℝeval
-    simp at ξℝeval
+    simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, ne_eq,
+      PNat.ne_zero, not_false_eq_true, zero_pow, mul_zero, add_zero, Polynomial.eval_one, zero_sub,
+      neg_eq_zero, one_ne_zero] at ξℝeval
   have ξℝuniqueCond: (fun ξ ↦ ξ > 0 ∧ Polynomial.eval ξ (ξPolynomialℝ s t) = 0) ξℝ := by
-    simp
+    simp only [gt_iff_lt]
     constructor
     · exact ξℝpos'
     · exact ξℝeval
@@ -1265,44 +1326,54 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
   obtain unique := ξ₀unique ξℝ ξℝuniqueCond
   exact unique
 
+noncomputable
+def Res₀ (s t: ℕ+): ℝ := (1 - (ξ₀ s t)) * (s * (ξ₀ s t)^(s:ℕ) + t * (ξ₀ s t)^(t:ℕ))
 
-theorem ΦAsymptotic (s t: ℕ+) (coprime: s.Coprime t):
-Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * (1 - (ξ₀ s t)) * (s * (ξ₀ s t)^(s:ℕ) + t * (ξ₀ s t)^(t:ℕ)))) Filter.atTop (nhds 1) := by
+lemma ΦAsymptotic (s t: ℕ+) (coprime: s.Coprime t):
+Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * Res₀ s t)) Filter.atTop (nhds 1) := by
   obtain ⟨⟨ξ₀pos, ξ₀eq⟩, ξ₀unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
   have funrw:
-    (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * (1 - (ξ₀ s t)) * (s * (ξ₀ s t)^(s:ℕ) + t * (ξ₀ s t)^(t:ℕ)))) =
+    (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * Res₀ s t)) =
     (fun (i:ℕ) ↦ 1 +
     ∑ ξ ∈ (ξSet s t).erase ↑(ξ₀ s t),
       (↑(ξ₀ s t) / ξ) ^ i *
         ((1 - ξ)⁻¹ * (s * ξ ^ (s:ℕ) + t * ξ ^ (t:ℕ))⁻¹ * (1 - (ξ₀ s t)) * (s * (ξ₀ s t) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ)))) := by
     ext i
+    unfold Res₀
+    push_cast
+    nth_rw 2 [← mul_assoc]
     rw [ΦFormula]
     rw [Finset.sum_mul]
     have mem: (ξ₀ s t: ℂ) ∈ ξSet s t := by
       unfold ξSet
-      simp
+      simp only [Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, Polynomial.IsRoot.def]
       constructor
       · by_contra poly0
         have ev1: (ξPolynomial s t).eval 1 = 1 := by
           unfold ξPolynomial
-          simp
+          simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial,
+            one_pow, mul_one, Polynomial.eval_one, add_sub_cancel_right]
         rw [poly0] at ev1
-        simp at ev1
+        simp only [Polynomial.eval_zero, zero_ne_one] at ev1
       · unfold ξPolynomial
-        simp
+        simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial,
+          one_mul, Polynomial.eval_one]
         norm_cast
         unfold ξ₀ ξPolynomialℝ
-        simp
+        simp only [gt_iff_lt, map_one, Polynomial.eval_sub, Polynomial.eval_add,
+          Polynomial.eval_monomial, one_mul, Polynomial.eval_one, and_imp]
         unfold ξPolynomialℝ at ξ₀eq
-        simp at ξ₀eq
+        simp only [gt_iff_lt, map_one, Polynomial.eval_sub, Polynomial.eval_add,
+          Polynomial.eval_monomial, one_mul, Polynomial.eval_one, and_imp] at ξ₀eq
         exact ξ₀eq
     rw [← Finset.add_sum_erase _ _ mem]
     have left: ((ξ₀ s t: ℂ))⁻¹ ^ i * (1 - (ξ₀ s t: ℂ))⁻¹ * (s * (ξ₀ s t: ℂ) ^ (s:ℕ) + t * (ξ₀ s t: ℂ) ^ (t:ℕ))⁻¹ *
       ((ξ₀ s t: ℂ) ^ i * (1 - (ξ₀ s t: ℂ)) * (s * (ξ₀ s t: ℂ) ^ (s:ℕ) + t * (ξ₀ s t: ℂ) ^ (t:ℕ))) = 1 := by
-      simp
+      simp only [inv_pow]
       field_simp
       apply div_self
-      simp
+      simp only [ne_eq, mul_eq_zero, pow_eq_zero_iff', Complex.ofReal_eq_zero, not_or, not_and,
+        Decidable.not_not]
       constructor
       · constructor
         · rw [imp_iff_not_or]
@@ -1311,17 +1382,24 @@ Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * (1 - (ξ₀ s 
           by_contra ξ0
           rw [ξ0] at mem
           unfold ξSet ξPolynomial at mem
-          simp at mem
+          simp only [map_one, Complex.ofReal_zero, Multiset.mem_toFinset, Polynomial.mem_roots',
+            ne_eq, Polynomial.IsRoot.def, Polynomial.eval_sub, Polynomial.eval_add,
+            Polynomial.eval_monomial, PNat.ne_zero, not_false_eq_true, zero_pow, mul_zero, add_zero,
+            Polynomial.eval_one, zero_sub, neg_eq_zero, one_ne_zero, and_false] at mem
         · show 1 - (ξ₀ s t : ℂ) ≠ 0
           by_contra ξ1
           apply eq_of_sub_eq_zero at ξ1
           rw [← ξ1] at mem
           unfold ξSet ξPolynomial at mem
-          simp at mem
+          simp only [map_one, Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq,
+            Polynomial.IsRoot.def, Polynomial.eval_sub, Polynomial.eval_add,
+            Polynomial.eval_monomial, one_pow, mul_one, Polynomial.eval_one, add_sub_cancel_right,
+            one_ne_zero, and_false] at mem
       · show (s * (ξ₀ s t: ℂ) ^ (s:ℕ) + t * (ξ₀ s t: ℂ) ^ (t:ℕ)) ≠ 0
         obtain noneq := ξNonMult s t (ξ₀ s t:ℂ) mem
         contrapose noneq with eq0
-        simp at eq0; simp
+        simp only [ne_eq, Decidable.not_not] at eq0;
+        simp only [ne_eq, Decidable.not_not]
         have h: s * (ξ₀ s t:ℂ) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ) =
           (s * (ξ₀ s t) ^ (s - 1:ℕ) + t * (ξ₀ s t) ^ (t - 1:ℕ)) * (ξ₀ s t) := by
           rw [add_mul]
@@ -1335,8 +1413,11 @@ Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * (1 - (ξ₀ s 
           by_contra ξ0
           rw [ξ0] at mem
           unfold ξSet ξPolynomial at mem
-          simp at mem
-        simp [h2] at eq0
+          simp only [map_one, Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq,
+            Polynomial.IsRoot.def, Polynomial.eval_sub, Polynomial.eval_add,
+            Polynomial.eval_monomial, PNat.ne_zero, not_false_eq_true, zero_pow, mul_zero, add_zero,
+            Polynomial.eval_one, zero_sub, neg_eq_zero, one_ne_zero, and_false] at mem
+        simp only [h2, or_false] at eq0
         exact eq0
     rw [left]
     have right:
@@ -1356,30 +1437,33 @@ Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * (1 - (ξ₀ s 
 
   rw [funrw]
 
-  have limrw: nhds (1:ℂ) = nhds (1 + 0) := by simp
+  have limrw: nhds (1:ℂ) = nhds (1 + 0) := by simp only [add_zero]
   rw [limrw]
-  apply Filter.Tendsto.add (by simp)
+  apply Filter.Tendsto.add (by simp only [tendsto_const_nhds_iff])
 
-  have limrw2: nhds (0:ℂ) = nhds (∑ ξ ∈ (ξSet s t).erase (ξ₀ s t), 0) := by simp
+  have limrw2: nhds (0:ℂ) = nhds (∑ ξ ∈ (ξSet s t).erase (ξ₀ s t), 0) := by simp only [Finset.sum_const_zero]
   rw [limrw2]
   apply tendsto_finset_sum
   intro ξ mem
-  simp at mem
+  simp only [Finset.mem_erase, ne_eq] at mem
   rcases mem with ⟨ne, mem⟩
 
-  have limrw3: nhds (0:ℂ) = nhds (0 * ((1 - ξ)⁻¹ * (s * ξ ^ (s:ℕ) + t * ξ ^ (t:ℕ))⁻¹ * (1 - (ξ₀ s t)) * (s * (ξ₀ s t) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ)))) := by simp
+  have limrw3: nhds (0:ℂ) = nhds (0 * ((1 - ξ)⁻¹ * (s * ξ ^ (s:ℕ) + t * ξ ^ (t:ℕ))⁻¹ * (1 - (ξ₀ s t)) * (s * (ξ₀ s t) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ)))) := by simp only [zero_mul]
   rw [limrw3]
   apply Filter.Tendsto.mul_const
   apply tendsto_pow_atTop_nhds_zero_of_norm_lt_one
   rw [norm_div]
   refine (div_lt_one ?_).mpr ?_
-  · simp
+  · simp only [norm_pos_iff, ne_eq]
     by_contra ξ0
     rw [ξ0] at mem
     unfold ξSet ξPolynomial at mem
-    simp at mem
+    simp only [map_one, Multiset.mem_toFinset, Polynomial.mem_roots', ne_eq, Polynomial.IsRoot.def,
+      Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, PNat.ne_zero,
+      not_false_eq_true, zero_pow, mul_zero, add_zero, Polynomial.eval_one, zero_sub, neg_eq_zero,
+      one_ne_zero, and_false] at mem
   · have rwl: ‖(ξ₀ s t: ℂ)‖ = ξ₀ s t := by
-      simp
+      simp only [Complex.norm_real, Real.norm_eq_abs, abs_eq_self]
       apply le_of_lt
       unfold ξ₀
       exact ξ₀pos
@@ -1387,3 +1471,60 @@ Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * (1 - (ξ₀ s 
     apply ξ₀Smallest s t coprime
     · exact mem
     · exact ne
+
+lemma ΦAsymptoticℝ (s t: ℕ+) (coprime: s.Coprime t):
+Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℝ) * ((ξ₀ s t)^i * Res₀ s t)) Filter.atTop (nhds 1) := by
+  obtain complex := ΦAsymptotic s t coprime
+  norm_cast at complex
+  have one: (1:ℂ) = (1:ℝ) := by simp only [Complex.ofReal_one]
+  rw [one] at complex
+  exact Filter.tendsto_ofReal_iff.mp complex
+
+lemma dE_int_Asymptotic (s t: ℕ+) (coprime: s.Coprime t):
+Filter.Tendsto (fun n ↦ dE_int s t n / (Real.log n)) Filter.atTop (nhds 1) := by
+  have leftSide (n: ℝ) (n1: n > 1): Φ s t (dE_int s t n - 1) ≤ n := by
+    have mem: dE_int s t n - 1 ∈ Set.Iic (dE_int s t n - 1) := by simp only [Set.mem_Iic, le_refl]
+    rw [← Φ_inv s t n (le_of_lt n1)] at mem
+    unfold ΔceiledByΦ at mem
+    simp only [Set.mem_setOf_eq] at mem
+    exact mem
+  have rightSide (n: ℝ) (n1: n > 1): n < Φ s t (dE_int s t n) := by
+    have mem: dE_int s t n ∉ Set.Iic (dE_int s t n - 1) := by simp only [Set.mem_Iic,
+      le_sub_self_iff, Int.reduceLE, not_false_eq_true]
+    rw [← Φ_inv s t n (le_of_lt n1)] at mem
+    unfold ΔceiledByΦ at mem
+    simp only [Set.mem_setOf_eq, not_le] at mem
+    exact mem
+  have Φ0 (n: ℝ) (n1: n > 1): Φ s t (dE_int s t n - 1) > 0 := by sorry
+  have ξ0 (n: ℝ): ξ₀ s t ^ (dE_int s t n - 1) > 0 := by sorry
+  have ξ0' (n: ℝ): ξ₀ s t ^ (dE_int s t n) > 0 := by sorry
+  have Res₀0: Res₀ s t > 0 := by sorry
+  have ξRes₀0 (n: ℝ): ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 := by sorry
+  have leftSide0 (n: ℝ) (n1: n > 1): (Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t) > 0 := by
+    sorry
+  have leftSide1 (n: ℝ) (n1: n > 1): (Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t) * ξ₀ s t > 0 := by
+    sorry
+
+  have nξ0' (n: ℝ) (n1: n > 1): n * ξ₀ s t ^ (dE_int s t n) > 0 := by sorry
+
+  have mid (n: ℝ) (n1: n > 1): n * ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 := by sorry
+
+  have leftSide' (n: ℝ) (n1: n > 1):
+    (Real.log (Φ s t (dE_int s t n - 1) * ((ξ₀ s t)^(dE_int s t n - 1) * Res₀ s t)) + Real.log (ξ₀ s t)) / Real.log n ≤
+    1 + (dE_int s t n) * Real.log ((ξ₀ s t)) / Real.log n + Real.log (Res₀ s t) / Real.log n := by
+    have logngt0: 0 < Real.log n := by sorry
+    have logn0: Real.log n ≠ 0 := by sorry
+    have n0: n ≠ 0 := by sorry
+    rw [← Real.log_mul (ne_of_gt (leftSide0 n n1)) (ne_of_gt (ξ₀min s t))]
+    rw [← div_self (logn0)]
+    rw [← add_div, ← add_div]
+    rw [← Real.log_zpow]
+    rw [← Real.log_mul n0 (ne_of_gt (ξ0' n))]
+    rw [← Real.log_mul (ne_of_gt (nξ0' n n1)) (ne_of_gt Res₀0)]
+    apply (div_le_div_iff_of_pos_right logngt0).mpr
+    apply (Real.strictMonoOn_log.le_iff_le (leftSide1 n n1) (mid n n1)).mpr
+    rw [mul_assoc, mul_right_comm, ← zpow_add_one₀ (ne_of_gt (ξ₀min s t)), sub_add_cancel, mul_assoc]
+    apply (mul_le_mul_iff_of_pos_right (ξRes₀0 n)).mpr
+    exact leftSide n n1
+
+  sorry

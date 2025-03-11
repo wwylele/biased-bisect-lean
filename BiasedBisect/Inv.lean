@@ -27,51 +27,52 @@ theorem φ_inv (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
   unfold Set.Iio
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
   rw [keq]
-  simp
+  simp only
   unfold kₙ at keq
   unfold φ
   ext δ
   constructor
-  · simp
+  · simp only [Nat.cast_add, Nat.cast_one, Set.mem_setOf_eq]
     intro JceiledLe
     contrapose JceiledLe with δGe
-    simp
-    simp at δGe
+    simp only [not_le]
+    simp only [not_lt] at δGe
     have JceiledLe: (1: ℝ) + Jceiled s t (δₖ s t k) ≤ 1 + Jceiled s t δ := by
-      simp
+      simp only [add_le_add_iff_left, Nat.cast_le]
       apply Jceiled_mono
       exact δGe
     apply gt_of_ge_of_gt JceiledLe
     have pull_cast: (1: ℝ) + (Jceiled s t (δₖ s t k)) = ((1 + Jceiled s t (δₖ s t k): ℕ): ℝ) := by
-      simp
+      simp only [Nat.cast_add, Nat.cast_one]
     have n_accum: 1 + Jceiled s t (δₖ s t k) = nₖ s t (k + 1) := by
       rw [nₖ_accum]
-      simp
+      simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+        add_tsub_cancel_right]
     rw [pull_cast]
     rw [n_accum]
     by_contra nle
-    simp at nle
+    simp only [gt_iff_lt, not_lt] at nle
     have kp1mem: k + 1 ∈ (kceiled s t n).toFinset := by
       unfold kceiled
-      simp
+      simp only [Set.mem_toFinset, Set.mem_setOf_eq]
       exact nle
     have what: k + 1 ≤ k := by exact Finset.le_max_of_eq kp1mem keq
-    simp at what
-  · simp
+    simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
+  · simp only [Set.mem_setOf_eq, Nat.cast_add, Nat.cast_one]
     intro δlt
     by_cases k0: k = 0
     · rw [k0] at δlt
       rw [δ₀] at δlt
       rw [Jceiled_neg s t δ δlt]
-      simp
+      simp only [CharP.cast_eq_zero, add_zero]
       exact n1
     · have kmem: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
       unfold kceiled at kmem
-      simp at kmem
+      simp only [Set.mem_toFinset, Set.mem_setOf_eq] at kmem
       rw [nₖ_accum] at kmem
-      simp [k0] at kmem
+      simp only [k0, ↓reduceIte, Nat.cast_add, Nat.cast_one] at kmem
       apply le_trans ?_ kmem
-      simp
+      simp only [add_le_add_iff_left, Nat.cast_le]
       apply Jceiled_gap'
       rw [← δₖ]
       have h: (k - 1).succ = k := by exact Nat.succ_pred_eq_of_ne_zero k0
@@ -93,7 +94,10 @@ HasDerivAt (fun x ↦ Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) / (
     Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) * (-2 * π * f * Complex.I - σ) / (-2 * π * f * Complex.I - σ) := by
     rw [mul_div_cancel_right₀]
     apply ne_zero_of_re_neg
-    simp
+    simp only [neg_mul, Complex.sub_re, Complex.neg_re, Complex.mul_re, Complex.re_ofNat,
+      Complex.ofReal_re, Complex.im_ofNat, Complex.ofReal_im, mul_zero, sub_zero, Complex.mul_im,
+      zero_mul, add_zero, Complex.I_re, Complex.I_im, mul_one, sub_self, neg_zero, zero_sub,
+      gt_iff_lt, Left.neg_neg_iff]
     exact σ0
   rw [muldiv]
   apply HasDerivAt.div_const
@@ -133,7 +137,8 @@ lemma φReg_Fourier (s t μ σ f: ℝ):
     unfold φReg; rfl
   _ = ∫ x, Complex.exp ((↑(-2 * π * (x * f)) * Complex.I)) * (U μ x * Complex.exp (- σ * x) + ∑' pq, φTerm s t μ σ pq x) := by
     rw [fourierIntegral_eq']
-    simp
+    simp only [neg_mul, RCLike.inner_apply, conj_trivial, Complex.ofReal_neg, Complex.ofReal_mul,
+      Complex.ofReal_ofNat, smul_eq_mul]
   _ = ∫ x, Complex.exp ((↑(-2 * π * (x * f)) * Complex.I)) * (U μ x * Complex.exp (- σ * x)) + Complex.exp ((↑(-2 * π * (x * f)) * Complex.I)) * ∑' pq, φTerm s t μ σ pq x := by
     congr 1
     ext x
@@ -165,7 +170,7 @@ lemma φReg_Fourier (s t μ σ f: ℝ):
   _ = (∫ x, Complex.exp ((↑(-2 * π * (x * f)) * Complex.I)) * (U μ (x - 0) * Complex.exp (- σ * x))) + ∑' pq, Jₚ pq * ∫ x, Complex.exp ((↑(-2 * π * (x * f)) * Complex.I)) * (U μ (x - (pq.1 * s + pq.2 * t)) * Complex.exp (- σ * x)) := by
     congr 2
     ext x
-    simp
+    simp only [neg_mul, Complex.ofReal_neg, Complex.ofReal_mul, Complex.ofReal_ofNat, sub_zero]
   _ = (Uinteg μ σ 0 f) + ∑' pq, Jₚ pq * Uinteg μ σ (pq.1 * s + pq.2 * t) f := by
     rfl
 
