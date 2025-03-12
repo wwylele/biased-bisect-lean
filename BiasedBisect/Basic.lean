@@ -65,6 +65,9 @@ by
 class PosReal (x : ℝ) : Prop where
   pos : x > 0
 
+instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a * b) where
+  pos := mul_pos PosReal.pos PosReal.pos
+
 /-
 Throughout the file, we will use a pair of real positive parameters s and t.
 
@@ -87,7 +90,7 @@ def Δ(s t: ℝ) :=
   {δ | is_δ s t δ}
 
 /-
-The set Δ is symmetric for s and t. We will exploit this symmetry a lot later on.
+The set Δ is symmetric for s and t. We will explore this symmetry a lot later on.
 -/
 theorem Δ_symm(s t: ℝ): Δ s t = Δ t s := by
   ext
@@ -99,6 +102,26 @@ theorem Δ_symm(s t: ℝ): Δ s t = Δ t s := by
   constructor
   · apply oneway
   · apply oneway
+
+/-
+Another property we will explore is homogeneity:
+parameters (l * s, l * t) is closely related to (s, t),
+and the associated objects is either the same, or scaled by l
+-/
+theorem Δ_homo(s t l: ℝ) [lpos: PosReal l]: ∀δ, δ ∈ Δ s t ↔ l * δ ∈ Δ (l * s) (l * t) := by
+  intro d
+  unfold Δ is_δ
+  simp only [Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨p, ⟨q, mem⟩⟩
+    use p, q
+    rw [← mul_assoc, ← mul_assoc, mul_comm _ l, mul_comm _ l]
+    rw [mul_assoc, mul_assoc, ← mul_add, mem]
+  · rintro ⟨p, ⟨q, mem⟩⟩
+    use p, q
+    refine Or.resolve_right (mul_eq_mul_left_iff.mp ?_) (ne_of_gt lpos.pos)
+    rw [mul_add, ← mul_assoc, ← mul_assoc, mul_comm l, mul_comm l, mul_assoc, mul_assoc]
+    exact mem
 
 /-
 For each lattice point, we can assign a δ. As previously mentioned,
@@ -401,6 +424,25 @@ lemma Δfloored_symm (s t floor: ℝ):
   apply Δ_symm
 
 /-
+... and homogeneous
+-/
+lemma Δfloored_homo (s t floor l: ℝ) [PosReal l]:
+∀δ, δ ∈ Δfloored s t floor ↔ l * δ ∈ Δfloored (l * s) (l * t) (l * floor) := by
+  unfold Δfloored
+  intro d
+  simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨dgrid, dfloor⟩
+    constructor
+    · exact (Δ_homo s t l d).mp dgrid
+    · exact (mul_lt_mul_left PosReal.pos).mpr dfloor
+  · rintro ⟨dgrid, dfloor⟩
+    constructor
+    · exact (Δ_homo s t l d).mpr dgrid
+    · exact (mul_lt_mul_left PosReal.pos).mp dfloor
+
+
+/-
 Floored sets are still infinite, but are well-ordered as subsets
 -/
 lemma Δfloored_WF (s t floor: ℝ) [PosReal s] [PosReal t]:
@@ -447,6 +489,25 @@ lemma δnext_symm (s t floor: ℝ) [PosReal s] [PosReal t]:
   unfold δnext
   congr
   apply Δfloored_symm
+
+/-
+δnext is homogeneous
+-/
+lemma δnext_homo (s t floor l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
+l * δnext s t floor = δnext (l * s) (l * t) (l * floor) := by
+  unfold δnext
+  symm
+  apply Set.IsWF.min_eq_of_le
+  · rw [← Δfloored_homo]
+    exact Set.IsWF.min_mem (Δfloored_WF s t floor) (Δfloored_nonempty s t floor)
+  · intro d mem
+    let d' := d / l
+    have drw: d = l * d' := by unfold d'; rw [mul_comm]; rw [div_mul_cancel₀]; apply ne_of_gt (PosReal.pos)
+    rw [drw] at mem
+    rw [← Δfloored_homo] at mem
+    rw [drw]
+    refine mul_le_mul_of_nonneg_left ?_ (le_of_lt PosReal.pos)
+    exact Set.IsWF.min_le (Δfloored_WF s t floor) (Δfloored_nonempty s t floor) mem
 
 /-
 δnext will always output an element in Δ
@@ -656,6 +717,17 @@ theorem δₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: δₖ s t k = δ
 -/
 lemma δ₀ (s t: ℝ) [PosReal s] [PosReal t]: δₖ s t 0 = 0 := by
   rfl
+
+/-
+δₖ is homogeneous
+-/
+lemma δₖ_homo (s t l: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal l]: l * δₖ s t k = δₖ (l * s) (l * t) k := by
+  induction k with
+  | zero => rw [δ₀, δ₀]; simp only [mul_zero]
+  | succ k prev =>
+    unfold δₖ
+    rw [← prev]
+    rw [← δnext_homo]
 
 /-
 All δₖ are obviously elements in Δ
@@ -1260,6 +1332,16 @@ Jceiled s t δ = Jceiled t s δ := by
     exact Jₚ_symm a b
 
 /-
+... and homogeneous
+-/
+lemma Jceiled_homo (s t δ l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
+Jceiled s t δ = Jceiled (l * s) (l * t) (l * δ) := by
+  unfold Jceiled
+  congr 1
+  simp only [Set.toFinset_inj]
+  rw [← Λceiled_homo]
+
+/-
 Jceiled is weakly increasing with regards to δ.
 As δ grows, Λceiled can either remain unchanged for include new points.
 -/
@@ -1451,6 +1533,14 @@ lemma nₖ_symm (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t = nₖ t s := by
     rw [prev]
     simp only [add_right_inj]
     rw [Jₖ_symm]
+
+/-
+... and homogeneous
+-/
+lemma nₖ_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: nₖ s t = nₖ (l * s) (l * t) := by
+  ext k
+  rw [nₖ_accum, nₖ_accum]
+  rw [← δₖ_homo, ← Jceiled_homo]
 
 /-
 The first two elements of nₖ are always 1 and 2
@@ -2038,6 +2128,14 @@ noncomputable instance (s t n: ℝ) [PosReal s] [PosReal t]:
 Fintype (kceiled s t n) := by apply Fintype.ofFinite
 
 /-
+... and homogeneous
+-/
+lemma kceiled_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: kceiled s t n = kceiled (l * s) (l * t) n := by
+  unfold kceiled
+  rw [← nₖ_homo]
+
+
+/-
 We can now find kₙ, the closest k for which nₖ ≤ n.
 We can always find such k for n ≥ 1.
 -/
@@ -2052,6 +2150,15 @@ lemma kₙ_symm (s t n: ℝ) [PosReal s] [PosReal t]: kₙ s t n = kₙ t s n :=
   congr 1
   simp only [Set.toFinset_inj]
   rw [kceiled_symm]
+
+/-
+... and homogeneous
+-/
+lemma kₙ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: kₙ s t n = kₙ (l * s) (l * t) n := by
+  unfold kₙ
+  congr 1
+  simp only [Set.toFinset_inj]
+  rw [← kceiled_homo]
 
 /-
 kₙ and nₖ are basically inverse functions to each other.
@@ -2146,6 +2253,18 @@ lemma dE_symm (s t n: ℝ) [PosReal s] [PosReal t]: dE s t n = dE t s n := by
   congr
   ext
   rw [δₖ_symm]
+
+/-
+... homogeneous
+-/
+lemma dE_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: l * dE s t n = dE (l * s) (l * t) n := by
+  unfold dE
+  rw [← kₙ_homo]
+  cases kₙ s t n with
+  | bot => simp only [mul_zero]
+  | coe k =>
+    simp only
+    exact δₖ_homo s t l k
 
 /-
 ... and weakly increasing

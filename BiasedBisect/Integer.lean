@@ -188,6 +188,12 @@ lemma dE_int_agree (s t: ℕ+) (n: ℝ): dE_int s t n = dE s t n := by
     rw [keq]
     simp only [Int.cast_zero]
 
+lemma dE_int_homo (s t l: ℕ+) (n: ℝ): l * (dE_int s t n) = dE_int (l * s) (l * t) n := by
+  rify
+  rw [dE_int_agree, dE_int_agree]
+  push_cast
+  apply dE_homo s t n l
+
 
 /-
 Let's introduce a new sequence Φ(δ) that's simply Jceiled_int shifted by 1.
@@ -1145,6 +1151,29 @@ lemma ξ₀max (s t: ℕ+): ξ₀ s t < 1 := by
   simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial, one_pow,
     mul_one, Polynomial.eval_one, add_sub_cancel_right, zero_lt_one]
 
+lemma ξ₀eval (s t: ℕ+): (ξPolynomialℝ s t).eval (ξ₀ s t) = 0 := by
+  obtain ⟨⟨range, ev⟩, unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
+  exact ev
+
+lemma ξ₀homo (s t l: ℕ+): (ξ₀ s t) = (ξ₀ (l * s) (l * t)) ^ (l:ℕ) := by
+  apply (ξPolynomialℝUniqueRoot s t).unique
+  · constructor
+    · apply ξ₀min
+    · apply ξ₀eval
+  · constructor
+    · apply pow_pos; apply ξ₀min
+    · unfold ξPolynomialℝ
+      simp only [map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial,
+        one_mul, Polynomial.eval_one]
+      rw [← pow_mul, ← pow_mul]
+      norm_cast
+      obtain eval := ξ₀eval (l * s) (l * t)
+      unfold ξPolynomialℝ at eval
+      simp only [PNat.mul_coe, map_one, Polynomial.eval_sub, Polynomial.eval_add,
+        Polynomial.eval_monomial, one_mul, Polynomial.eval_one] at eval
+      exact eval
+
+
 
 theorem Complex.arg_pow_coe_angle {x : ℂ} {n: ℕ} : ((x ^ n).arg : Real.Angle) = n • (x.arg : Real.Angle) := by
   by_cases x0: x = 0
@@ -1480,8 +1509,18 @@ Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℝ) * ((ξ₀ s t)^i * Res₀ s t)) F
   rw [one] at complex
   exact Filter.tendsto_ofReal_iff.mp complex
 
-lemma dE_int_Asymptotic (s t: ℕ+) (coprime: s.Coprime t):
-Filter.Tendsto (fun n ↦ dE_int s t n / (Real.log n)) Filter.atTop (nhds 1) := by
+lemma ΦAsymptoticℝ' (s t: ℕ+) (coprime: s.Coprime t):
+Filter.Tendsto (fun (i:ℤ) ↦ (Φ s t i:ℝ) * ((ξ₀ s t)^i * Res₀ s t)) Filter.atTop (nhds 1) := by
+  have funrw: (fun (i:ℕ) ↦ (Φ s t i:ℝ) * ((ξ₀ s t)^i * Res₀ s t)) = (fun (i:ℤ) ↦ (Φ s t i:ℝ) * ((ξ₀ s t)^i * Res₀ s t)) ∘ (fun (i:ℕ) ↦ (i:ℤ)) := by
+    rfl
+  obtain asymp := ΦAsymptoticℝ s t coprime
+  rw [funrw] at asymp
+  apply Filter.tendsto_map' at asymp
+  convert asymp
+  exact Eq.symm Nat.map_cast_int_atTop
+
+lemma dE_int_Asymptotic_coprime (s t: ℕ+) (coprime: s.Coprime t):
+Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n) Filter.atTop (nhds (-1:ℝ)) := by
   have leftSide (n: ℝ) (n1: n > 1): Φ s t (dE_int s t n - 1) ≤ n := by
     have mem: dE_int s t n - 1 ∈ Set.Iic (dE_int s t n - 1) := by simp only [Set.mem_Iic, le_refl]
     rw [← Φ_inv s t n (le_of_lt n1)] at mem
@@ -1495,36 +1534,164 @@ Filter.Tendsto (fun n ↦ dE_int s t n / (Real.log n)) Filter.atTop (nhds 1) := 
     unfold ΔceiledByΦ at mem
     simp only [Set.mem_setOf_eq, not_le] at mem
     exact mem
-  have Φ0 (n: ℝ) (n1: n > 1): Φ s t (dE_int s t n - 1) > 0 := by sorry
-  have ξ0 (n: ℝ): ξ₀ s t ^ (dE_int s t n - 1) > 0 := by sorry
-  have ξ0' (n: ℝ): ξ₀ s t ^ (dE_int s t n) > 0 := by sorry
-  have Res₀0: Res₀ s t > 0 := by sorry
-  have ξRes₀0 (n: ℝ): ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 := by sorry
-  have leftSide0 (n: ℝ) (n1: n > 1): (Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t) > 0 := by
-    sorry
-  have leftSide1 (n: ℝ) (n1: n > 1): (Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t) * ξ₀ s t > 0 := by
-    sorry
+  have Φ0 {d: ℤ}: Φ s t d > (0:ℝ) := by
+    norm_cast
+    unfold Φ
+    simp only [gt_iff_lt, add_pos_iff, Nat.lt_one_iff, pos_of_gt, true_or]
+  have ξ0 (n: ℝ): ξ₀ s t ^ (dE_int s t n - 1) > 0 := by apply zpow_pos (ξ₀min s t)
+  have ξ0' (n: ℝ): ξ₀ s t ^ (dE_int s t n) > 0 := by apply zpow_pos (ξ₀min s t)
+  have Res₀0: Res₀ s t > 0 := by
+    unfold Res₀
+    apply mul_pos
+    · apply sub_pos_of_lt
+      exact ξ₀max s t
+    · apply add_pos
+      all_goals
+        apply mul_pos
+        · simp only [Nat.cast_pos, PNat.pos]
+        · apply pow_pos (ξ₀min s t)
+  have ξRes₀0 (n: ℝ): ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 := mul_pos (ξ0' n) (Res₀0)
+  have leftSide0 (n: ℝ): (Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t) > 0 :=
+    mul_pos Φ0 (mul_pos (ξ0 n) Res₀0)
+  have leftSide1 (n: ℝ) : (Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t) * ξ₀ s t > 0 :=
+    mul_pos (leftSide0 n) (ξ₀min s t)
 
-  have nξ0' (n: ℝ) (n1: n > 1): n * ξ₀ s t ^ (dE_int s t n) > 0 := by sorry
+  have rightSide0 (n: ℝ) : (Φ s t (dE_int s t n)) * (ξ₀ s t ^ (dE_int s t n) * Res₀ s t) > 0 :=
+    mul_pos Φ0 (mul_pos (ξ0' n) Res₀0)
 
-  have mid (n: ℝ) (n1: n > 1): n * ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 := by sorry
+  have nξ0' (n: ℝ) (n1: n > 1): n * ξ₀ s t ^ (dE_int s t n) > 0 :=
+    mul_pos (lt_trans Real.zero_lt_one n1) (ξ0' n)
+
+  have mid (n: ℝ) (n1: n > 1): n * ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 :=
+    mul_pos (nξ0' n n1) Res₀0
+  have logngt0 (n: ℝ) (n1: n > 1): 0 < Real.log n := Real.log_pos n1
+  have logn0 (n: ℝ) (n1: n > 1): Real.log n ≠ 0 := Ne.symm (ne_of_lt (logngt0 n n1))
+  have n0 (n: ℝ) (n1: n > 1): n ≠ 0 := ne_of_gt (lt_trans Real.zero_lt_one n1)
 
   have leftSide' (n: ℝ) (n1: n > 1):
-    (Real.log (Φ s t (dE_int s t n - 1) * ((ξ₀ s t)^(dE_int s t n - 1) * Res₀ s t)) + Real.log (ξ₀ s t)) / Real.log n ≤
+    (Real.log (Φ s t (dE_int s t n - 1) * ((ξ₀ s t)^(dE_int s t n - 1) * Res₀ s t)) + Real.log (ξ₀ s t)) * (Real.log n)⁻¹ ≤
     1 + (dE_int s t n) * Real.log ((ξ₀ s t)) / Real.log n + Real.log (Res₀ s t) / Real.log n := by
-    have logngt0: 0 < Real.log n := by sorry
-    have logn0: Real.log n ≠ 0 := by sorry
-    have n0: n ≠ 0 := by sorry
-    rw [← Real.log_mul (ne_of_gt (leftSide0 n n1)) (ne_of_gt (ξ₀min s t))]
-    rw [← div_self (logn0)]
+
+    rw [← Real.log_mul (ne_of_gt (leftSide0 n)) (ne_of_gt (ξ₀min s t))]
+    rw [← div_self (logn0 n n1)]
     rw [← add_div, ← add_div]
     rw [← Real.log_zpow]
-    rw [← Real.log_mul n0 (ne_of_gt (ξ0' n))]
+    rw [← Real.log_mul (n0 n n1) (ne_of_gt (ξ0' n))]
     rw [← Real.log_mul (ne_of_gt (nξ0' n n1)) (ne_of_gt Res₀0)]
-    apply (div_le_div_iff_of_pos_right logngt0).mpr
-    apply (Real.strictMonoOn_log.le_iff_le (leftSide1 n n1) (mid n n1)).mpr
+    apply (div_le_div_iff_of_pos_right (logngt0 n n1)).mpr
+    apply (Real.strictMonoOn_log.le_iff_le (leftSide1 n) (mid n n1)).mpr
     rw [mul_assoc, mul_right_comm, ← zpow_add_one₀ (ne_of_gt (ξ₀min s t)), sub_add_cancel, mul_assoc]
     apply (mul_le_mul_iff_of_pos_right (ξRes₀0 n)).mpr
     exact leftSide n n1
 
-  sorry
+  have rightSide' (n: ℝ) (n1: n > 1):
+    1 + (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n + Real.log (Res₀ s t) / Real.log n <
+    (Real.log (Φ s t (dE_int s t n) * ((ξ₀ s t)^(dE_int s t n) * Res₀ s t))) * (Real.log n)⁻¹ := by
+    rw [← div_self (logn0 n n1)]
+    rw [← add_div, ← add_div]
+    rw [← Real.log_zpow]
+    rw [← Real.log_mul (n0 n n1) (ne_of_gt (ξ0' n))]
+    rw [← Real.log_mul (ne_of_gt (nξ0' n n1)) (ne_of_gt Res₀0)]
+    apply (div_lt_div_iff_of_pos_right (logngt0 n n1)).mpr
+    apply (Real.strictMonoOn_log.lt_iff_lt (mid n n1) (rightSide0 n)).mpr
+    rw [mul_assoc]
+    apply (mul_lt_mul_iff_of_pos_right (ξRes₀0 n)).mpr
+    exact rightSide n n1
+
+  have loginv: Filter.Tendsto ((Real.log ·)⁻¹) Filter.atTop (nhds 0) := by
+    apply Filter.Tendsto.inv_tendsto_atTop
+    exact Real.tendsto_log_atTop
+  have log1: Filter.Tendsto Real.log (nhds 1) (nhds 0) := by
+    rw [← Real.log_one]
+    apply ContinuousAt.tendsto
+    apply Real.continuousAt_log
+    norm_num
+  have dElim: Filter.Tendsto (dE_int s t) Filter.atTop Filter.atTop := by
+    apply Filter.tendsto_atTop_atTop.mpr
+    intro d
+    use Φ s t d
+    intro n dlen
+    obtain dEdlen:= dE_mono s t dlen
+    rw [← dE_int_agree, ← dE_int_agree] at dEdlen
+    norm_cast at dEdlen
+    refine le_trans ?_ dEdlen
+    apply le_of_lt
+    have mem: d ∈ ΔceiledByΦ s t (Φ s t d) := by
+      unfold ΔceiledByΦ
+      simp only [Nat.cast_le, Set.mem_setOf_eq, le_refl]
+    have g1: Φ s t d ≥ (1:ℝ) := by
+      norm_cast
+      unfold Φ
+      simp only [le_add_iff_nonneg_right, zero_le]
+    rw [Φ_inv _ _ _ g1] at mem
+    exact Int.lt_of_le_sub_one mem
+
+
+  have leftLimit:
+    Filter.Tendsto (fun n ↦ (Real.log (Φ s t (dE_int s t n - 1) * ((ξ₀ s t)^(dE_int s t n - 1) * Res₀ s t)) + Real.log (ξ₀ s t)) * (Real.log n)⁻¹) Filter.atTop (nhds 0) := by
+    rw [(by norm_num: (0:ℝ) = (0 + Real.log (ξ₀ s t)) * 0)]
+    apply Filter.Tendsto.mul
+    · apply Filter.Tendsto.add_const
+      rw [(by rfl: (fun n ↦ Real.log (↑(Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t))) = Real.log ∘ (fun d ↦ ↑(Φ s t d) * (ξ₀ s t ^ d * Res₀ s t)) ∘ (fun n ↦ dE_int s t n - 1))]
+      apply Filter.Tendsto.comp log1
+      apply Filter.Tendsto.comp
+      · apply ΦAsymptoticℝ' s t coprime
+      · apply Filter.tendsto_atTop_add_const_right
+        exact dElim
+    · exact loginv
+
+  have rightLimit:
+    Filter.Tendsto (fun n ↦ (Real.log (Φ s t (dE_int s t n) * ((ξ₀ s t)^(dE_int s t n) * Res₀ s t)))  * (Real.log n)⁻¹) Filter.atTop (nhds 0) := by
+    rw [(by norm_num: (0:ℝ) = 0 * 0)]
+    apply Filter.Tendsto.mul
+    rw [(by rfl: (fun n ↦ Real.log (↑(Φ s t (dE_int s t n)) * (ξ₀ s t ^ (dE_int s t n) * Res₀ s t))) = Real.log ∘ (fun d ↦ ↑(Φ s t d) * (ξ₀ s t ^ d * Res₀ s t)) ∘ (fun n ↦ dE_int s t n))]
+    · apply Filter.Tendsto.comp log1
+      apply Filter.Tendsto.comp
+      · apply ΦAsymptoticℝ' s t coprime
+      · exact dElim
+    · exact loginv
+
+  have midLimit:
+    Filter.Tendsto (fun n ↦ 1 + (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n + Real.log (Res₀ s t) / Real.log n) Filter.atTop (nhds 0) := by
+    apply tendsto_of_tendsto_of_tendsto_of_le_of_le' leftLimit rightLimit
+    all_goals
+      unfold Filter.Eventually
+      apply Filter.mem_atTop_sets.mpr
+      use 2
+      intro n n2
+      have n1 : n > 1 := lt_of_lt_of_le (by norm_num) n2
+      simp only [Set.mem_setOf_eq]
+    · apply leftSide' n n1
+    · apply le_of_lt
+      apply rightSide' n n1
+
+  have funrw: (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n) =
+    (fun n ↦ 1 + (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n + Real.log (Res₀ s t) / Real.log n - (1 + Real.log (Res₀ s t) / Real.log n)) := by
+    ext n
+    ring
+
+  rw [funrw]
+  rw [(by norm_num: (-1:ℝ) = 0 - (1 + Real.log (Res₀ s t) * 0))]
+  apply Filter.Tendsto.sub midLimit
+  apply Filter.Tendsto.const_add
+  apply Filter.Tendsto.const_mul
+  exact loginv
+
+lemma dE_int_Asymptotic (s t: ℕ+):
+Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n) Filter.atTop (nhds (-1:ℝ)) := by
+  obtain ⟨S, seq⟩ := PNat.gcd_dvd_left s t
+  obtain ⟨T, teq⟩ := PNat.gcd_dvd_right s t
+  have coprime: S.Coprime T := by
+    obtain gcd_left := Nat.gcd_mul_left (s.gcd t) S T
+    norm_cast at gcd_left
+    rw [← seq, ← teq] at gcd_left
+    exact mul_right_eq_self.mp (id (Eq.symm gcd_left))
+
+  obtain base := dE_int_Asymptotic_coprime S T coprime
+  refine Filter.Tendsto.congr ?_ base
+  intro n
+  set l := s.gcd t
+  rw [seq, teq, ← dE_int_homo]
+  rw [mul_comm _ (dE_int S T n)]
+  push_cast
+  rw [mul_assoc, ← Real.log_pow, ← ξ₀homo]
