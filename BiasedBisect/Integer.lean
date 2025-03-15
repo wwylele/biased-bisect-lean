@@ -322,7 +322,7 @@ Int.cast '' Set.Iic (dE_int s t n - 1) = Set.Iio (dE s t n) ∩ (Int.cast '' Set
 /-
 And finally, we show that Φ is the inverse function of dE in some sense
 -/
-theorem Φ_inv (s t: ℕ+) (n: ℝ) (n1: n ≥ 1):
+lemma Φ_inv (s t: ℕ+) (n: ℝ) (n1: n ≥ 1):
 ΔceiledByΦ s t n = Set.Iic (dE_int s t n - 1) := by
   have lifted: ((Int.cast '' (ΔceiledByΦ s t n)): Set ℝ) = Int.cast '' Set.Iic (dE_int s t n - 1) := by
     rw [ΔceiledByΦ_agree]
@@ -330,6 +330,20 @@ theorem Φ_inv (s t: ℕ+) (n: ℝ) (n1: n ≥ 1):
     congr
     exact φ_inv s t n n1
   exact (Set.image_eq_image Int.cast_injective).mp lifted
+
+lemma Φδₖ (s t: ℕ+) (k: ℕ):
+Φ s t (δₖ_int s t k) = nₖ s t (k + 1) := by
+  rw [Φ_agree]
+  rw [δₖ_int_agree]
+  apply φδₖ
+
+lemma Φδₖt (s t: ℕ+) (k: ℕ) (kh: k ≥ 1):
+Φ s t (δₖ_int s t k - t) = wₖ s t (k + 1) := by
+  rw [Φ_agree]
+  push_cast
+  rw [δₖ_int_agree]
+  exact φδₖt _ _ _ kh
+
 
 /-
 We will investigate the generator function Z{Φ}(x) = ∑i:ℕ, Φ(i) * x^i and
@@ -1358,6 +1372,18 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
 noncomputable
 def Res₀ (s t: ℕ+): ℝ := (1 - (ξ₀ s t)) * (s * (ξ₀ s t)^(s:ℕ) + t * (ξ₀ s t)^(t:ℕ))
 
+lemma Res₀pos (s t: ℕ+): Res₀ s t > 0 := by
+  unfold Res₀
+  apply mul_pos
+  · apply sub_pos_of_lt
+    exact ξ₀max s t
+  · apply add_pos
+    all_goals
+      apply mul_pos
+      · simp only [Nat.cast_pos, PNat.pos]
+      · apply pow_pos
+        exact ξ₀min s t
+
 lemma ΦAsymptotic (s t: ℕ+) (coprime: s.Coprime t):
 Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * Res₀ s t)) Filter.atTop (nhds 1) := by
   obtain ⟨⟨ξ₀pos, ξ₀eq⟩, ξ₀unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
@@ -1540,30 +1566,20 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
     simp only [gt_iff_lt, add_pos_iff, Nat.lt_one_iff, pos_of_gt, true_or]
   have ξ0 (n: ℝ): ξ₀ s t ^ (dE_int s t n - 1) > 0 := by apply zpow_pos (ξ₀min s t)
   have ξ0' (n: ℝ): ξ₀ s t ^ (dE_int s t n) > 0 := by apply zpow_pos (ξ₀min s t)
-  have Res₀0: Res₀ s t > 0 := by
-    unfold Res₀
-    apply mul_pos
-    · apply sub_pos_of_lt
-      exact ξ₀max s t
-    · apply add_pos
-      all_goals
-        apply mul_pos
-        · simp only [Nat.cast_pos, PNat.pos]
-        · apply pow_pos (ξ₀min s t)
-  have ξRes₀0 (n: ℝ): ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 := mul_pos (ξ0' n) (Res₀0)
+  have ξRes₀0 (n: ℝ): ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 := mul_pos (ξ0' n) (Res₀pos s t)
   have leftSide0 (n: ℝ): (Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t) > 0 :=
-    mul_pos Φ0 (mul_pos (ξ0 n) Res₀0)
+    mul_pos Φ0 (mul_pos (ξ0 n) (Res₀pos s t))
   have leftSide1 (n: ℝ) : (Φ s t (dE_int s t n - 1)) * (ξ₀ s t ^ (dE_int s t n - 1) * Res₀ s t) * ξ₀ s t > 0 :=
     mul_pos (leftSide0 n) (ξ₀min s t)
 
   have rightSide0 (n: ℝ) : (Φ s t (dE_int s t n)) * (ξ₀ s t ^ (dE_int s t n) * Res₀ s t) > 0 :=
-    mul_pos Φ0 (mul_pos (ξ0' n) Res₀0)
+    mul_pos Φ0 (mul_pos (ξ0' n) (Res₀pos s t))
 
   have nξ0' (n: ℝ) (n1: n > 1): n * ξ₀ s t ^ (dE_int s t n) > 0 :=
     mul_pos (lt_trans Real.zero_lt_one n1) (ξ0' n)
 
   have mid (n: ℝ) (n1: n > 1): n * ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 :=
-    mul_pos (nξ0' n n1) Res₀0
+    mul_pos (nξ0' n n1) (Res₀pos s t)
   have logngt0 (n: ℝ) (n1: n > 1): 0 < Real.log n := Real.log_pos n1
   have logn0 (n: ℝ) (n1: n > 1): Real.log n ≠ 0 := Ne.symm (ne_of_lt (logngt0 n n1))
   have n0 (n: ℝ) (n1: n > 1): n ≠ 0 := ne_of_gt (lt_trans Real.zero_lt_one n1)
@@ -1577,7 +1593,7 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
     rw [← add_div, ← add_div]
     rw [← Real.log_zpow]
     rw [← Real.log_mul (n0 n n1) (ne_of_gt (ξ0' n))]
-    rw [← Real.log_mul (ne_of_gt (nξ0' n n1)) (ne_of_gt Res₀0)]
+    rw [← Real.log_mul (ne_of_gt (nξ0' n n1)) (ne_of_gt (Res₀pos s t))]
     apply (div_le_div_iff_of_pos_right (logngt0 n n1)).mpr
     apply (Real.strictMonoOn_log.le_iff_le (leftSide1 n) (mid n n1)).mpr
     rw [mul_assoc, mul_right_comm, ← zpow_add_one₀ (ne_of_gt (ξ₀min s t)), sub_add_cancel, mul_assoc]
@@ -1591,7 +1607,7 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
     rw [← add_div, ← add_div]
     rw [← Real.log_zpow]
     rw [← Real.log_mul (n0 n n1) (ne_of_gt (ξ0' n))]
-    rw [← Real.log_mul (ne_of_gt (nξ0' n n1)) (ne_of_gt Res₀0)]
+    rw [← Real.log_mul (ne_of_gt (nξ0' n n1)) (ne_of_gt (Res₀pos s t))]
     apply (div_lt_div_iff_of_pos_right (logngt0 n n1)).mpr
     apply (Real.strictMonoOn_log.lt_iff_lt (mid n n1) (rightSide0 n)).mpr
     rw [mul_assoc]
@@ -1677,8 +1693,7 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
   apply Filter.Tendsto.const_mul
   exact loginv
 
-lemma dE_int_Asymptotic (s t: ℕ+):
-Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n) Filter.atTop (nhds (-1:ℝ)) := by
+lemma reduce_coprime (s t: ℕ+): ∃ (l S T: ℕ+), s = l * S ∧ t = l * T ∧ S.Coprime T := by
   obtain ⟨S, seq⟩ := PNat.gcd_dvd_left s t
   obtain ⟨T, teq⟩ := PNat.gcd_dvd_right s t
   have coprime: S.Coprime T := by
@@ -1686,12 +1701,276 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
     norm_cast at gcd_left
     rw [← seq, ← teq] at gcd_left
     exact mul_right_eq_self.mp (id (Eq.symm gcd_left))
+  use s.gcd t, S, T
+
+
+lemma dE_int_Asymptotic (s t: ℕ+):
+Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n) Filter.atTop (nhds (-1:ℝ)) := by
+  obtain ⟨l, S, T, seq, teq, coprime⟩ := reduce_coprime s t
 
   obtain base := dE_int_Asymptotic_coprime S T coprime
   refine Filter.Tendsto.congr ?_ base
   intro n
-  set l := s.gcd t
   rw [seq, teq, ← dE_int_homo]
   rw [mul_comm _ (dE_int S T n)]
   push_cast
   rw [mul_assoc, ← Real.log_pow, ← ξ₀homo]
+
+lemma wₖ_Asymtotic (s t: ℕ+):
+Filter.Tendsto (fun k ↦ (wₖ s t k: ℝ) / nₖ s t k) Filter.atTop (nhds (ξ₀ s t ^ (t: ℕ))) := by
+
+  have funrw: (fun k ↦ (wₖ s t k: ℝ) / nₖ s t k) =ᶠ[Filter.atTop] (fun k ↦ (wₖ s t (k - 2 + 2): ℝ) / nₖ s t (k - 2 + 2)) := by
+    apply Filter.eventually_atTop.mpr
+    use 2
+    intro k k2
+    congr
+    exact (Nat.sub_eq_iff_eq_add k2).mp rfl
+
+  apply Filter.Tendsto.congr' funrw.symm
+
+  obtain ⟨l, S, T, seq, teq, coprime⟩ := reduce_coprime s t
+
+  have factor0(k: ℕ): (ξ₀ S T)^(δₖ_int S T (k - 2 + 1)) * Res₀ S T ≠ 0 := by
+    apply ne_of_gt
+    refine mul_pos ?_ (Res₀pos S T)
+    apply zpow_pos
+    exact ξ₀min S T
+
+  rw [seq, teq]
+  conv in (fun k ↦ _) =>
+    ext k
+    simp only [PNat.mul_coe, Nat.cast_mul]
+    rw [← nₖ_homo, ← wₖ_homo]
+    rw [(by rfl: k - 2 + 2 = k - 2 + 1 + 1)]
+    rw [← Φδₖ, ← Φδₖt _ _ _ (by exact Nat.le_add_left 1 (k - 2))]
+    rw [← mul_div_mul_right _ _ (factor0 k)]
+    conv in ((Φ S T (δₖ_int S T (k - 2 + 1) - T):ℝ) * _) =>
+      conv in ξ₀ S T ^ δₖ_int S T (k - 2 + 1) * Res₀ S T  =>
+        rw [← sub_add_cancel (δₖ_int S T (k - 2 + 1)) T]
+      rw [zpow_add₀ (ne_of_gt (ξ₀min S T))]
+      rw [mul_right_comm, ← mul_assoc]
+
+  push_cast
+  rw [pow_mul]
+  rw [← ξ₀homo]
+  norm_cast
+  conv in (nhds _) =>
+    rw [← mul_div_cancel_left₀ (ξ₀ S T ^ (T:ℕ)) (by norm_num: (1:ℝ) ≠ 0)]
+  have inner: Filter.Tendsto (fun k ↦ δₖ_int S T (k - 2 + 1)) Filter.atTop Filter.atTop := by
+    apply Filter.tendsto_atTop_atTop.mpr
+    intro j
+    use j.toNat + 1
+    intro k le
+    zify at le
+    apply Int.le_sub_right_of_add_le at le
+    have jk: j ≤ k - 1 := le_trans (Int.self_le_toNat j) le
+    apply le_trans jk
+    have kle: (k:ℤ) - 1 ≤ (k - 2 + 1: ℕ) := by omega
+    apply le_trans kle
+    have δₖ_int_growth (k: ℕ): k ≤ δₖ_int S T k := by
+      induction k with
+      | zero =>
+        rify
+        rw [δₖ_int_agree]
+        rw [δ₀]
+      | succ k prev =>
+        apply (add_le_add_iff_right 1).mpr at prev
+        push_cast
+        apply le_trans prev
+        apply Int.add_one_le_of_lt
+        rify
+        rw [δₖ_int_agree, δₖ_int_agree]
+        apply δₖ_mono
+        exact lt_add_one k
+    exact δₖ_int_growth (k - 2 + 1)
+
+
+  apply Filter.Tendsto.div _ _ (by norm_num)
+  · apply Filter.Tendsto.mul
+    · have inner': Filter.Tendsto (fun k ↦ δₖ_int S T (k - 2 + 1) - T) Filter.atTop Filter.atTop := by
+        have shift: Filter.Tendsto (fun (x:ℤ) ↦ x - T) Filter.atTop Filter.atTop := by
+          apply Filter.tendsto_atTop_atTop.mpr
+          intro j
+          use j + T
+          exact fun a b ↦ Int.le_sub_right_of_add_le b
+        exact Filter.Tendsto.comp shift inner
+      exact Filter.Tendsto.comp (ΦAsymptoticℝ' S T coprime) inner'
+    · simp only [tendsto_const_nhds_iff]
+  · exact Filter.Tendsto.comp (ΦAsymptoticℝ' S T coprime) inner
+
+lemma lerp_dist (a u v g: ℝ) (arange: a ∈ Set.Icc 0 1):
+dist ((1 - a) * u + a * v) g ≤ max (dist u g) (dist v g) := by
+  obtain ⟨h0, h1⟩ := Set.mem_Icc.mp arange
+  rw [dist_eq_norm, dist_eq_norm, dist_eq_norm]
+  rw [(by ring: (1 - a) * u + a * v - g = (1 - a) * (u - g) + a * (v - g))]
+  apply le_trans (by apply norm_add_le)
+  rw [norm_mul, norm_mul]
+  obtain norma: ‖a‖ = a := Real.norm_of_nonneg h0
+  obtain norm1a: ‖1 - a‖ = 1 - a:= Real.norm_of_nonneg (sub_nonneg_of_le h1)
+  rw [(by rw [norma, norm1a]; ring: max ‖u - g‖ ‖v - g‖ = ‖1 - a‖ * max ‖u - g‖ ‖v - g‖ + ‖a‖ * max ‖u - g‖ ‖v - g‖)]
+  gcongr
+  · apply le_max_left
+  · apply le_max_right
+
+
+lemma w_Asymtotic_of_wₖ (s t limit: ℝ) [PosReal s] [PosReal t]
+(wₖas: Filter.Tendsto (fun k ↦ (wₖ s t k: ℝ) / nₖ s t k) Filter.atTop (nhds limit)):
+Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds limit) := by
+  let kₙ'proof (n: ℝ): (max n 1) ≥ 1 := by simp only [ge_iff_le, le_sup_right]
+  let kₙ' (n: ℝ) := (kₙ_exist s t _ (kₙ'proof n))
+  let f (n: ℝ): ℕ × ℝ :=
+    let k := (kₙ' n).choose
+    (k, (nₖ s t (k + 1) / nₖ s t k - nₖ s t (k + 1) / n) / (nₖ s t (k + 1) / nₖ s t k - 1))
+  let g (k: ℕ) (a: ℝ): ℝ :=
+    (1 - a) * (wₖ s t k / nₖ s t k) + a * (wₖ s t (k + 1) / nₖ s t (k + 1))
+
+  have funrw: (fun n ↦ (wₗᵢ s t n: ℝ) / n) =ᶠ[Filter.atTop] ↿g ∘ f := by
+    apply Filter.eventually_atTop.mpr
+    use 1
+    intro n n1
+    simp only [Function.comp_apply]
+    unfold f
+    simp only
+    unfold Function.HasUncurry.uncurry Function.hasUncurryInduction Function.HasUncurry.uncurry Function.hasUncurryBase
+    simp only [id_eq]
+    unfold wₗᵢ g
+    obtain ⟨k, keq⟩ := kₙ_exist s t n n1
+    rw [keq]
+    simp only
+    have keq': (kₙ' n).choose = k := by
+      obtain k' := (kₙ' n).choose_spec
+      apply WithBot.coe_eq_coe.mp
+      rw [WithBot.some_eq_coe] at k'
+      rw [← k', (max_eq_left n1: max n 1 = n), keq]
+      rfl
+    rw [keq']
+    have nkk0: (nₖ s t (k + 1) - nₖ s t k: ℝ) ≠ 0 := by
+      apply ne_of_gt
+      apply sub_pos_of_lt
+      norm_num
+      apply nₖ_mono
+      exact lt_add_one k
+    have nk0: (nₖ (↑↑s) (↑↑t) k: ℝ) ≠ 0 := by norm_cast; apply nₖ_pos
+    have nk0': (nₖ (↑↑s) (↑↑t) (k + 1): ℝ) ≠ 0 := by norm_cast; apply nₖ_pos
+    have n0: n ≠ 0 := ne_of_gt (lt_of_lt_of_le (by norm_num) n1)
+    field_simp [nkk0, nk0, nk0', n0]
+    ring
+
+  apply Filter.Tendsto.congr' funrw.symm
+
+  have flim: Filter.Tendsto f Filter.atTop (Filter.atTop ×ˢ Filter.principal (Set.Icc 0 1)) := by
+    unfold f
+    apply Filter.Tendsto.prod_mk
+    · apply Filter.tendsto_atTop_atTop.mpr
+      intro k
+      use nₖ s t k
+      intro n le
+      obtain k' := (kₙ' n).choose_spec
+      unfold kₙ at k'
+
+      have mem: k ∈ (kceiled s t (max n 1)).toFinset := by
+        unfold kceiled
+        simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_setOf_eq]
+        left
+        exact le
+
+      obtain lemax := Finset.le_max mem
+      rw [k'] at lemax
+      exact WithBot.coe_le_coe.mp lemax
+
+    · refine Filter.tendsto_atTop'.mpr ?_
+      intro nhds01 nhds01mem
+      use 1
+      intro n n1
+      simp only [Filter.mem_principal] at nhds01mem
+      apply Set.mem_of_subset_of_mem nhds01mem
+      simp only [Set.mem_Icc]
+      have nₖpos: (0:ℝ) < nₖ s t (kₙ' n).choose := by
+        norm_num
+        apply Nat.zero_lt_of_ne_zero
+        apply nₖ_pos
+      obtain k' := (kₙ' n).choose_spec
+      unfold kₙ at k'
+
+      constructor
+      · apply div_nonneg_iff.mpr
+        left
+        constructor
+        · apply sub_nonneg_of_le
+          apply div_le_div_of_nonneg_left
+          · apply Nat.cast_nonneg'
+          · exact nₖpos
+          · obtain nₖmem := Finset.mem_of_max k'
+            unfold kceiled at nₖmem
+            simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_setOf_eq] at nₖmem
+            obtain l|r := nₖmem
+            · exact l
+            · rify at r
+              exact le_trans r n1
+        · apply sub_nonneg_of_le
+          refine (one_le_div₀ ?_).mpr ?_
+          · exact nₖpos
+          · simp only [Nat.cast_le]
+            apply (nₖ_mono s t).le_iff_le.mpr
+            apply Nat.le_add_right
+      · refine (div_le_one₀ ?_).mpr ?_
+        · apply sub_pos_of_lt
+          refine (one_lt_div ?_).mpr ?_
+          · exact nₖpos
+          · norm_cast
+            apply nₖ_mono
+            apply lt_add_one
+        · apply sub_le_sub_left
+          refine (one_le_div ?_).mpr ?_
+          · exact lt_of_lt_of_le (by norm_num) n1
+          · by_contra lt
+            simp only [not_le] at lt
+            have mem: (kₙ' n).choose + 1 ∈ (kceiled (↑↑s) (↑↑t) (max n 1)).toFinset := by
+              unfold kceiled
+              simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_setOf_eq]
+              left
+              exact le_of_lt lt
+            obtain le_max := Finset.le_max mem
+            rw [k'] at le_max
+            obtain what := WithBot.coe_le_coe.mp le_max
+            simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
+
+  have limkk: Filter.Tendsto (· + 1) Filter.atTop Filter.atTop := by
+    apply Filter.tendsto_atTop_atTop.mpr
+    intro j
+    use j
+    intro n le
+    exact Nat.le_add_right_of_le le
+  let limLeft := wₖas
+  obtain limRight := Filter.Tendsto.comp limLeft limkk
+  obtain limLeft' := Metric.tendsto_atTop.mp limLeft
+  obtain limRight' := Metric.tendsto_atTop.mp limRight
+  simp only [Function.comp_apply] at limRight'
+
+  have glim: Filter.Tendsto ↿g (Filter.atTop ×ˢ Filter.principal (Set.Icc 0 1)) (nhds (limit)) := by
+    apply tendsto_prod_principal_iff.mpr
+    refine Metric.tendstoUniformlyOn_iff.mpr ?_
+    intro ε εpos
+    apply Filter.eventually_atTop.mpr
+    obtain ⟨nLeft, nLeftSpec⟩ := limLeft' ε εpos
+    obtain ⟨nRight, nRightSpec⟩ := limRight' ε εpos
+
+    use (max nLeft nRight)
+    intro k kbound
+    simp only [ge_iff_le, sup_le_iff] at kbound
+    obtain ⟨leftBound, rightBound⟩ := kbound
+    obtain leftLt := nLeftSpec k leftBound
+    obtain rightLt := nRightSpec k rightBound
+    intro a arange
+    obtain maxLt := max_lt leftLt rightLt
+    refine lt_of_le_of_lt ?_ maxLt
+    unfold g
+    rw [dist_comm]
+    apply lerp_dist _ _ _ _ arange
+
+  exact Filter.Tendsto.comp glim flim
+
+
+theorem w_Asymtotic_int (s t: ℕ+):
+Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds (ξ₀ s t ^ (t: ℕ))) :=
+  w_Asymtotic_of_wₖ s t _ (wₖ_Asymtotic s t)

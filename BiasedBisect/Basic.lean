@@ -1610,6 +1610,16 @@ lemma nₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (nₖ s t) := by
   exact v2 k l kl
 
 /-
+As a quick corollary, nₖ are all positive
+-/
+lemma nₖ_pos (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: nₖ s t k ≠ 0 := by
+  have k1: 1 ≤ nₖ s t k := by
+    rw [← n₀ s t]
+    apply (nₖ_mono s t).le_iff_le.mpr
+    exact Nat.zero_le k
+  exact Nat.ne_zero_of_lt k1
+
+/-
 Just as we used Jₖ to define nₖ, we also use Jsₖ and Jtₖ to define
 partial sum sequences wₖ' and wₖ, respectively.
 (The reason wₖ corresponds to t is mostly historical)
@@ -1797,6 +1807,19 @@ wₖ' s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - s) := by
   rw [Jceiled_symm]
   rw [δₖ_symm]
   exact wₖ_accum t s k
+
+/-
+Similar to nₖ, wₖ/wₖ' are homogeneous
+-/
+lemma wₖ_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: wₖ s t = wₖ (l * s) (l * t) := by
+  ext k
+  rw [wₖ_accum, wₖ_accum]
+  rw [← δₖ_homo, ← mul_sub, ← Jceiled_homo]
+
+lemma wₖ'_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: wₖ' s t = wₖ' (l * s) (l * t) := by
+  ext k
+  rw [wₖ'_accum, wₖ'_accum]
+  rw [← δₖ_homo, ← mul_sub, ← Jceiled_homo]
 
 /-
 w₁ = w₁' = 1 is the real starting point of this sequence
