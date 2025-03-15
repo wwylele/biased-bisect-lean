@@ -521,7 +521,7 @@ lemma δₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (δₖ s t) := b
 /-
 δₖ covers all elements in Δ
 -/
-def δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: ∃k, δₖ s t k = δ := by
+lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: ∃k, δₖ s t k = δ := by
   -- do induction on Δ
   apply Set.WellFoundedOn.induction (Δ_WF s t) mem
   intro this thismem prev
@@ -628,7 +628,7 @@ def δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: ∃
 /-
 δₖ is also symmetric
 -/
-theorem δₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: δₖ s t k = δₖ t s k := by
+lemma δₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: δₖ s t k = δₖ t s k := by
   induction k with
   | zero => unfold δₖ; rfl
   | succ k prev =>
@@ -1922,6 +1922,24 @@ kₙ s t n = some k := by
     apply Nat.le_of_lt_add_one
     exact (nₖ_mono s t).lt_iff_lt.mp nlt
 
+lemma nₖ_inv (s t n: ℝ) (k: ℕ) [PosReal s] [PosReal t] (keq: kₙ s t n = some k):
+nₖ s t k ≤ n ∧ n < nₖ s t (k + 1) := by
+  constructor
+  · unfold kₙ at keq
+    have maxle: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
+    unfold kceiled at maxle
+    simp only [Set.mem_toFinset, Set.mem_setOf_eq] at maxle
+    exact maxle
+  · by_contra le
+    simp only [not_lt] at le
+    have mem: k + 1 ∈ (kceiled s t n).toFinset := by
+      unfold kceiled
+      simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+      exact le
+    unfold kₙ at keq
+    have what: k + 1 ≤ k := by apply Finset.le_max_of_eq mem keq
+    simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
+
 /-
 k₁ = 0 is the first non-empty kₙ. This corresponds to the fact n₀ = 1
 -/
@@ -1961,8 +1979,7 @@ lemma kₙ_not_exist (s t n: ℝ) (np: n < 1) [PosReal s] [PosReal t]: kₙ s t 
     simp only [Set.mem_setOf_eq, not_le]
     apply lt_of_lt_of_le np
     simp only [Nat.one_le_cast]
-    have n0: 1 = nₖ s t 0 := by exact rfl
-    rw [n0]
+    rw [← n₀ s t]
     apply (StrictMono.le_iff_le (nₖ_mono s t)).mpr
     exact Nat.zero_le k
   rw [empty]
@@ -2020,11 +2037,10 @@ lemma dE_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (dE s t) := by
       simp only [zero_le]
   · simp only [not_lt] at m1;
     rcases kₙ_exist s t m m1 with ⟨k, keq⟩
-    have n1: n ≥ 1 := by apply ge_trans mnle m1
+    have n1: n ≥ 1 := ge_trans mnle m1
     rcases kₙ_exist s t n n1 with ⟨k', k'eq⟩
-    rw [keq]
-    rw [k'eq]
-    simp only [ge_iff_le]
+    rw [keq, k'eq]
+    simp only
     apply (StrictMono.le_iff_le (δₖ_mono s t)).mpr
     unfold kₙ at keq
     unfold kₙ at k'eq
@@ -2069,10 +2085,9 @@ dE s t w = δₖ s t k - t := by
   δ ∉ Δ s t := by
     by_contra mem
     have δtmem: δ + t ∈ Δ s t := by
-      unfold Δ at mem; simp only [Set.mem_setOf_eq] at mem
+      unfold Δ at mem ⊢; simp only [Set.mem_setOf_eq] at mem ⊢
       rcases mem with ⟨p, ⟨q, pq⟩⟩
-      unfold Δ;  simp only [Set.mem_setOf_eq]
-      use p, q+1
+      use p, q + 1
       rw [← pq]
       simp only [Nat.cast_add, Nat.cast_one]
       ring
@@ -2082,11 +2097,11 @@ dE s t w = δₖ s t k - t := by
       · simp only [gt_iff_lt, Set.mem_setOf_eq]
         exact lt_add_of_tsub_lt_right lower
     have δnext_smaller: δₖ s t (k' + 1) ≤ δ + t := by
-      unfold δₖ; unfold δnext
+      unfold δₖ δnext
       exact Set.IsWF.min_le _ _ δtmemfloor
-    have δnext_smaller': δₖ s t (k' + 1) - t ≤ δ := by exact
-      (OrderedSub.tsub_le_iff_right (δₖ s t (k' + 1)) t δ).mpr δnext_smaller
-    have what: δₖ s t (k' + 1) - t < δₖ s t (k' + 1) - t := by apply lt_of_le_of_lt δnext_smaller' upper
+    have δnext_smaller': δₖ s t (k' + 1) - t ≤ δ := by
+      exact (OrderedSub.tsub_le_iff_right (δₖ s t (k' + 1)) t δ).mpr δnext_smaller
+    have what: δₖ s t (k' + 1) - t < δₖ s t (k' + 1) - t := lt_of_le_of_lt δnext_smaller' upper
     simp only [lt_self_iff_false] at what
   have δ_shift_mem: δₖ s t k - t ∈ Δ s t := by
     by_contra notmem
@@ -2102,13 +2117,11 @@ dE s t w = δₖ s t k - t := by
       rcases bm with ⟨pq, pqm⟩
       have bmm: b ∈ Δ s t := by
         rw [← pqm]
-        unfold δₚ
-        unfold Δ
+        unfold δₚ Δ
         simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
       exact Ne.symm (ne_of_mem_of_not_mem bmm notmem)
     have zero: Jtₖ s t k = 0 := by
-      unfold Jtₖ
-      unfold Jline
+      unfold Jtₖ Jline
       rw [empty]
       apply Finset.sum_empty
     have inter: wₖ s t k < wₖ s t (k + 1) := by
@@ -2121,12 +2134,12 @@ dE s t w = δₖ s t k - t := by
   rcases (δₖ_surjΔ s t (δₖ s t k - t) δ_shift_mem) with ⟨l, Leq⟩
 
   rw [wₖ_accum] at r
-  simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+  simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
     add_tsub_cancel_right, Nat.cast_add, Nat.cast_one] at r
   rw [← Leq] at r
   have nₖ_accum_rw: (1:ℝ) + Jceiled s t (δₖ s t l) = nₖ s t (l + 1) := by
     rw [nₖ_accum]
-    simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+    simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
       add_tsub_cancel_right, Nat.cast_add, Nat.cast_one]
   rw [nₖ_accum_rw] at r
 
@@ -2135,14 +2148,12 @@ dE s t w = δₖ s t k - t := by
     have km1e: k = K + 1 := by exact (Nat.sub_eq_iff_eq_add kh).mp rfl
     rw [wₖ_accum]
     rw [km1e]
-    simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+    simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
       add_tsub_cancel_right]
     by_cases Leq0: l = 0
-    · rw [Leq0]
-      rw [nₖ_accum]
+    · rw [Leq0, nₖ_accum]
       simp only [↓reduceIte, add_right_eq_self]
-      rw [Leq0] at Leq
-      rw [δ₀] at Leq
+      rw [Leq0, δ₀] at Leq
       apply Jceiled_neg
       rw [km1e] at Leq
       unfold δₖ at Leq
@@ -2150,13 +2161,11 @@ dE s t w = δₖ s t k - t := by
       simp only [sub_lt_sub_iff_right]
       exact δnext_larger s t (δₖ s t K)
     · let L := l - 1
-      have Lm1e: l = L + 1 := by exact Eq.symm (Nat.succ_pred_eq_of_ne_zero Leq0)
-      rw [nₖ_accum]
-      rw [Lm1e]
-      simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+      have Lm1e: l = L + 1 := Eq.symm (Nat.succ_pred_eq_of_ne_zero Leq0)
+      rw [nₖ_accum, Lm1e]
+      simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
         add_tsub_cancel_right, add_right_inj]
-      rw [km1e] at Leq
-      rw [Lm1e] at Leq
+      rw [km1e, Lm1e] at Leq
       unfold δₖ at Leq
       symm
       apply Jceiled_gap
@@ -2215,9 +2224,8 @@ lemma w_lt (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
 dE s t w < δₖ s t k - t := by
   let K := k - 1
   have km1e: k = K + 1 := by exact (Nat.sub_eq_iff_eq_add kh).mp rfl
-  rw [wₖ_accum] at high
-  rw [km1e] at high
-  simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+  rw [wₖ_accum, km1e] at high
+  simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
     add_tsub_cancel_right, Nat.cast_add, Nat.cast_one] at high
   rw [km1e]
 
@@ -2230,13 +2238,8 @@ dE s t w < δₖ s t k - t := by
   apply Finset.mem_of_max at leq
   simp only [Set.mem_toFinset, Set.mem_setOf_eq] at leq
   by_cases Leq0: l = 0
-  · rw [Leq0]
-    rw [δ₀]
-    have low': w ≥ (1:ℝ) := by exact low
-    have Jceiled_lt: 1 + (Jceiled s t (δₖ s t K - t)) > (1:ℝ) := by
-      apply gt_of_gt_of_ge
-      · exact high
-      · exact low'
+  · rw [Leq0, δ₀]
+    have Jceiled_lt: 1 + (Jceiled s t (δₖ s t K - t)) > (1:ℝ) := gt_of_gt_of_ge high low
     simp only [gt_iff_lt, lt_add_iff_pos_right, Nat.cast_pos] at Jceiled_lt
     have nonneg: (δₖ s t K - t) ≥ 0 := by
       contrapose Jceiled_lt with Jceiled_zero
@@ -2251,14 +2254,13 @@ dE s t w < δₖ s t k - t := by
     have lm1e: l = L + 1 := by exact Eq.symm (Nat.succ_pred_eq_of_ne_zero Leq0)
     rw [nₖ_accum] at leq
     rw [lm1e] at leq
-    simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+    simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
       add_tsub_cancel_right, Nat.cast_add, Nat.cast_one] at leq
     have Jceiled_lt: (1:ℝ) + Jceiled s t (δₖ s t L) < 1 + Jceiled s t (δₖ s t K - t) := by
-      apply lt_of_le_of_lt leq high
+      exact lt_of_le_of_lt leq high
     simp only [add_lt_add_iff_left, Nat.cast_lt] at Jceiled_lt
     apply Jceiled_gap'' at Jceiled_lt
-    rw [lm1e]
-    rw [δₖ]
+    rw [lm1e, δₖ]
     apply lt_of_le_of_lt Jceiled_lt
     simp only [sub_lt_sub_iff_right]
     rw [δₖ]
@@ -2283,20 +2285,17 @@ dE s t w > δₖ s t k - t := by
     by_contra le
     simp only [gt_iff_lt, not_lt] at le
     have what: l + 1 ≤ l := by
-      apply Finset.le_max_of_eq ?_ leq
+      refine Finset.le_max_of_eq ?_ leq
       simp only [Set.mem_toFinset, Set.mem_setOf_eq]
       exact le
     simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
 
   have tr: nₖ s t (l + 1) > wₖ s t (k + 1)  := by
     rify
-    apply gt_of_gt_of_ge
-    · exact l_greater
-    · exact low
+    exact gt_of_gt_of_ge l_greater low
 
-  rw [wₖ_accum] at tr
-  rw [nₖ_accum] at tr
-  simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+  rw [wₖ_accum, nₖ_accum] at tr
+  simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
     add_tsub_cancel_right, gt_iff_lt, add_lt_add_iff_left] at tr
   exact Monotone.reflect_lt (Jceiled_mono s t) tr
 
@@ -2316,26 +2315,22 @@ lemma wₖ_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
     rcases wₖ_is_nₖ s t (k + 1) with ⟨k'p1, k'p1eq⟩
     rw [k'p1eq]
     congr
-    have w_mono: wₖ s t k < wₖ s t (k + 1) := by
-      apply lt_of_le_of_ne ?_ wne
-      exact Nat.le.intro rfl
+    have w_mono: wₖ s t k < wₖ s t (k + 1) := lt_of_le_of_ne (Nat.le.intro rfl) wne
     have k_mono: k' < k'p1 := by
-      apply (StrictMono.lt_iff_lt (nₖ_mono s t)).mp
-      rw [← keq]
-      rw [← k'p1eq]
+      apply (nₖ_mono s t).lt_iff_lt.mp
+      rw [← keq, ← k'p1eq]
       exact w_mono
     have k'notp2: k'p1 < k' + 2 := by
       by_contra k'p1gt
       simp only [not_lt] at k'p1gt
       let k'mid := k' + 1
-      have k'left: k' < k'mid := by exact lt_add_one k'
-      have k'right: k'mid < k'p1 := by exact k'p1gt
-      have nleft: nₖ s t k' < nₖ s t k'mid := by apply (nₖ_mono s t) k'left
-      have nright: nₖ s t k'mid < nₖ s t k'p1 := by apply (nₖ_mono s t) k'right
+      have k'left: k' < k'mid := lt_add_one k'
+      have k'right: k'mid < k'p1 := k'p1gt
+      have nleft: nₖ s t k' < nₖ s t k'mid := (nₖ_mono s t) k'left
+      have nright: nₖ s t k'mid < nₖ s t k'p1 := (nₖ_mono s t) k'right
       have deLeft: dE s t (nₖ s t k') < dE s t (nₖ s t k'mid) := by
         unfold dE
-        rw [kₙ_inv]
-        rw [kₙ_inv]
+        rw [kₙ_inv, kₙ_inv]
         simp only
         unfold k'mid
         rw [δₖ]
@@ -2354,8 +2349,7 @@ lemma wₖ_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
         · rw [k'p1eq]
           simp only [Nat.cast_lt]
           exact nright
-      rw [leftEq] at deLeft
-      rw [midEq] at deLeft
+      rw [leftEq, midEq] at deLeft
       simp only [lt_self_iff_false] at deLeft
     exact Nat.eq_of_le_of_lt_succ k_mono k'notp2
 
@@ -2364,12 +2358,9 @@ By symmetry, the same holds for wₖ'
 -/
 lemma wₖ'_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
 (keq: wₖ' s t k = nₖ s t k') (wne: wₖ' s t k ≠ wₖ' s t (k + 1)): wₖ' s t (k + 1) = nₖ s t (k' + 1) := by
-  rw [← wₖ_symm] at keq
-  rw [← wₖ_symm] at wne
-  rw [← wₖ_symm] at wne
-  rw [← wₖ_symm]
-  rw [nₖ_symm] at keq
-  rw [nₖ_symm]
+  rw [← wₖ_symm] at keq ⊢
+  rw [← wₖ_symm, ← wₖ_symm] at wne
+  rw [nₖ_symm] at keq ⊢
   exact wₖ_is_nₖ_p1 t s k k' keq wne
 
 
@@ -2416,17 +2407,10 @@ wₘᵢₙ s t n + wₘₐₓ t s n = n := by
     rw [← wₖ_rec s t k]
     · simp only [Nat.cast_add, add_sub_cancel_left]
     · exact k1
-  rw [krec, k1rec]
-  rw [nₖ_symm t s]
-  have h1: (nₖ s t (k + 1): ℝ) - wₖ s t (k + 1) = - ((wₖ s t (k + 1)) + n - (nₖ s t (k + 1))) + n := by
-    ring
-  have h2: (nₖ s t k: ℝ) - (wₖ s t k) + n - (nₖ s t k) = -(wₖ s t k) + n := by
-    ring
-  rw [h1]
-  rw [h2]
-  rw [← min_add]
-  rw [min_neg_neg]
-  rw [max_comm]
+  rw [krec, k1rec, nₖ_symm t s]
+  rw [(by ring: (nₖ s t (k + 1): ℝ) - wₖ s t (k + 1) = - ((wₖ s t (k + 1)) + n - (nₖ s t (k + 1))) + n)]
+  rw [(by ring: (nₖ s t k: ℝ) - (wₖ s t k) + n - (nₖ s t k) = -(wₖ s t k) + n)]
+  rw [← min_add, min_neg_neg, max_comm]
   simp only [add_neg_cancel_left]
 
 /-
@@ -2464,10 +2448,9 @@ lemma wₘₐₓ_max (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘₐ�
   rw [kexist]
   simp only [inf_le_iff, tsub_le_iff_right]
   right
-  rw [add_comm]
-  rw [add_comm_sub]
+  rw [add_comm, add_comm_sub]
   apply add_le_add
-  · trivial
+  · exact le_rfl
   · have h2: wₖ s t k ≤ nₖ s t k - 1 := by
       apply wₖ_max s t k
       exact k1
@@ -2516,25 +2499,10 @@ def wₗᵢ_range (s t n: ℝ) [PosReal s] [PosReal t]:
 wₘᵢₙ s t n ≤ wₗᵢ s t n ∧ wₗᵢ s t n ≤ wₘₐₓ s t n := by
   unfold wₘᵢₙ wₗᵢ wₘₐₓ
   by_cases n1: n ≥ 1
-  · have n0: (n: ℝ) ≥ 0 := by apply ge_trans n1; simp only [ge_iff_le, zero_le_one]
+  · have n0: (n: ℝ) ≥ 0 := ge_trans n1 (by norm_num)
     rcases kₙ_exist s t n n1 with ⟨k, keq⟩
-    have nle: nₖ s t k ≤ n := by
-      unfold kₙ at keq
-      have maxle: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
-      unfold kceiled at maxle
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq] at maxle
-      exact maxle
-    have nge: nₖ s t (k + 1) ≥ n := by
-      by_contra le
-      simp only [ge_iff_le, not_le] at le
-      apply le_of_lt at le
-      have mem: k + 1 ∈ (kceiled s t n).toFinset := by
-        unfold kceiled
-        simp only [Set.mem_toFinset, Set.mem_setOf_eq]
-        exact le
-      unfold kₙ at keq
-      have what: k + 1 ≤ k := by apply Finset.le_max_of_eq mem keq
-      simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
+    obtain ⟨nle, ngt⟩ := nₖ_inv s t n k keq
+    obtain nge := le_of_lt ngt
     have wge: wₖ s t (k + 1) ≥ wₖ s t k := by exact Nat.le.intro rfl
     have wge': (wₖ s t (k + 1): ℝ) ≥ wₖ s t k := by exact Nat.cast_le.mpr wge
     have w'ge': (nₖ s t (k + 1): ℝ) - wₖ s t (k + 1) - nₖ s t k + wₖ s t k ≥ 0 := by
@@ -2542,61 +2510,43 @@ wₘᵢₙ s t n ≤ wₗᵢ s t n ∧ wₗᵢ s t n ≤ wₘₐₓ s t n := by
       · rw [k0]
         simp only [zero_add, ge_iff_le]
         rw [w₁]
-        unfold wₖ
-        unfold nₖ
+        unfold wₖ nₖ
         simp only [Nat.cast_add, Nat.cast_one, sub_add_cancel, sub_nonneg]
-        unfold nₖ
-        unfold Jₖ
-        rw [δ₀]; rw [Jline₀]; simp only [Nat.cast_one, le_add_iff_nonneg_right, zero_le_one]
+        unfold nₖ Jₖ
+        rw [δ₀, Jline₀]; simp only [Nat.cast_one, le_add_iff_nonneg_right, zero_le_one]
       · have k1: k ≥ 1 := by exact Nat.one_le_iff_ne_zero.mpr k0
         have k2: k + 1 ≥ 1 := by exact Nat.le_add_right_of_le k1
-        rw [← wₖ_rec s t k k1]; rw [← wₖ_rec s t (k + 1) k2]
-        simp only [Nat.cast_add, add_sub_cancel_left, ge_iff_le]
-        rw [← sub_sub]
-        rw [sub_right_comm]
-        rw [sub_add]
-        simp only [sub_self, sub_zero, sub_nonneg, Nat.cast_le]
+        rw [← wₖ_rec s t k k1, ← wₖ_rec s t (k + 1) k2]
+        push_cast
+        rw [(by ring: (wₖ s t (k + 1) + wₖ t s (k + 1) - wₖ s t (k + 1) - (wₖ s t k + wₖ t s k) + wₖ s t k:ℝ)
+          = wₖ t s (k + 1) - wₖ t s k)]
+        apply sub_nonneg_of_le
+        norm_cast
         exact Nat.le.intro rfl
     have wnle: nₖ s t k * ((wₖ s t (k + 1): ℝ) - wₖ s t k) ≤ n * ((wₖ s t (k + 1): ℝ) - wₖ s t k) := by
-      apply mul_le_mul nle
-      · simp only [le_refl]
-      · exact sub_nonneg_of_le wge'
-      · exact n0
+      exact mul_le_mul nle (by apply le_refl) (sub_nonneg_of_le wge') (n0)
     have wnle': nₖ s t (k + 1) * ((nₖ s t (k + 1): ℝ) - wₖ s t (k + 1) - nₖ s t k + wₖ s t k) ≥ n * ((nₖ s t (k + 1): ℝ) - wₖ s t (k + 1) - nₖ s t k + wₖ s t k) := by
-      apply mul_le_mul nge
-      · simp only [le_refl]
-      · exact w'ge'
-      · simp only [Nat.cast_nonneg]
+      exact mul_le_mul nge (by apply le_refl) (w'ge') (by apply Nat.cast_nonneg)
     have wnle'': nₖ s t (k + 1) * ((wₖ s t (k + 1): ℝ) - wₖ s t k) ≥ n * ((wₖ s t (k + 1): ℝ) - wₖ s t k) := by
-      apply mul_le_mul nge
-      · simp only [le_refl]
-      · exact sub_nonneg_of_le wge'
-      · simp only [Nat.cast_nonneg]
+      exact mul_le_mul nge (by apply le_refl) (sub_nonneg_of_le wge') (by apply Nat.cast_nonneg)
     have wnle''': nₖ s t k * ((nₖ s t (k + 1): ℝ) - wₖ s t (k + 1) - nₖ s t k + wₖ s t k) ≤ n * ((nₖ s t (k + 1): ℝ) - wₖ s t (k + 1) - nₖ s t k + wₖ s t k) := by
-      apply mul_le_mul nle
-      · simp only [le_refl]
-      · exact w'ge'
-      · exact n0
+      exact mul_le_mul nle (by apply le_refl) w'ge' n0
     simp only [keq, sup_le_iff, tsub_le_iff_right, le_inf_iff]
     have denogt: (nₖ s t (k + 1): ℝ) - nₖ s t k > 0 := by
       simp only [gt_iff_lt, sub_pos, Nat.cast_lt]
       apply nₖ_mono
       simp only [lt_add_iff_pos_right, Nat.lt_one_iff, pos_of_gt]
     have deno0: (nₖ s t (k + 1): ℝ) - nₖ s t k ≠ 0 := by
-      apply ne_of_gt denogt
+      exact ne_of_gt denogt
     constructor
     · constructor
-      · field_simp
-        refine (le_div_iff₀ denogt).mpr ?_
-        linarith
-      · field_simp
+      all_goals
+      · field_simp [deno0]
         refine (le_div_iff₀ denogt).mpr ?_
         linarith
     · constructor
-      · field_simp
-        refine (div_le_iff₀ denogt).mpr ?_
-        linarith
-      · field_simp
+      all_goals
+      · field_simp [deno0]
         refine (div_le_iff₀ denogt).mpr ?_
         linarith
   · simp only [ge_iff_le, not_le] at n1
@@ -2614,8 +2564,7 @@ As usual, wₗᵢ is symmetric
 lemma wₗᵢ_symm (s t n: ℝ) [PosReal s] [PosReal t]:
 wₗᵢ s t n = wₗᵢ' t s n := by
   unfold wₗᵢ wₗᵢ'
-  rw [kₙ_symm s t]
-  rw [nₖ_symm s t]
+  rw [kₙ_symm s t, nₖ_symm s t]
   congr
   ext k
   simp only
@@ -2643,24 +2592,20 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
   have k0: k ≠ 0 := by exact Nat.ne_zero_of_lt k1
   have k2: k + 1 ≥ 1 := by exact Nat.le_add_right_of_le k1
   unfold wₗᵢ
-  rw [kₙ_symm t s]
-  rw [keq]
+  rw [kₙ_symm t s, keq, nₖ_symm t s]
   simp only
-  rw [nₖ_symm t s]
   have wrec: wₖ t s k = nₖ s t k - wₖ s t k := by
     refine Nat.eq_sub_of_add_eq' ?_
     exact wₖ_rec s t k k1
   have wrec': wₖ t s (k + 1) = nₖ s t (k + 1) - wₖ s t (k + 1) := by
     refine Nat.eq_sub_of_add_eq' ?_
     exact wₖ_rec s t (k + 1) k2
-  rw [wrec]
-  rw [wrec']
+  rw [wrec, wrec']
   have denogt: (nₖ s t (k + 1): ℝ) - nₖ s t k > 0 := by
     simp only [gt_iff_lt, sub_pos, Nat.cast_lt]
     apply nₖ_mono
     simp only [lt_add_iff_pos_right, Nat.lt_one_iff, pos_of_gt]
-  have deno0: (nₖ s t (k + 1): ℝ) - nₖ s t k ≠ 0 := by
-    apply ne_of_gt denogt
+  have deno0: (nₖ s t (k + 1): ℝ) - nₖ s t k ≠ 0 := ne_of_gt denogt
   have cast1: ((nₖ s t k - wₖ s t k: ℕ) : ℝ) = (nₖ s t k: ℝ) - wₖ s t k := by
     refine Nat.cast_sub ?_
     rw [wₖ_accum, nₖ_accum]
@@ -2679,7 +2624,7 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
     apply le_of_lt
     exact PosReal.pos
   rw [cast1, cast2]
-  field_simp
+  field_simp [deno0]
   ring
 
 
@@ -2713,7 +2658,7 @@ lemma dD_mono (s t n: ℝ) [PosReal s] [PosReal t]: Monotone (dD s t n) := by
     exact tsub_le_tsub_left able n
   refine tsub_le_tsub ?_ (le_refl s)
   refine add_le_add  ?_ (le_refl t)
-  apply tsub_le_tsub h1 h2
+  exact tsub_le_tsub h1 h2
 
 /-
 We show that wₘᵢₙ and wₘₐₓ indicates where dD is negative, zero, or positive.
@@ -2721,7 +2666,7 @@ We show that wₘᵢₙ and wₘₐₓ indicates where dD is negative, zero, or 
 In these theorems, we conviniently ignored boundary points at w = wₘᵢₙ or w = wₘₐₓ.
 dD value at those points can be found, but it doesn't add much value for our further arguments.
 -/
-theorem dD_zero (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
+lemma dD_zero (s t n w: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w > wₘᵢₙ s t n) (rightBound: w < wₘₐₓ s t n):
 dD s t n w = 0 := by
   have n1: n ≥ 1 := by
@@ -2751,31 +2696,22 @@ dD s t n w = 0 := by
     simp only [Set.mem_setOf_eq]
     rw [n₁]
     exact h
-  have k1rel: dE s t w = δₖ s t kl - t := by
-    apply w_eq s t w
-    · exact kl1
-    · exact le_of_lt lw
-    · exact rw
+  have k1rel: dE s t w = δₖ s t kl - t := w_eq s t w kl kl1 (le_of_lt lw) rw
   have k2rel: dE s t (n - w) = δₖ s t kl - s := by
-    rw [δₖ_symm]
-    rw [dE_symm]
-    apply w_eq t s (n - w)
-    · exact kl1
-    · rw [← wₖ_rec] at rnw
+    rw [δₖ_symm, dE_symm]
+    apply w_eq t s (n - w) kl kl1
+    · rw [← wₖ_rec s t kl kl1] at rnw
       simp only [Nat.cast_add, add_sub_add_left_eq_sub] at rnw
       apply le_of_lt at rnw
       exact le_sub_comm.mp rnw
-      exact kl1
-    · rw [← wₖ_rec] at lnw
+    · rw [← wₖ_rec s t (kl + 1) (Nat.le_add_right_of_le kl1)] at lnw
       simp only [Nat.cast_add, add_sub_add_left_eq_sub] at lnw
       exact sub_lt_comm.mp lnw
-      exact Nat.le_add_right_of_le kl1
   unfold dD
-  rw [k1rel]
-  rw [k2rel]
+  rw [k1rel, k2rel]
   simp only [sub_sub_sub_cancel_left, sub_add_cancel, sub_self]
 
-theorem dD_neg (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
+lemma dD_neg (s t n w: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w > 1) (rightBound: w < wₘᵢₙ s t n):
 dD s t n w < 0 := by
   have n1: n ≥ 1 := by
@@ -2864,7 +2800,7 @@ dD s t n w < 0 := by
     linarith
 
 
-theorem dD_pos (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
+lemma dD_pos (s t n w: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w > wₘₐₓ s t n) (rightBound: w < n - 1):
 dD s t n w > 0 := by
   rw [dD_symm]
@@ -2891,13 +2827,13 @@ Here is a more useful version with the correction term s + t
 -/
 lemma dE_integrable' (s t m n: ℝ) [PosReal s] [PosReal t]:
 IntervalIntegrable (fun x ↦ (dE s t x) + s + t) MeasureTheory.volume m n := by
-  have ti: IntervalIntegrable (fun x ↦ t)  MeasureTheory.volume m n := by
+  have ti: IntervalIntegrable (fun x ↦ t) MeasureTheory.volume m n := by
     apply intervalIntegrable_const
-  have si: IntervalIntegrable (fun x ↦ s)  MeasureTheory.volume m n := by
+  have si: IntervalIntegrable (fun x ↦ s) MeasureTheory.volume m n := by
     apply intervalIntegrable_const
 
-  apply IntervalIntegrable.add ?_ ti
-  apply IntervalIntegrable.add ?_ si
+  refine IntervalIntegrable.add ?_ ti
+  refine IntervalIntegrable.add ?_ si
   apply dE_integrable
 
 lemma dD_integrable (s t n w1 w2: ℝ) [PosReal s] [PosReal t]:
@@ -2967,8 +2903,7 @@ lemma Eₖ_integral (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 Eₖ s t k = ∫ x in (1: ℝ)..(nₖ s t k), dE s t x + s + t := by
  induction k with
  | zero =>
-   unfold Eₖ
-   unfold nₖ
+   unfold Eₖ nₖ
    simp only [Nat.cast_one, intervalIntegral.integral_same]
  | succ k prev =>
     unfold Eₖ
@@ -3068,8 +3003,7 @@ E s t n = ∫ x in (1: ℝ)..n, dE s t x + s + t := by
       apply dE_mono s t
       exact high
     have right: δₖ s t k = dE s t n := by
-      unfold dE
-      unfold kₙ
+      unfold dE kₙ
       rw [keq]
     rw [right]
     exact left
@@ -3090,25 +3024,21 @@ E s t (wₖ s t k) + (Jtₖ s t k) * (δₖ s t k + s) = E s t (wₖ s t (k + 1)
     exact zero_interval
   · rcases wₖ_is_nₖ s t k with ⟨k', k'eq⟩
     rcases wₖ_is_nₖ_p1 s t k k' k'eq zero_interval with k'p1eq
-    rw [k'eq]
-    rw [k'p1eq]
+    rw [k'eq, k'p1eq]
     unfold E
-    rw [kₙ_inv]
-    rw [kₙ_inv]
+    rw [kₙ_inv,kₙ_inv]
     simp only [sub_self, zero_mul, add_zero]
     rw [Eₖ]
     simp only [add_right_inj]
     have dEeq: dE s t (wₖ s t k) = δₖ s t k - t := by
-      apply w_eq
-      · exact k1
+      apply w_eq _ _ _ _ k1
       · simp only [ge_iff_le, le_refl]
       · simp only [Nat.cast_lt]
         apply lt_of_le_of_ne ?_ zero_interval
         apply (wₖ_mono s t)
         exact Nat.le_add_right k 1
     unfold dE at dEeq
-    rw [k'eq] at dEeq
-    rw [kₙ_inv] at dEeq
+    rw [k'eq, kₙ_inv] at dEeq
     simp only at dEeq
     congr 1
     · simp only [Nat.cast_inj]
@@ -3195,28 +3125,19 @@ lemma Eₖ_rec (s t: ℝ) [PosReal s] [PosReal t]:
 Eₖ s t k = E s t (wₖ s t k) + E s t (wₖ' s t k) +
            t *   (wₖ s t k) + s *   (wₖ' s t k) := by
   apply Nat.le_induction
-  · rw [w₁]
-    rw [w₁']
+  · rw [w₁, w₁']
     unfold E
     simp only [Nat.cast_one, mul_one]
     rw [k₁]
     simp only
     unfold nₖ
     simp only [Nat.cast_one, sub_self, zero_mul, add_zero]
-    unfold Eₖ
-    unfold Eₖ
-    unfold Jₖ
-    rw [δ₀]
-    rw [Jline₀]
+    unfold Eₖ Eₖ Jₖ
+    rw [δ₀, Jline₀]
     ring
   · intro k k1 prev
     unfold Eₖ
-    rw [prev]
-    rw [← Ew_accum _ _ _ k1]
-    rw [← Ew'_accum _ _ _ k1]
-    rw [wₖ]
-    rw [wₖ']
-    rw [Jstₖ_rec _ _ _ k1]
+    rw [prev, ← Ew_accum _ _ _ k1, ← Ew'_accum _ _ _ k1, wₖ, wₖ', Jstₖ_rec _ _ _ k1]
     push_cast
     ring
 
@@ -3229,8 +3150,7 @@ E s t ((1 - a) * (nₖ s t k) + a * (nₖ s t (k + 1))) = (1 - a) * (Eₖ s t k)
     rw [kₙ_inv]
     simp only [sub_self, zero_mul, add_zero]
   · have keq: kₙ s t ((1 - a) * (nₖ s t k) + a * (nₖ s t (k + 1))) = some k := by
-      unfold kₙ
-      unfold kceiled
+      unfold kₙ kceiled
       apply finset_max_eq
       · simp only [Set.mem_toFinset, Set.mem_setOf_eq]
         apply le_add_of_sub_left_le
@@ -3238,35 +3158,27 @@ E s t ((1 - a) * (nₖ s t k) + a * (nₖ s t (k + 1))) = (1 - a) * (Eₖ s t k)
         nth_rw 1 [onem]
         rw [← sub_mul]
         simp only [sub_sub_cancel, ge_iff_le]
-        refine mul_le_mul_of_nonneg ?_ ?_ low ?_
-        · simp only [le_refl]
-        · simp only [Nat.cast_le]
-          exact Nat.le.intro rfl
-        · simp only [Nat.cast_nonneg]
+        refine mul_le_mul_of_nonneg (by apply le_refl) ?_ low (by apply Nat.cast_nonneg)
+        norm_cast
+        exact Nat.le.intro rfl
       · intro n mem
         simp only [Set.mem_toFinset, Set.mem_setOf_eq] at mem
-        rw [sub_mul] at mem
-        rw [sub_add] at mem
-        rw [← mul_sub] at mem
+        rw [sub_mul, sub_add, ← mul_sub] at mem
         have lt: nₖ s t n < 1 * (nₖ s t k) - (((nₖ s t k): ℝ) - (nₖ s t (k + 1))) := by
           apply lt_of_le_of_lt mem
           apply sub_lt_sub_left
-          rw [← neg_sub]
-          rw [mul_neg]
+          rw [← neg_sub, mul_neg]
           apply neg_lt_neg
-          apply (mul_lt_iff_lt_one_left ?_).mpr
-          · exact lt_of_le_of_ne high a1
-          · simp only [sub_pos, Nat.cast_lt]
-            apply nₖ_mono
-            simp only [lt_add_iff_pos_right, Nat.lt_one_iff, pos_of_gt]
+          refine (mul_lt_iff_lt_one_left ?_).mpr (lt_of_le_of_ne high a1)
+          simp only [sub_pos, Nat.cast_lt]
+          apply nₖ_mono
+          simp only [lt_add_iff_pos_right, Nat.lt_one_iff, pos_of_gt]
         simp only [one_mul, sub_sub_cancel, Nat.cast_lt] at lt
         apply (StrictMono.lt_iff_lt (nₖ_mono s t)).mp at lt
         exact Nat.le_of_lt_succ lt
     unfold E
-    rw [keq]
+    rw [keq, Eₖ, nₖ]
     simp only
-    rw [Eₖ]
-    rw [nₖ]
     push_cast
     ring
 
@@ -3289,7 +3201,7 @@ E s t ((1 - a) * (wₖ s t k) + a * (wₖ s t (k + 1))) = (1 - a) * (E s t (wₖ
 
 lemma Ewₖ'_lerp (s t: ℝ) (k: ℕ) (a: ℝ) (low: a ≥ 0) (high: a ≤ 1) [PosReal s] [PosReal t]:
 E s t ((1 - a) * (wₖ' s t k) + a * (wₖ' s t (k + 1))) = (1 - a) * (E s t (wₖ' s t k)) + a * (E s t (wₖ' s t (k + 1))) := by
-  rw [← wₖ_symm]; rw [← wₖ_symm];
+  rw [← wₖ_symm, ← wₖ_symm];
   rw [E_symm]; nth_rw 2 [E_symm]; nth_rw 3 [E_symm]
   exact Ewₖ_lerp t s k a low high
 
@@ -3322,8 +3234,7 @@ E s t n = D s t n (wₗᵢ s t n) := by
     apply ge_trans n2
     simp only [ge_iff_le, Nat.one_le_ofNat]
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
-  unfold wₗᵢ
-  unfold wₗᵢ'
+  unfold wₗᵢ wₗᵢ'
   rw [keq]
   simp only
   have denogt: (nₖ s t (k + 1): ℝ) - nₖ s t k > 0 := by
@@ -3398,7 +3309,7 @@ E s t n = D s t n w := by
       rcases high with h|h
       · apply lt_of_lt_of_le h rightBound
       · apply lt_of_lt_of_le h wₗᵢrightBound
-    exact dD_zero s t n n2 xlow xhigh
+    exact dD_zero s t n x n2 xlow xhigh
   · simp only [measurableSet_Ioo]
   · simp only [measurableSet_Ioc]
 
@@ -3428,7 +3339,7 @@ E s t n < D s t n w := by
     apply dD_integrable
   · rintro x ⟨xleft, xright⟩
     simp only [Left.neg_pos_iff]
-    apply dD_neg s t n n2
+    apply dD_neg s t n x n2
     · apply gt_of_gt_of_ge xleft leftBound
     · exact xright
   · exact rightBound
