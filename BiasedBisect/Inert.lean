@@ -636,7 +636,7 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
         unfold Δfloored
         simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq]
         constructor
-        · unfold δₚ Δ is_δ
+        · unfold δₚ Δ
           simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
         · exact preserveNext
       unfold δₖ δnext
@@ -646,7 +646,7 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
     · by_contra lt
       simp only [not_le] at lt
       obtain δₖ2FromPq := δₖ_in_Δ s2 t2 (k + 1)
-      unfold Δ is_δ at δₖ2FromPq
+      unfold Δ at δₖ2FromPq
       simp only [Set.mem_setOf_eq] at δₖ2FromPq
       rcases δₖ2FromPq with ⟨p', ⟨q', δₖ2eq⟩⟩
       rw [← δₖ2eq] at lt
@@ -694,7 +694,7 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       unfold δₖ at preserveLt
       rw [← pqMatch1 k kleprev] at preserveGt
       have inFloor: p' * s1 + q' * t1 ∈ Δfloored s1 t1 (δₖ s1 t1 k) := by
-        unfold Δfloored Δ is_δ
+        unfold Δfloored Δ
         simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, exists_apply_eq_apply2, true_and]
         exact preserveGt
       have inFloor': p' * s1 + q' * t1 ≥ δnext s1 t1 (δₖ s1 t1 k) := by
@@ -1076,7 +1076,7 @@ instance abPos(a b: ℕ+): PosReal (a + b) where
 lemma pqOfδₖ_abcd_exist(a b c d: ℕ+) (k: ℕ):
 ∃ (pq: ℕ × ℕ), δₚ (a + c) (b + d) pq = δₖ (a + c) (b + d) k := by
   obtain h := δₖ_in_Δ (a + c) (b + d) k
-  unfold Δ is_δ at h
+  unfold Δ at h
   simp only [Set.mem_setOf_eq] at h
   unfold δₚ
   simp only [Prod.exists]
@@ -1142,7 +1142,7 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
         unfold Δtriangle at mem
         simp only [Set.mem_image, Prod.exists] at mem
         rcases mem with ⟨p, q, mem, mem2⟩
-        unfold Δ is_δ
+        unfold Δ
         simp only [Set.mem_setOf_eq]
         use p, q
         unfold δₚ at mem2
@@ -1391,7 +1391,7 @@ nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) 
     intro pq mem
     simp only [Set.mem_setOf_eq] at mem
     have inΔ: (pq.1: ℝ) * (a + c) + pq.2 * (b + d) ∈ Δ (a + c) (b + d) := by
-      unfold Δ is_δ
+      unfold Δ
       simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
     obtain ⟨k, keq⟩ := δₖ_surjΔ (a + c) (b + d)  _ inΔ
     rw [← keq] at mem
@@ -1429,7 +1429,7 @@ nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) 
     unfold Λceiled at outCeiled
     simp only [Set.mem_setOf_eq, not_le] at outCeiled
     have inΔ: (pq.1: ℝ) * (a + c) + pq.2 * (b + d) ∈ Δ (a + c) (b + d) := by
-      unfold Δ is_δ
+      unfold Δ
       simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
     obtain ⟨k', keq⟩ := δₖ_surjΔ (a + c) (b + d) _ inΔ
     rw [← keq] at outCeiled
@@ -1487,7 +1487,7 @@ nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) 
     obtain lrange := lt_of_le_of_lt lrange k'floor
     obtain lkrel := δₖ_mono (a + c) (b + d) lrange
     obtain lpq := δₖ_in_Δ (a + c) (b + d) l
-    unfold Δ is_δ at lpq
+    unfold Δ at lpq
     rcases lpq with ⟨lp, lq, lpqeq⟩
     rw [← lpqeq] at lkrel
     rw [← lpqeq] at lnotmem
@@ -1838,14 +1838,14 @@ lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
     apply Set.IsWF.min_eq_of_le
     · unfold Δfloored
       constructor
-      · unfold Δ is_δ
+      · unfold Δ
         simp only [Nat.cast_add, Nat.cast_one, Set.mem_setOf_eq]
         use k + 1, 0
         simp only [Nat.cast_add, Nat.cast_one, CharP.cast_eq_zero, zero_mul, add_zero]
       · simp only [gt_iff_lt, Nat.cast_add, Nat.cast_one, Set.mem_setOf_eq]
         apply (mul_lt_mul_right PosReal.pos).mpr ?_
         · apply lt_add_one
-    · unfold Δfloored Δ is_δ
+    · unfold Δfloored Δ
       simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, Nat.cast_add, Nat.cast_one,
         and_imp, forall_exists_index]
       intro δ p q eq mem

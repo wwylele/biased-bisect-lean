@@ -27,7 +27,6 @@ theorem Δ_int (s t: ℕ+):
   simp only [PNat.gcd_coe]
   intro δ mem
   unfold Δ at mem
-  unfold is_δ at mem
   simp only [Set.mem_setOf_eq] at mem
   rcases mem with ⟨p, ⟨q, pq⟩⟩
   simp only [Set.mem_setOf_eq]
@@ -58,7 +57,6 @@ We will also start
 -/
 theorem δlift (s t: ℕ+) (δ: ℝ) (mem: δ ∈ Δ s t): ∃d: ℤ, d = δ := by
   unfold Δ at mem
-  unfold is_δ at mem
   simp only [Set.mem_setOf_eq] at mem
   rcases mem with ⟨p, ⟨q, pq⟩⟩
   use p * s + q * t
@@ -147,7 +145,7 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
       · show Set.range (δₚ s t) ⊆ Δ s t
         refine Set.range_subset_iff.mpr ?_
         intro ⟨p, q⟩
-        unfold δₚ; unfold Δ; unfold is_δ
+        unfold δₚ; unfold Δ
         simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
       · simp only [Set.disjoint_singleton_left]
         contrapose lt with isOnΛ
