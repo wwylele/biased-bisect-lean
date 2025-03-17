@@ -984,7 +984,7 @@ lemma ΛrectangleDecompose (a b c d: ℕ+) (det: a * d = b * c + 1):
           | 1 =>
             simp only [mul_one] at keq
             rw [keq] at eq
-            simp only [self_eq_add_left, mul_eq_zero, AddLeftCancelMonoid.add_eq_zero, PNat.ne_zero,
+            simp only [right_eq_add, mul_eq_zero, AddLeftCancelMonoid.add_eq_zero, PNat.ne_zero,
               and_self, or_false] at eq
             rw [eq] at p0
             contradiction
@@ -1112,7 +1112,7 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
       simp only [PNat.add_coe, Nat.cast_add]
       norm_cast
     obtain pqeq := unique_pq (a + c) (b + d) (p, q) (p2, q2) coprime eq mem'
-    exact Prod.mk.inj_iff.mp pqeq
+    exact Prod.mk_inj.mp pqeq
 
   let kTriangle := (δₖ (a + c) (b + d)) ⁻¹' Δtriangle
   have kTriangleFintype: Fintype kTriangle := by
@@ -1949,7 +1949,7 @@ wₖ s t k = 1 := by
   by_cases k0: k = 0
   · rw [k0]
     simp only [↓reduceIte]
-  · simp only [k0, ↓reduceIte, add_right_eq_self]
+  · simp only [k0, ↓reduceIte, add_eq_left]
     unfold Jceiled
     convert Finset.sum_empty
     have k1: k - 1 < N + 1 := by

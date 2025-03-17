@@ -162,7 +162,7 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
       rw [line_empty]
       apply Finset.sum_empty
     rw [ceiled_nogrow]
-    simp only [Int.cast_add, Int.cast_one, add_right_eq_self]
+    simp only [Int.cast_add, Int.cast_one, add_eq_left]
     exact line_empty'
 
 /-
@@ -212,7 +212,7 @@ lemma Φ_agree (s t: ℕ+) (δ: ℤ): Φ s t δ = φ s t δ := by
 
 theorem Φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): Φ s t δ = 1 := by
   unfold Φ
-  simp only [add_right_eq_self]
+  simp only [add_eq_left]
   unfold Jceiled_int
   unfold Jceiled
   have line_empty: (Λceiled s t δ).toFinset = ∅ := by
@@ -1185,22 +1185,6 @@ lemma ξ₀homo (s t l: ℕ+): (ξ₀ s t) = (ξ₀ (l * s) (l * t)) ^ (l:ℕ) :
         Polynomial.eval_monomial, one_mul, Polynomial.eval_one] at eval
       exact eval
 
-
-
-theorem Complex.arg_pow_coe_angle {x : ℂ} {n: ℕ} : ((x ^ n).arg : Real.Angle) = n • (x.arg : Real.Angle) := by
-  by_cases x0: x = 0
-  · rw [x0]
-    by_cases n0: n = 0
-    repeat simp [n0]
-  · induction n with
-    | zero => simp [x0]
-    | succ n prev =>
-      have xn0: x ^ n ≠ 0 := pow_ne_zero n x0
-      rw [pow_succ]
-      rw [Complex.arg_mul_coe_angle xn0 x0]
-      rw [prev]
-      rfl
-
 lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
 ∀ξ ∈ ξSet s t, ξ ≠ ξ₀ s t → ξ₀ s t < ‖ξ‖ := by
   obtain ⟨⟨ξ₀pos, ξ₀eq⟩, ξ₀unique⟩ := (ξPolynomialℝUniqueRoot s t).choose_spec
@@ -1698,7 +1682,7 @@ lemma reduce_coprime (s t: ℕ+): ∃ (l S T: ℕ+), s = l * S ∧ t = l * T ∧
     obtain gcd_left := Nat.gcd_mul_left (s.gcd t) S T
     norm_cast at gcd_left
     rw [← seq, ← teq] at gcd_left
-    exact mul_right_eq_self.mp (id (Eq.symm gcd_left))
+    exact mul_eq_left.mp (id (Eq.symm gcd_left))
   use s.gcd t, S, T
 
 

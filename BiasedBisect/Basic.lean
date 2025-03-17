@@ -1498,7 +1498,7 @@ wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
       rcases lt_trichotomy (δₖ s t k - t) (δnext s t (δₖ s t (k - 1) - t)) with lt|eq|gt
       -- case 1: Jtₖ contains no new points. We argue by showing the gap in δ
       · rw [← Jceiled_gap s t (δₖ s t (k - 1) - t) (δₖ s t k - t)]
-        · simp only [add_right_eq_self]
+        · simp only [add_eq_left]
           unfold Jline
           have empty: (Λline s t (δₖ s t k - t)).toFinset = ∅ := by
             simp only [Set.toFinset_eq_empty]
@@ -1591,7 +1591,7 @@ lemma w₁ (s t: ℝ) [PosReal s] [PosReal t]: wₖ s t 1 = 1 := by
   unfold wₖ
   unfold wₖ Jtₖ
   rw [δ₀]
-  simp only [zero_sub, add_right_eq_self]
+  simp only [zero_sub, add_eq_left]
   unfold Jline
   rw [Set.toFinset_eq_empty.mpr (Λline_neg s t (-t) (neg_lt_zero.mpr PosReal.pos))]
   rfl
@@ -1748,7 +1748,7 @@ lemma wₖ_is_nₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: ∃k', wₖ s t 
         apply le_trans mem memle
     · use 0
       unfold nₖ
-      simp only [add_right_eq_self]
+      simp only [add_eq_left]
       apply Jceiled_neg
       exact lt_of_not_ge ge0
 
@@ -2152,7 +2152,7 @@ dE s t w = δₖ s t k - t := by
       add_tsub_cancel_right]
     by_cases Leq0: l = 0
     · rw [Leq0, nₖ_accum]
-      simp only [↓reduceIte, add_right_eq_self]
+      simp only [↓reduceIte, add_eq_left]
       rw [Leq0, δ₀] at Leq
       apply Jceiled_neg
       rw [km1e] at Leq
@@ -3016,11 +3016,11 @@ lemma Ew_accum (s t: ℝ) (k: ℕ) (k1: k ≥ 1) [PosReal s] [PosReal t]:
 E s t (wₖ s t k) + (Jtₖ s t k) * (δₖ s t k + s) = E s t (wₖ s t (k + 1)) := by
   by_cases zero_interval: wₖ s t k = wₖ s t (k + 1)
   · rw [zero_interval]
-    simp only [add_right_eq_self, mul_eq_zero, Nat.cast_eq_zero]
+    simp only [add_eq_left, mul_eq_zero, Nat.cast_eq_zero]
     left
     rw [wₖ] at zero_interval
     unfold Jtₖ at zero_interval
-    simp only [self_eq_add_right] at zero_interval
+    simp only [left_eq_add] at zero_interval
     exact zero_interval
   · rcases wₖ_is_nₖ s t k with ⟨k', k'eq⟩
     rcases wₖ_is_nₖ_p1 s t k k' k'eq zero_interval with k'p1eq
