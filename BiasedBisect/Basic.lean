@@ -68,6 +68,11 @@ class PosReal (x : ℝ) : Prop where
 instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a * b) where
   pos := mul_pos PosReal.pos PosReal.pos
 
+instance PNat_is_pos (s: ℕ+): PosReal s where
+  pos := by
+    have nat: (s: ℕ) > 0 := by exact PNat.pos s
+    exact Nat.cast_pos'.mpr nat
+
 /-
 Throughout the file, we will use a pair of real positive parameters s and t.
 
@@ -2933,12 +2938,10 @@ Eₖ s t k = ∫ x in (1: ℝ)..(nₖ s t k), dE s t x + s + t := by
       unfold dE
       rw [kₙ_inv' s t n k low high]
 
-    rw [← MeasureTheory.ae_restrict_iff',
+    rw [← MeasureTheory.ae_restrict_iff' measurableSet_Ioc,
       MeasureTheory.Measure.restrict_congr_set MeasureTheory.Ico_ae_eq_Ioc.symm,
-      MeasureTheory.ae_restrict_iff']
-    · exact .of_forall ico
-    · simp only [measurableSet_Ico]
-    · simp only [measurableSet_Ioc]
+      MeasureTheory.ae_restrict_iff' measurableSet_Ico]
+    exact .of_forall ico
 
 /-
 We then define E(n) as linear interpolation between Eₖ

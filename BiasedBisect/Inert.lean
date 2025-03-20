@@ -2213,3 +2213,21 @@ PNat.recOn n [] (fun prevn prev ↦
 )
 
 #eval nodeList 30
+
+
+-- h: k < (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ)
+
+noncomputable
+def δ'ₖ (a b c d: ℕ+) (k: ℕ) := δₚ a c (pqOfδₖ_abcd a b c d k)
+
+lemma δ'ₖ_mono (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1):
+MonotoneOn (δ'ₖ a b c d) (Set.Ico 0 (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ)) := by
+  unfold MonotoneOn δ'ₖ
+  intro k kmem l lmem klel
+  simp only [Set.mem_Ico, zero_le, true_and] at kmem lmem
+  sorry
+
+lemma δ'ₖ_map (a b c d: ℕ+) (k l: ℕ) (det: a * d = b * c + 1)
+(bound: k < (((a + c + 1) * (b + d + 1) - 2) / 2 - 1: ℕ)) (ne: δ'ₖ a b c d k ≠ δ'ₖ a b c d (k + 1))
+(prev: δ'ₖ a b c d k = δₖ a c l)
+: δ'ₖ a b c d (k + 1) = δₖ a c (l + 1) := sorry

@@ -14,11 +14,6 @@ but the generalization will be deferred to homogeneity.
 
 -/
 
-instance PNat_is_pos (s: ℕ+): PosReal s where
-  pos := by
-    have nat: (s: ℕ) > 0 := by exact PNat.pos s
-    exact Nat.cast_pos'.mpr nat
-
 /-
 When s and t are positive integers, Δ collaps to a subset of l * gcd(s, t)
 -/
@@ -195,11 +190,6 @@ lemma dE_int_homo (s t l: ℕ+) (n: ℝ): l * (dE_int s t n) = dE_int (l * s) (l
 
 /-
 Let's introduce a new sequence Φ(δ) that's simply Jceiled_int shifted by 1.
-
-We will soon see that this is the sequence that uniquely satisfies the following conditions:
- - Φ(< 0) = 1
- - Φ(δ ≥ 0) = Φ(δ - s) + Φ(δ - t)
-As an example, for s = 1 and t = 2, this is the Fibonacci sequence (shifted in index)
 -/
 noncomputable
 def Φ (s t: ℕ+) (δ: ℤ) := 1 + Jceiled_int s t δ
@@ -210,6 +200,12 @@ lemma Φ_agree (s t: ℕ+) (δ: ℤ): Φ s t δ = φ s t δ := by
   unfold φ
   rfl
 
+/-
+Φ(δ) is the unique sequence that satisfies the following conditions:
+ - Φ(< 0) = 1
+ - Φ(δ ≥ 0) = Φ(δ - s) + Φ(δ - t)
+As an example, for s = 1 and t = 2, this is the Fibonacci sequence (shifted in index)
+-/
 theorem Φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): Φ s t δ = 1 := by
   unfold Φ
   simp only [add_eq_left]

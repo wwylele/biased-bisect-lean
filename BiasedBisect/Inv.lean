@@ -142,3 +142,124 @@ lemma φδₖt(s t: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]:
   obtain equiv7 := (equiv5 (φ s t (δₖ s t k - t)))
   simp only [Nat.cast_le, le_refl, iff_true] at equiv7
   exact Nat.le_antisymm equiv6 equiv7
+
+/-
+Two lemmas similar to Jline_s and Jline_t
+-/
+lemma Jceiled_s (s t δ: ℝ) [PosReal s] [PosReal t]:
+Jceiled s t (δ - s) = ∑⟨p, q⟩ ∈ (Λceiled s t δ).toFinset, shut p (Jₚ (p - 1, q)) := by
+  unfold Jceiled
+  apply Finset.sum_of_injOn (fun pq ↦ (pq.1 + 1, pq.2))
+  · unfold Set.InjOn
+    simp only [Set.coe_toFinset, Prod.forall, Prod.mk.injEq]
+    intro a b abmem c d cdmem ab_eq_cd
+    simp only [Prod.mk.injEq, add_left_inj] at ab_eq_cd
+    trivial
+  · simp only [Set.coe_toFinset]
+    unfold Λceiled Set.MapsTo
+    intro ⟨p, q⟩  pqmem
+    simp only [Set.mem_preimage, Set.mem_setOf_eq] at pqmem ⊢
+    simp only [Nat.cast_add, Nat.cast_one]
+    linarith
+  · intro ⟨p, q⟩ pqmem pqnmem
+    have p0: p = 0 := by
+      unfold Λceiled at pqmem
+      simp only [Set.mem_toFinset, Set.mem_preimage, Set.mem_setOf_eq] at pqmem
+      unfold Λceiled at pqnmem
+      simp only [Set.coe_toFinset, Set.mem_image, Set.mem_preimage, Prod.exists, not_exists,
+        not_and] at pqnmem
+      contrapose pqnmem
+      apply not_forall.mpr
+      use p - 1
+      apply not_forall.mpr
+      use q
+      simp only [Classical.not_imp, Decidable.not_not]
+      constructor
+      · simp only [Set.mem_setOf_eq]
+        have p1: p ≥ 1 := by exact Nat.one_le_iff_ne_zero.mpr pqnmem
+        push_cast [p1]
+        linarith
+      · simp only [Prod.mk.injEq, and_true]
+        apply Nat.exists_eq_succ_of_ne_zero at pqnmem
+        rcases pqnmem with ⟨n, np⟩
+        rw [np]
+        simp only [Nat.succ_eq_add_one, add_tsub_cancel_right]
+    rw [p0]
+    unfold shut
+    simp only
+  · intro δ δmem
+    unfold shut
+    simp only [add_tsub_cancel_right, Prod.mk.eta]
+
+lemma Jceiled_t (s t δ: ℝ) [PosReal s] [PosReal t]:
+Jceiled s t (δ - t) = ∑⟨p, q⟩ ∈ (Λceiled s t δ).toFinset, shut q (Jₚ (p, q - 1)) := by
+  rw [Jceiled_symm]
+  rw [Jceiled_s]
+  apply Finset.sum_of_injOn (fun pq ↦ (pq.2, pq.1))
+  · unfold Set.InjOn
+    simp only [Set.coe_toFinset, Prod.mk.injEq, and_imp, Prod.forall]
+    intro p q pqmem p' q' pqmem' qeq peq
+    exact ⟨peq, qeq⟩
+  · unfold Set.MapsTo
+    simp only [Set.coe_toFinset, Prod.forall]
+    apply Λceiled_symm
+  · simp only [Set.mem_toFinset, Set.coe_toFinset, Set.mem_image, Prod.exists, not_exists, not_and,
+      Prod.forall, Prod.mk.injEq]
+    intro p q mem mem2
+    obtain mem_symm := Λceiled_symm _ _ _ _ _ mem
+    obtain what := mem2 q p mem_symm rfl
+    simp only [not_true_eq_false] at what
+  · simp only [Set.mem_toFinset, Prod.forall]
+    intro p q mem
+    rw [Jₚ_symm]
+
+/-
+φ(δ) is the unique function that satifies the following conditions:
+ - φ(< 0) = 1
+ - φ(δ ≥ 0) = φ(δ - s) + φ(δ - t)
+-/
+lemma φ_neg (s t δ: ℝ) (dneg: δ < 0) [PosReal s] [PosReal t]:
+φ s t δ = 1 := by
+  unfold φ
+  rw [Jceiled_neg _ _ _ dneg]
+
+lemma φ_rec (s t δ: ℝ) (dpos: δ ≥ 0) [PosReal s] [PosReal t]:
+φ s t δ = φ s t (δ - s) + φ s t (δ - t) := by
+  unfold φ
+  zify
+  suffices (1:ℤ) = Jceiled s t δ - (Jceiled s t (δ - s) + Jceiled s t (δ - t)) by omega
+  rw [Jceiled_s, Jceiled_t, Jceiled]
+  push_cast
+  rw [← Finset.sum_add_distrib]
+  rw [← Finset.sum_sub_distrib]
+  symm
+  rw [Finset.sum_eq_single (0, 0)]
+  · unfold Jₚ shut
+    simp only [add_zero, Nat.choose_self, Nat.cast_one, CharP.cast_eq_zero, sub_zero]
+  · unfold shut
+    rintro ⟨p, q⟩ mem not0
+    apply sub_eq_zero_of_eq
+    norm_cast
+    obtain p0|p1 := Nat.eq_zero_or_eq_succ_pred p
+    · obtain q0|q1 := Nat.eq_zero_or_eq_succ_pred q
+      · absurd not0
+        exact Prod.ext p0 q0
+      · unfold Jₚ
+        rw [p0, q1]
+        simp only [Nat.pred_eq_sub_one, Nat.succ_eq_add_one, zero_add, Nat.choose_zero_right,
+          add_tsub_cancel_right]
+    · obtain q0|q1 := Nat.eq_zero_or_eq_succ_pred q
+      · unfold Jₚ
+        rw [p1, q0]
+        simp only [Nat.pred_eq_sub_one, Nat.succ_eq_add_one, add_zero, Nat.choose_self,
+          add_tsub_cancel_right]
+      · rw [p1, q1]
+        simp only [Nat.pred_eq_sub_one, Nat.succ_eq_add_one, add_tsub_cancel_right]
+        rw [add_comm (Jₚ _)]
+        apply Jₚ_rec
+  · intro h
+    absurd h
+    unfold Λceiled
+    simp only [Prod.mk_zero_zero, Set.mem_toFinset, Set.mem_setOf_eq, Prod.fst_zero,
+      CharP.cast_eq_zero, zero_mul, Prod.snd_zero, add_zero]
+    exact dpos
