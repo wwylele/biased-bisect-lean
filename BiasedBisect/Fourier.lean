@@ -11,267 +11,8 @@ open Complex
 open MeasureTheory
 
 
-
-
-/-Some culculus-/
-
 lemma ne_zero_of_re_neg {s : ℂ} (hs : 0 > s.re) : s ≠ 0 :=
   fun h ↦ (Complex.zero_re ▸ h ▸ hs).false
-
-lemma exp_dir (f σ: ℝ) (x c: ℂ) (σ0: σ > 0):
-HasDerivAt (fun x ↦ Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) / (-2 * π * f * Complex.I - σ) )
-(Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c))) x
-:= by
-  have muldiv: Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) =
-    Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) * (-2 * π * f * Complex.I - σ) / (-2 * π * f * Complex.I - σ) := by
-    rw [mul_div_cancel_right₀]
-    apply ne_zero_of_re_neg
-    simp only [neg_mul, Complex.sub_re, Complex.neg_re, Complex.mul_re, Complex.re_ofNat,
-      Complex.ofReal_re, Complex.im_ofNat, Complex.ofReal_im, mul_zero, sub_zero, Complex.mul_im,
-      zero_mul, add_zero, Complex.I_re, Complex.I_im, mul_one, sub_self, neg_zero, zero_sub,
-      gt_iff_lt, Left.neg_neg_iff]
-    exact σ0
-  rw [muldiv]
-  apply HasDerivAt.div_const
-  apply HasDerivAt.cexp
-  have right: (-2 * π * f * Complex.I - σ) = (-2 * π * f * Complex.I - σ) * 1 := by
-    rw [MulOneClass.mul_one]
-  nth_rw 2 [right]
-  apply HasDerivAt.const_mul
-  apply HasDerivAt.sub_const c
-  exact hasDerivAt_id' x
-
-lemma exp_integ(f σ c a b: ℝ) (σ0: σ > 0):
-∫ x in a..b, Complex.exp ((-2 * π * f * Complex.I - σ) * (x - c)) =
-Complex.exp ((-2 * π * f * Complex.I - σ) * (b - c)) / (-2 * π * f * Complex.I - σ) - Complex.exp ((-2 * π * f * Complex.I - σ) * (a - c)) / (-2 * π * f * Complex.I - σ) := by
-  apply intervalIntegral.integral_eq_sub_of_hasDerivAt
-  · intro x xmem
-    apply HasDerivAt.comp_ofReal (exp_dir f σ x c σ0)
-  · apply intervalIntegrable_iff.mpr
-    apply Continuous.integrableOn_uIoc
-    continuity
-
-def MeasureTheory.HasIntegral [NormedAddCommGroup G] [NormedSpace ℝ G] {_ : MeasurableSpace α}
-(f : α → G) (μ : MeasureTheory.Measure α) (s : Set α) (result : G) :=
-MeasureTheory.IntegrableOn f s μ ∧ ∫ x in s, f x ∂μ = result
-
-lemma MeasureTheory.HasIntegral_union [NormedAddCommGroup G] [NormedSpace ℝ G] {_ : MeasurableSpace α}
-{f: α → G} {μ : MeasureTheory.Measure α} {s t : Set α} {a b : G}
-(hst : Disjoint s t) (ht : MeasurableSet t)
-(hfs : MeasureTheory.HasIntegral f μ s a) (hft : MeasureTheory.HasIntegral f μ t b):
-MeasureTheory.HasIntegral f μ (s ∪ t) (a + b) := by
-  constructor
-  · exact MeasureTheory.IntegrableOn.union (hfs.left) (hft.left)
-  · rw [MeasureTheory.setIntegral_union hst ht hfs.left hft.left, hfs.right, hft.right]
-
-lemma MeasureTheory.HasIntegral_congr_ae [NormedAddCommGroup G] [NormedSpace ℝ G] {_ : MeasurableSpace α}
-{f g: α → G} {μ : MeasureTheory.Measure α} {s : Set α} {a : G}
-(h : f =ᵐ[μ.restrict s] g) (hfs : MeasureTheory.HasIntegral f μ s a):
-MeasureTheory.HasIntegral g μ s a := by
-  constructor
-  · exact MeasureTheory.Integrable.congr hfs.left h
-  · rw [← MeasureTheory.integral_congr_ae h]
-    exact hfs.right
-
-lemma MeasureTheory.HasIntegralHasSum [NormedAddCommGroup G] [NormedSpace ℝ G] {_ : MeasurableSpace α}
-[Countable ι]
-{f: ι → α → G} {g: α → G} {μ : MeasureTheory.Measure α} {s : Set α} {a : ι → G} {asum: G}
-(hf : ∀ (i : ι), MeasureTheory.HasIntegral (f i) μ s (a i)) (hsum: HasSum a asum) (hfsum: HasSum f g)
-(habs: Summable fun (i : ι) => ∫a in s, ‖f i a‖ ∂μ):
-MeasureTheory.HasIntegral g μ s asum := by
-  constructor
-  · sorry
-  · rw [← hfsum.tsum_eq]
-    have intrw: ∫ (x : α) in s, (∑' (i : ι), f i) x ∂μ = ∫ (x : α) in s, (∑' (i : ι), f i x) ∂μ := by
-      congr
-      ext x
-      apply tsum_apply
-      exact hfsum.summable
-    rw [intrw]
-    rw [← hsum.tsum_eq]
-    rw [← MeasureTheory.integral_tsum_of_summable_integral_norm (fun i ↦ (hf i).left) habs]
-    congr
-    ext i
-    exact (hf i).right
-
-
-
-noncomputable
-def U (μ x: ℝ): ℂ := if x ≤ 0 then 0 else if x ≤ μ then x / μ else 1
-
-noncomputable
-def Uexp (μ σ a f x: ℝ): ℂ := Complex.exp (((-2 * π * (f * x)) * Complex.I)) * (U μ (x - a) * Complex.exp (- σ * x))
-
-lemma Uexp_integral (μ σ a f: ℝ):
-MeasureTheory.HasIntegral (Uexp μ σ a f) MeasureTheory.volume Set.univ 0 := by
-  have left: MeasureTheory.HasIntegral (Uexp μ σ a f) MeasureTheory.volume (Set.Iic a) 0 := by
-    have left': MeasureTheory.HasIntegral (fun (x:ℝ) ↦ (0:ℂ)) MeasureTheory.volume (Set.Iic a) 0 := by sorry
-    refine MeasureTheory.HasIntegral_congr_ae ?_ left'
-    apply (MeasureTheory.ae_restrict_iff' (by exact measurableSet_Iic)).mpr
-    apply Filter.Eventually.of_forall
-    unfold Uexp U
-    simp only [Set.mem_Iic]
-    intro x xmem
-    have cond: x - a ≤ 0 := by exact sub_nonpos_of_le xmem
-    simp only [cond, ↓reduceIte, zero_mul, mul_zero]
-
-  have mid: MeasureTheory.HasIntegral (Uexp μ σ a f) MeasureTheory.volume (Set.Ioc a (a + μ))
-    (((((2 * π * f * Complex.I + σ) * μ + 1)) * Complex.exp (-(a + μ) * (2 * π * f * Complex.I + σ))
-        - Complex.exp (-a * (2 * π * f * Complex.I + σ)))
-        / (-μ * (2 * π * f * Complex.I + σ) ^ 2) :ℂ) := by
-    have mid': MeasureTheory.HasIntegral (fun (x:ℝ) ↦ Complex.exp (((-2 * π * (f * x)) * Complex.I)) * ((x - a) / μ * Complex.exp (- σ * x)))
-      MeasureTheory.volume (Set.Ioc a (a + μ))
-      (((((2 * π * f * Complex.I + σ) * μ + 1)) * Complex.exp (-(a + μ) * (2 * π * f * Complex.I + σ))
-        - Complex.exp (-a * (2 * π * f * Complex.I + σ)))
-        / (-μ * (2 * π * f * Complex.I + σ) ^ 2) :ℂ) := by sorry
-    refine MeasureTheory.HasIntegral_congr_ae ?_ mid'
-    apply (MeasureTheory.ae_restrict_iff' (by exact measurableSet_Ioc)).mpr
-    apply Filter.Eventually.of_forall
-    unfold Uexp U
-    simp only [Set.mem_Ioc]
-    rintro x ⟨xleft, xright⟩
-    have cond1: ¬ x - a ≤ 0 := by simp only [not_le]; exact sub_pos_of_lt xleft
-    have cond2: x - a ≤ μ := by exact sub_left_le_of_le_add xright
-    simp only [cond1, cond2, ↓reduceIte]
-    push_cast
-    rfl
-
-  have right: MeasureTheory.HasIntegral (Uexp μ σ a f) MeasureTheory.volume (Set.Ioi (a + μ)) 0 := by sorry
-
-  have leftmid_disjoint: Disjoint (Set.Iic a) (Set.Ioc a (a + μ)) := by sorry
-  have leftmid_union: Set.Iic a ∪ Set.Ioc a (a + μ) = Set.Iic (a + μ) := by sorry
-  obtain leftmid := MeasureTheory.HasIntegral_union leftmid_disjoint measurableSet_Ioc left mid
-  rw [leftmid_union] at leftmid
-
-
-  have all_disjoint: Disjoint (Set.Iic (a + μ)) (Set.Ioi (a + μ)) := by sorry
-  have all_union: (Set.Iic (a + μ)) ∪ (Set.Ioi (a + μ)) = Set.univ := by sorry
-  obtain all := MeasureTheory.HasIntegral_union all_disjoint measurableSet_Ioi leftmid right
-  rw [all_union] at all
-  sorry
-
-lemma UexpSum_integral (μ σ a f: ℝ):
-MeasureTheory.HasIntegral (fun x ↦ ∑' pq, Jₚ pq * Uexp μ σ a f x) MeasureTheory.volume Set.univ 0 := by
-  sorry
-
-/-End-/
-
-noncomputable
-def Uinteg (μ σ a f: ℝ) := ∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ (x - a) * Complex.exp (- σ * x))
-
-/-
-noncomputable
-def φTerm (s t μ σ: ℝ) (pq: ℕ × ℕ) (x: ℝ): ℂ := Jₚ pq * (U μ (x - (pq.1 * s + pq.2 * t)) * Complex.exp (- σ * x))
-
-noncomputable
-def φReg (s t μ σ x: ℝ) := U μ x * Complex.exp (- σ * x) + ∑' pq, φTerm s t μ σ pq x
-
-lemma φReg_Fourier (s t μ σ f: ℝ):
-𝓕 (φReg s t μ σ) f = 0 := calc
-  𝓕 (φReg s t μ σ) f = 𝓕 (fun x ↦ U μ x * Complex.exp (- σ * x) + ∑' pq, φTerm s t μ σ pq x) f := by
-    unfold φReg; rfl
-  _ = ∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ x * Complex.exp (- σ * x) + ∑' pq, φTerm s t μ σ pq x) := by
-    rw [fourierIntegral_eq']
-    simp only [neg_mul, RCLike.inner_apply, conj_trivial, Complex.ofReal_neg, Complex.ofReal_mul,
-      Complex.ofReal_ofNat, smul_eq_mul]
-  _ = ∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ x * Complex.exp (- σ * x)) + Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * ∑' pq, φTerm s t μ σ pq x := by
-    congr 1
-    ext x
-    apply left_distrib
-  _ = (∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ x * Complex.exp (- σ * x))) + ∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * ∑' pq, φTerm s t μ σ pq x := by
-    refine MeasureTheory.integral_add ?_ ?_
-    sorry
-    sorry
-  _ = (∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ x * Complex.exp (- σ * x))) + ∫ x, ∑' pq, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * φTerm s t μ σ pq x := by
-    congr 2
-    ext x
-    exact Eq.symm tsum_mul_left
-  _ = (∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ x * Complex.exp (- σ * x))) + ∑' pq, ∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * φTerm s t μ σ pq x := by
-    congr 1
-    refine MeasureTheory.integral_tsum ?_ ?_
-    sorry
-    sorry
-  _ = (∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ x * Complex.exp (- σ * x))) + ∑' pq, ∫ x, Jₚ pq * (Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ (x - (pq.1 * s + pq.2 * t)) * Complex.exp (- σ * x))) := by
-    congr 2
-    ext pq
-    congr 1
-    ext x
-    unfold φTerm
-    ring_nf
-  _ = (∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ x * Complex.exp (- σ * x))) + ∑' pq, Jₚ pq * ∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ (x - (pq.1 * s + pq.2 * t)) * Complex.exp (- σ * x)) := by
-    congr 2
-    ext pq
-    apply MeasureTheory.integral_mul_left
-  _ = (∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ (x - 0) * Complex.exp (- σ * x))) + ∑' pq, Jₚ pq * ∫ x, Complex.exp ((↑(-2 * π * (f * x)) * Complex.I)) * (U μ (x - (pq.1 * s + pq.2 * t)) * Complex.exp (- σ * x)) := by
-    congr 2
-    ext x
-    simp only [neg_mul, Complex.ofReal_neg, Complex.ofReal_mul, Complex.ofReal_ofNat, sub_zero]
-  _ = (Uinteg μ σ 0 f) + ∑' pq, Jₚ pq * Uinteg μ σ (pq.1 * s + pq.2 * t) f := by
-    rfl
-
-  _ = 0 := by sorry
--/
-
-
-lemma φReg_Fourier_sum_exchange (s t μ σ f: ℝ) :
-∫ x:ℝ, ∑' pq, Jₚ pq * Complex.exp ((-(2 * π * f * Complex.I + σ) * x)) * (U μ (x - (pq.1 * s + pq.2 * t))) =
-∑' pq, ∫ x:ℝ, Jₚ pq * Complex.exp ((-(2 * π * f * Complex.I + σ) * x)) * (U μ (x - (pq.1 * s + pq.2 * t))) := by
-  apply MeasureTheory.integral_tsum
-  · intro pq
-    apply Continuous.aestronglyMeasurable
-    sorry
-  · have le: ∑' (pq : ℕ × ℕ), ∫⁻ (x : ℝ), ‖Jₚ pq * Complex.exp (-(2 * π * f * Complex.I + σ) * x) * U μ (x - (pq.1 * s + pq.2 * t))‖ₑ ≤
-      ∑' (pq : ℕ × ℕ), ∫⁻ x in Set.Ici (pq.1 * s + pq.2 * t), ‖(2 ^ pq.1 * 2 ^ pq.2 * Real.exp (- σ * x))‖ₑ := by
-      apply ENNReal.tsum_le_tsum
-      intro pq
-      have split: ∫⁻ (x : ℝ), ‖Jₚ pq * Complex.exp (-(2 * π * f * Complex.I + σ) * x) * U μ (x - (pq.1 * s + pq.2 * t))‖ₑ =
-        ∫⁻ (x : ℝ) in (Set.Iio (pq.1 * s + pq.2 * t) ∪ Set.Ici (pq.1 * s + pq.2 * t)), ‖Jₚ pq * Complex.exp (-(2 * π * f * Complex.I + σ) * x) * U μ (x - (pq.1 * s + pq.2 * t))‖ₑ  := by
-        rw [← MeasureTheory.setLIntegral_univ]
-        congr
-        simp only [Set.Iio_union_Ici]
-      rw [split]
-      have union: ∫⁻ (x : ℝ) in (Set.Iio (pq.1 * s + pq.2 * t) ∪ Set.Ici (pq.1 * s + pq.2 * t)), ‖Jₚ pq * Complex.exp (-(2 * π * f * Complex.I + σ) * x) * U μ (x - (pq.1 * s + pq.2 * t))‖ₑ ≤
-        (∫⁻ (x : ℝ) in Set.Iio (pq.1 * s + pq.2 * t), ‖Jₚ pq * Complex.exp (-(2 * π * f * Complex.I + σ) * x) * U μ (x - (pq.1 * s + pq.2 * t))‖ₑ) +
-        (∫⁻ (x : ℝ) in Set.Ici (pq.1 * s + pq.2 * t), ‖Jₚ pq * Complex.exp (-(2 * π * f * Complex.I + σ) * x) * U μ (x - (pq.1 * s + pq.2 * t))‖ₑ) := by apply MeasureTheory.lintegral_union_le
-      refine le_trans union ?_
-      have leftzero: (∫⁻ (x : ℝ) in Set.Iio (pq.1 * s + pq.2 * t), ‖Jₚ pq * Complex.exp (-(2 * π * f * Complex.I + σ) * x) * U μ (x - (pq.1 * s + pq.2 * t))‖ₑ) = 0 := by
-        sorry
-      rw [leftzero, zero_add]
-      gcongr with x
-
-      sorry
-
-    refine ne_top_of_le_ne_top ?_ le
-
-    have eq: ∑' (pq : ℕ × ℕ), ∫⁻ x in Set.Ici (pq.1 * s + pq.2 * t), ‖(2 ^ pq.1 * 2 ^ pq.2 * Real.exp (- σ * x))‖ₑ =
-      ∑' (pq : ℕ × ℕ), (‖2 ^ pq.1 * 2 ^ pq.2 * Real.exp (pq.1 * s + pq.2 * t) * σ⁻¹‖₊: ENNReal)  := by
-      congr
-      ext pq
-
-
-      sorry
-
-    rw [eq]
-    apply ENNReal.tsum_coe_ne_top_iff_summable.mpr
-
-
-    sorry
-
-
-lemma φReg_Fourier_sum_exchange' (s t μ σ f: ℝ) :
-∑' pq, ∫ x:ℝ, Jₚ pq * cexp ((-(2 * π * f * I + σ) * x)) * (U μ (x - (pq.1 * s + pq.2 * t))) =
-∫ x:ℝ, ∑' pq, Jₚ pq * cexp ((-(2 * π * f * I + σ) * x)) * (U μ (x - (pq.1 * s + pq.2 * t))) := by
-  apply MeasureTheory.integral_tsum_of_summable_integral_norm
-  · rintro ⟨p, q⟩
-    sorry
-  · have normBound: ∀ (pq:ℕ×ℕ), norm (∫ (x : ℝ), ‖Jₚ pq * cexp (-(2 * π * f * I + σ) * x) * U μ (x - (pq.1 * s + pq.2 * t))‖)
-      ≤ 2 ^ pq.1 * 2 ^ pq.2 * rexp (-σ * (pq.1 * s + pq.2 * t)) / σ := by sorry
-    refine Summable.of_norm_bounded _ ?_ normBound
-    sorry
-
-lemma φReg_Fourier_sum_exchange_integrable (s t μ σ f: ℝ) :
-MeasureTheory.Integrable (fun (x: ℝ) ↦ ∑' pq, Jₚ pq * cexp ((-(2 * π * f * I + σ) * x)) * (U μ (x - (pq.1 * s + pq.2 * t)))) := by sorry
-
 
 lemma φBound (s t x: ℝ) (h: x ≥ - max s t) [PosReal s] [PosReal t]:
 φ s t x ≤ rexp ((Real.log 2 / (min s t)) * x) * rexp (Real.log 2 / (min s t) * max s t) := by
@@ -709,11 +450,11 @@ lemma φReg_Fourier2 (s t μ σ f: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) [
 
 
 noncomputable
-def φRegFourierIntegrantRightSummand (δ μ σ f: ℝ) :=
-  ∫ (x:ℝ), cexp (-(2 * π * f * I + σ) * x) * (smStep μ (x - δ))
+def φRegFourierIntegrantRightSummand (δ μ: ℝ) (l: ℂ) :=
+  ∫ (x:ℝ), cexp (l * x) * (smStep μ (x - δ))
 
 lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) [PosReal s] [PosReal t] [PosReal μ]:
-∫ (x:ℝ), φRegFourierIntegrantRight s t μ σ f x = ∑' pq, Jₚ pq * φRegFourierIntegrantRightSummand (pq.1 * s + pq.2 * t) μ σ f := by
+∫ (x:ℝ), φRegFourierIntegrantRight s t μ σ f x = ∑' pq, Jₚ pq * φRegFourierIntegrantRightSummand (pq.1 * s + pq.2 * t) μ (-(2 * π * f * I + σ)) := by
   have σpos: 0 < σ:= by
     refine lt_trans ?_ σBound
     apply div_pos (log_pos (by norm_num))
@@ -869,3 +610,100 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
       apply mul_nonneg
       · norm_num
       · apply exp_nonneg
+
+lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [PosReal μ]:
+φRegFourierIntegrantRightSummand δ μ l = cexp (l * δ) * (1 - cexp (l * μ)) / (l ^ 2 * μ) := by
+  rw [mul_sub, ← Complex.exp_add, ← mul_add]
+
+  unfold φRegFourierIntegrantRightSummand
+  have union: (Set.univ: Set ℝ) = (Set.Ioc δ (δ + μ) ∪ Set.Ioi (δ + μ)) ∪ Set.Iic δ := by
+    rw [Set.union_comm];
+    rw [Set.Ioc_union_Ioi_eq_Ioi ((le_add_iff_nonneg_right δ).mpr (le_of_lt PosReal.pos))]
+    simp only [Set.Iic_union_Ioi]
+  rw [← MeasureTheory.setIntegral_univ, union]
+  have leftZero: ∀ x ∈ Set.Iic δ, cexp (l * ↑x) * smStep μ (x - δ) = 0 := by
+    intro x xmem
+    simp only [Set.mem_Iic] at xmem
+    apply mul_eq_zero_of_right
+    norm_cast
+    unfold smStep
+    obtain cond := sub_nonpos_of_le xmem
+    simp only [cond, ↓reduceIte]
+
+  rw [MeasureTheory.integral_union_eq_left_of_forall measurableSet_Iic leftZero]
+
+  have μ0: (μ : ℂ) ≠ 0 := by norm_cast; exact ne_of_gt PosReal.pos
+  have l0: l ≠ 0 := ne_zero_of_re_neg hl
+  have l2μ0: l ^ 2 * μ ≠ 0 := by
+    refine mul_ne_zero ?_ μ0
+    simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff]
+    exact l0
+
+
+  have Leftfcongr: (fun (x: ℝ) ↦ (cexp (l * x) * smStep μ (x - δ): ℂ)) =ᵐ[volume.restrict (Set.Ioc δ (δ + μ))]
+    (fun (x: ℝ) ↦ (cexp (l * x) * ((x - δ) / μ): ℂ)) := by
+    apply (MeasureTheory.ae_restrict_iff' (by exact measurableSet_Ioc)).mpr
+    apply Filter.Eventually.of_forall
+    intro x xmem
+    obtain ⟨c1, c2⟩ := xmem
+    simp only [mul_eq_mul_left_iff, Complex.exp_ne_zero, or_false]
+    unfold smStep
+    have cond1: ¬ x - δ ≤ 0 := by simp only [tsub_le_iff_right, zero_add, not_le]; exact c1
+    have cond2: x - δ ≤ μ := by exact tsub_le_iff_left.mpr c2
+    simp only [cond1, cond2, ↓reduceIte]
+    norm_cast
+
+  have leftIntegral: ∫ (x : ℝ) in Set.Ioc δ (δ + μ), cexp (l * x) * smStep μ (x - δ) =
+      (cexp (l * (δ + μ)) * (l * μ - 1) + cexp (l * δ)) / (l ^ 2 * μ) := by
+    rw [MeasureTheory.integral_congr_ae Leftfcongr]
+    have der (x: ℝ): HasDerivAt (fun (x: ℝ) ↦ cexp (l * x) * ((l * x - l * δ - 1) / (l ^ 2 * μ): ℂ)) (cexp (l * x) * ((x - δ) / μ): ℂ) x := by
+      rw [(by field_simp [μ0, l2μ0]; ring:
+        (cexp (l * x) * ((x - δ) / μ): ℂ) =
+        ((l * 1) * cexp (l * x) * ((l * x - l * δ - 1) / (l ^ 2 * μ)): ℂ) + (cexp (l * x) * ((l * 1) / (l^2 * μ)): ℂ))]
+      apply HasDerivAt.mul
+      · rw [mul_comm]
+        apply ((Complex.hasDerivAt_exp _).comp x _)
+        exact ((hasDerivAt_id (x : ℂ)).const_mul _).comp_ofReal
+      · apply HasDerivAt.div_const
+        simp only [hasDerivAt_sub_const_iff]
+        exact ((hasDerivAt_id (x : ℂ)).const_mul _).comp_ofReal
+    rw [← intervalIntegral.integral_of_le ((le_add_iff_nonneg_right δ).mpr (le_of_lt PosReal.pos))]
+    rw [intervalIntegral.integral_deriv_eq_sub' _ (funext fun x => (der x).deriv) (fun x _ => (der x).differentiableAt) (by fun_prop)]
+    field_simp [l2μ0]
+    ring
+
+
+  have Rightfcongr: (fun (x: ℝ) ↦ (cexp (l * x) * smStep μ (x - δ): ℂ)) =ᵐ[volume.restrict (Set.Ioi (δ + μ))]
+    (fun (x: ℝ) ↦ cexp (l * x)) := by
+    apply (MeasureTheory.ae_restrict_iff' (by exact measurableSet_Ioi)).mpr
+    apply Filter.Eventually.of_forall
+    intro x xmem
+    simp only [Set.mem_Ioi] at xmem
+    have cond2: ¬ x - δ ≤ μ := by rw [not_le]; exact lt_tsub_iff_left.mpr xmem
+    have cond1: ¬ x - δ ≤ 0 := by
+      rw [not_le]
+      obtain c2 := not_le.mp cond2
+      exact lt_trans PosReal.pos c2
+    unfold smStep
+    simp only [cond1, cond2, ↓reduceIte, ofReal_one, mul_one]
+
+  have rightIntegral: ∫ (x : ℝ) in Set.Ioi (δ + μ), cexp (l * x) * smStep μ (x - δ) =
+      -cexp (l * (δ + μ)) / l := by
+    rw [MeasureTheory.integral_congr_ae Rightfcongr]
+    rw [integral_exp_mul_complex_Ioi _ _ hl]
+    norm_cast
+
+  rw [(by field_simp [l0, l2μ0]; ring:
+    (cexp (l * δ) * 1 - cexp (l * (δ + μ))) / (l ^ 2 * μ) =
+    (cexp (l * (δ + μ)) * (l * μ - 1: ℂ) + cexp (l * δ)) / (l ^ 2 * μ) + (-cexp (l * (δ + μ)) / l))]
+
+  rw [← leftIntegral, ← rightIntegral]
+  apply MeasureTheory.setIntegral_union
+  · simp only [le_refl, Set.Ioc_disjoint_Ioi]
+  · exact measurableSet_Ioi
+  · refine MeasureTheory.IntegrableOn.congr_fun_ae ?_ Leftfcongr.symm
+    apply Continuous.integrableOn_Ioc
+    fun_prop
+  · refine MeasureTheory.IntegrableOn.congr_fun_ae ?_ Rightfcongr.symm
+    apply integrable_exp_mul_complex_Ioi
+    exact hl
