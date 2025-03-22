@@ -837,6 +837,31 @@ Jₚ ((p + 1), (q + 1)) = Jₚ ((p + 1), q) + Jₚ (p, (q + 1)) := by
   linarith
 
 /-
+A gross bound for Jₚ to decompose it to a product of f(p) and g(q)
+-/
+lemma Jₚ_bound: ∀p, ∀q, Jₚ (p, q) ≤ 2^p * 2^q := by
+  intro p
+  induction p with
+  | zero =>
+    intro q
+    unfold Jₚ
+    simp only [zero_add, Nat.choose_zero_right, pow_zero, one_mul]
+    exact Nat.one_le_two_pow
+  | succ p prev =>
+    intro q
+    induction q with
+    | zero =>
+      unfold Jₚ
+      simp only [add_zero, Nat.choose_self, pow_zero, mul_one]
+      exact Nat.one_le_two_pow
+    | succ q prev' =>
+      rw [Jₚ_rec]
+      have right: 2 ^ (p + 1) * 2 ^ (q + 1) = 2 ^ (p + 1) * 2 ^ q + 2 ^ p * 2 ^ (q + 1) := by
+        ring
+      rw [right]
+      exact add_le_add prev' (prev (q + 1))
+
+/-
 On Λ, J are all nonzero
 -/
 lemma Jₚ_nonzero (pq: ℕ × ℕ): Jₚ pq > 0 := by

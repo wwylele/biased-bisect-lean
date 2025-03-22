@@ -421,31 +421,6 @@ def Λdecomp: ((j:ℕ) × Finset.range (j + 1)) ≃ (ℕ × ℕ) where
     simp only [add_tsub_cancel_left, Prod.mk.eta, implies_true]
 
 /-
-A gross bound for Jₚ to dompose it to a product of f(p) and g(q)
--/
-lemma Jₚ_bound: ∀p, ∀q, Jₚ (p, q) ≤ 2^p * 2^q := by
-  intro p
-  induction p with
-  | zero =>
-    intro q
-    unfold Jₚ
-    simp only [zero_add, Nat.choose_zero_right, pow_zero, one_mul]
-    exact Nat.one_le_two_pow
-  | succ p prev =>
-    intro q
-    induction q with
-    | zero =>
-      unfold Jₚ
-      simp only [add_zero, Nat.choose_self, pow_zero, mul_one]
-      exact Nat.one_le_two_pow
-    | succ q prev' =>
-      rw [Jₚ_rec]
-      have right: 2 ^ (p + 1) * 2 ^ (q + 1) = 2 ^ (p + 1) * 2 ^ q + 2 ^ p * 2 ^ (q + 1) := by
-        ring
-      rw [right]
-      exact add_le_add prev' (prev (q + 1))
-
-/-
 An analog to geometric series over ℕ × ℕ
 The radius bound here is not sharp
 -/
