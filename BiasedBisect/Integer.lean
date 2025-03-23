@@ -1,5 +1,6 @@
 import BiasedBisect.Basic
 import BiasedBisect.Inv
+import BiasedBisect.Multigeometric
 
 import Mathlib.Data.Complex.ExponentialBounds
 import Mathlib.LinearAlgebra.Lagrange
@@ -342,12 +343,10 @@ lemma Φδₖt (s t: ℕ+) (k: ℕ) (kh: k ≥ 1):
 /-
 We will investigate the generator function Z{Φ}(x) = ∑i:ℕ, Φ(i) * x^i and
 and show that it converges to a nice function.
-
-We start with a few lemma that will help us to reason about the summation
 -/
 
 /-
-Λexchange: the bijection between (i, (p, q) ∈ (Λceiled i)) ↔ ((p, q), (i - δₚ(p ,q)))
+Λexchange: the bijection between (i, (p, q) ∈ (Λceiled i)) ↔ ((p, q), (i - δₚ(p, q)))
 -/
 lemma ΛexchangeMem (s t: ℕ+) (pq :(ℕ × ℕ)) (i: ℕ):
 pq ∈ (Λceiled s t (i + pq.1 * s + pq.2 * t: ℕ)).toFinset := by
@@ -389,126 +388,6 @@ def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t
       push_cast
       rw [add_assoc]
       rw [sub_add_cancel]
-
-/-
-Λdecomp: the bijection to domcompose ℕ × ℕ lattice to slices of 45°
--/
-lemma ΛdecompMem (p q: ℕ): p ∈ Finset.range (p + q + 1) := by
-  simp only [Finset.mem_range]
-  linarith
-
-def Λdecomp: ((j:ℕ) × Finset.range (j + 1)) ≃ (ℕ × ℕ) where
-  toFun | ⟨j, n⟩ => (n, j - n)
-  invFun | ⟨p, q⟩ => ⟨p + q, ⟨p, ΛdecompMem p q⟩⟩
-  left_inv := by
-    unfold Function.LeftInverse
-    simp only
-    rintro ⟨j, ⟨n, nmem⟩⟩
-    simp only [Finset.mem_range] at nmem
-    simp only [Sigma.mk.injEq]
-    constructor
-    · rw [add_comm]
-      rw [Nat.sub_add_cancel]
-      exact Nat.le_of_lt_succ nmem
-    · refine (Subtype.heq_iff_coe_eq ?_).mpr rfl
-      intro k
-      rw [add_comm n]
-      rw [Nat.sub_add_cancel]
-      exact Nat.le_of_lt_succ nmem
-
-  right_inv := by
-    unfold Function.RightInverse Function.LeftInverse
-    simp only [add_tsub_cancel_left, Prod.mk.eta, implies_true]
-
-/-
-An analog to geometric series over ℕ × ℕ
-The radius bound here is not sharp
--/
-lemma pqx_sum [RCLike K]
-(s t: ℕ+) (x: K) (bound: ‖x‖ < 2⁻¹):
-HasSum (fun pq ↦ ↑(Jₚ pq) * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))) (1 - (x ^ (s:ℕ) + x ^ (t:ℕ)))⁻¹ := by
-  apply (Equiv.hasSum_iff Λdecomp).mp
-  unfold Λdecomp Function.comp
-  simp only [Equiv.coe_fn_mk]
-
-  let term := fun (⟨j, c⟩:(j:ℕ) × Finset.range (j + 1)) ↦ ((Jₚ (c, j - c)) * x ^ (c * s + (j - c) * t: ℕ ))
-  have binom: ∀(j:ℕ), HasSum (fun (c:Finset.range (j + 1)) ↦ term ⟨j, c⟩ ) ((x ^ (s:ℕ) + x ^ (t:ℕ))^j) := by
-    intro j
-    rw [add_pow]
-    let f(c: ℕ) := (x ^ (s:ℕ)) ^ c * (x ^ (t:ℕ)) ^ (j - c) * (j.choose c)
-    have left: (fun c ↦ term ⟨j, c⟩) = (fun (c:Finset.range (j + 1)) ↦ f c) ∘ (↑) := by
-      unfold term f Jₚ
-      ext c
-      rcases c with ⟨c, mem⟩
-      simp only [Finset.mem_range] at mem
-      simp only [Function.comp_apply]
-      rw [← pow_mul, ← pow_mul]
-      rw [← pow_add]
-      nth_rw 4 [mul_comm]
-      congr 2
-      · congr
-        rw [← Nat.add_sub_assoc]
-        · simp only [add_tsub_cancel_left]
-        · exact Nat.le_of_lt_succ mem
-      · ring
-    have left': ∀ c, (fun c ↦ term ⟨j, c⟩) c = ((fun (c:Finset.range (j + 1)) ↦ f c) ∘ (↑)) c := by
-      intro c
-      rw [left]
-    apply HasSum.congr_fun ?_ left'
-    apply Finset.hasSum
-
-  apply HasSum.sigma_of_hasSum ?_ binom
-  · apply (Equiv.summable_iff Λdecomp.symm).mp
-    unfold term Λdecomp Function.comp
-    simp only [Equiv.toFun_as_coe, Equiv.coe_fn_symm_mk, add_tsub_cancel_left, Prod.mk.eta]
-    show Summable fun (pq: ℕ × ℕ) ↦ Jₚ pq * x ^ (pq.1 * (s:ℕ) + pq.2 * (t:ℕ))
-    let termBound := fun (pq: ℕ × ℕ) ↦ ‖(2 * x ^ (s:ℕ)) ^ pq.1 * (2 * x ^ (t:ℕ)) ^ pq.2‖
-    have raise(pq: ℕ × ℕ): ‖Jₚ pq * x ^ (pq.1 * s + pq.2 * t)‖ ≤ termBound pq := by
-      unfold termBound
-      rw [mul_pow, mul_pow]
-      rw [mul_mul_mul_comm]
-      rw [← pow_mul, ← pow_mul]
-      rw [mul_comm (s:ℕ), mul_comm (t:ℕ)]
-      rw [← pow_add x]
-      rw [norm_mul, norm_mul]
-      apply mul_le_mul
-      · have left: ‖(Jₚ pq: K)‖ = Jₚ pq := by
-          simp only [RCLike.norm_natCast]
-        have right: ‖(2: K) ^ pq.1 * (2: K) ^ pq.2‖ = (2 ^ pq.1 * 2 ^ pq.2: ℕ) := by
-          simp only [norm_mul, norm_pow, RCLike.norm_ofNat, Nat.cast_mul, Nat.cast_pow,
-            Nat.cast_ofNat]
-        rw [left, right]
-        apply Nat.cast_le.mpr
-        apply Jₚ_bound
-      · simp only [norm_pow, le_refl]
-      · apply norm_nonneg
-      · apply norm_nonneg
-    apply Summable.of_norm_bounded termBound ?_ raise
-    · show Summable termBound
-      apply Summable.mul_norm
-      repeat
-        simp only [norm_pow, norm_mul, RCLike.norm_ofNat, summable_geometric_iff_norm_lt_one,
-          Real.norm_ofNat, norm_norm]
-        apply (lt_inv_mul_iff₀ ?_).mp
-        · simp only [mul_one]
-          apply lt_of_le_of_lt ?_ bound
-          apply pow_le_of_le_one
-          · simp only [norm_nonneg]
-          · apply le_of_lt; apply lt_trans bound; norm_num
-          · simp only [ne_eq, PNat.ne_zero, not_false_eq_true]
-        · simp only [Nat.ofNat_pos]
-  · apply hasSum_geometric_of_norm_lt_one
-    apply lt_of_le_of_lt (norm_add_le _ _)
-    have half: (1:ℝ) = 2⁻¹ + 2⁻¹ := by norm_num
-    rw [half]
-    apply add_lt_add
-    repeat
-      simp only [norm_pow]
-      apply lt_of_le_of_lt ?_ bound
-      apply pow_le_of_le_one
-      · simp only [norm_nonneg]
-      · apply le_of_lt; apply lt_trans bound; norm_num
-      · simp only [ne_eq, PNat.ne_zero, not_false_eq_true]
 
 noncomputable
 def ξPolynomial(s t: ℕ+) :=
@@ -751,7 +630,18 @@ HasSum (fun i:ℕ ↦ x ^ i * Φ s t i) ((((ξPolynomial s t).eval 1)⁻¹ - ((�
       rw [eqInside]
       apply HasSum.mul
       · unfold f
-        apply pqx_sum _ _ _ bound
+        conv in (fun x ↦ _) =>
+          ext pq
+          rw [pow_add]
+          rw [mul_comm _ (s:ℕ), mul_comm _ (t:ℕ)]
+          rw [pow_mul, pow_mul, ← mul_assoc]
+        apply bigeometric_series
+        all_goals
+        · rw [norm_pow]
+          refine lt_of_le_of_lt ?_ bound
+          refine pow_le_of_le_one (by apply norm_nonneg) ?_ ?_
+          · exact le_of_lt (lt_trans bound (by norm_num))
+          · simp only [ne_eq, PNat.ne_zero, not_false_eq_true]
       · unfold g
         apply hasSum_geometric_of_norm_lt_one
         exact bound2
@@ -760,9 +650,18 @@ HasSum (fun i:ℕ ↦ x ^ i * Φ s t i) ((((ξPolynomial s t).eval 1)⁻¹ - ((�
           simp only [Complex.norm_mul, Complex.norm_natCast, norm_pow]
           unfold Summable
           use (1 - (‖x‖ ^ (s: ℕ) + ‖x‖ ^ (t: ℕ)))⁻¹
-          apply pqx_sum s t ‖x‖
-          simp only [norm_norm]
-          exact bound
+          conv in (fun x ↦ _) =>
+            ext pq
+            rw [pow_add]
+            rw [mul_comm _ (s:ℕ), mul_comm _ (t:ℕ)]
+            rw [pow_mul, pow_mul, ← mul_assoc]
+          apply bigeometric_series
+          all_goals
+          · rw [norm_pow, norm_norm]
+            refine lt_of_le_of_lt ?_ bound
+            refine pow_le_of_le_one (by apply norm_nonneg) ?_ ?_
+            · exact le_of_lt (lt_trans bound (by norm_num))
+            · simp only [ne_eq, PNat.ne_zero, not_false_eq_true]
         · unfold g
           simp only [norm_pow, summable_geometric_iff_norm_lt_one, norm_norm]
           exact bound2

@@ -1,5 +1,7 @@
 import BiasedBisect.Inv
+import BiasedBisect.Multigeometric
 import Mathlib.Analysis.Fourier.FourierTransform
+import Mathlib.Analysis.Fourier.Inversion
 import Mathlib.Analysis.SpecialFunctions.Log.ERealExp
 import Mathlib.MeasureTheory.Integral.ExpDecay
 import Mathlib.Analysis.SpecialFunctions.Integrals
@@ -226,6 +228,80 @@ lemma φRegNonneg (s t μ σ x: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
     apply mul_nonneg (by apply Nat.cast_nonneg')
     apply smStepNonneg
 
+lemma JceiledContinuous (s t μ : ℝ) [PosReal s] [PosReal t] [PosReal μ]:
+Continuous (fun x ↦ ∑' (pq : ℕ × ℕ), Jₚ pq * smStep μ (x - (pq.1 * s + pq.2 * t)))  := by
+  let coverSet := fun (x:ℝ) ↦ Set.Iio (x + 1)
+  have converSetMap: ∀ (x:ℝ), ∃ (i:ℝ), coverSet i ∈ nhds x := by
+    intro x
+    use x
+    unfold coverSet
+    refine Iio_mem_nhds ?_
+    exact lt_add_one x
+  apply continuous_of_cover_nhds converSetMap
+  intro S
+  have funcongr: Set.EqOn
+    (fun x ↦ ∑' (pq : ℕ × ℕ), ↑(Jₚ pq) * smStep μ (x - (pq.1 * s + pq.2 * t)))
+    (fun x ↦ ∑ pq ∈ Λceiled s t (S + 1), ↑(Jₚ pq) * smStep μ (x - (pq.1 * s + pq.2 * t)))
+    (coverSet S) := by
+    intro x xmem
+    unfold coverSet at xmem
+    simp only [Set.mem_Iio] at xmem
+    simp only
+    apply tsum_eq_sum
+    intro pq pqnotmem
+    unfold Λceiled at pqnotmem
+    simp only [Set.mem_toFinset, Set.mem_setOf_eq, not_le] at pqnotmem
+    apply mul_eq_zero_of_right
+    unfold smStep
+    have cond: x - (pq.1 * s + pq.2 * t) ≤ 0 := sub_nonpos_of_le (le_of_lt (lt_trans xmem pqnotmem))
+    simp only [cond, ↓reduceIte]
+  refine ContinuousOn.congr ?_ funcongr
+  apply Continuous.continuousOn
+  apply continuous_finset_sum
+  intro pq pqmem
+  apply Continuous.mul
+  · exact continuous_const
+  · apply Continuous.comp (smStepContinuous μ)
+    fun_prop
+
+lemma φRegContinuousAt (s t μ σ x: ℝ) (hx: x ≠ 0) [PosReal s] [PosReal t] [PosReal μ]:
+ContinuousAt (φReg s t μ σ) x := by
+  obtain neg|pos := lt_or_gt_of_ne hx
+  · apply Filter.EventuallyEq.continuousAt (y := 0)
+    apply eventually_nhds_iff.mpr
+    use Set.Iio 0
+    constructor
+    · intro y ymem
+      simp only [Set.mem_Iio] at ymem
+      rw [φReg_neg _ _ _ _ _ ymem]
+    · exact ⟨isOpen_Iio, neg⟩
+  · apply ContinuousAt.mul (by fun_prop)
+    apply ContinuousAt.add
+    · apply Filter.EventuallyEq.continuousAt (y := 1)
+      apply eventually_nhds_iff.mpr
+      use Set.Ioi 0
+      constructor
+      · intro y ymem
+        simp only [Set.mem_Ioi] at ymem
+        obtain ymem' := le_of_lt ymem
+        simp only [Set.mem_Ici, ymem', Set.indicator_of_mem]
+      · exact ⟨isOpen_Ioi, pos⟩
+    · refine ContinuousOn.continuousAt (s := Set.Ioo 0 (x + 1)) ?_ (Ioo_mem_nhds pos (lt_add_one x))
+      apply Continuous.continuousOn
+      apply JceiledContinuous
+
+
+lemma φRegMeasurable (s t μ σ: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
+Measurable (φReg s t μ σ) := by
+  apply Measurable.mul
+  · apply Continuous.measurable
+    continuity
+  · apply Measurable.add
+    · apply Measurable.indicator
+      · measurability
+      · exact measurableSet_Ici
+    · apply Continuous.measurable
+      apply JceiledContinuous
 
 noncomputable
 def φRegFourierIntegrant (s t μ σ f x: ℝ): ℂ :=
@@ -260,51 +336,11 @@ Integrable (φRegFourierIntegrant s t μ σ f) := by
         continuity
       · rw [(by rfl: (fun x ↦((
           (rexp (-σ * x) * ((Set.Ici 0).indicator (fun x ↦ 1) x + ∑' (pq : ℕ × ℕ), (Jₚ pq) * smStep μ (x - (pq.1 * s + pq.2 * t)))):ℝ):ℂ)) =
-          Complex.ofReal ∘ (fun x ↦ rexp (-σ * x) * ((Set.Ici 0).indicator (fun x ↦ 1) x + ∑' (pq : ℕ × ℕ), (Jₚ pq) * smStep μ (x - (pq.1 * s + pq.2 * t)))))]
+          Complex.ofReal ∘ φReg s t μ σ)]
         apply AEStronglyMeasurable.comp_measurable
         · apply MeasureTheory.StronglyMeasurable.aestronglyMeasurable
           exact Continuous.stronglyMeasurable continuous_ofReal
-        · apply Measurable.mul
-          · apply Continuous.measurable
-            continuity
-          · apply Measurable.add
-            · apply Measurable.indicator
-              · measurability
-              · exact measurableSet_Ici
-            · apply Continuous.measurable
-              let coverSet := fun (x:ℝ) ↦ Set.Iio (x + 1)
-              have converSetMap: ∀ (x:ℝ), ∃ (i:ℝ), coverSet i ∈ nhds x := by
-                intro x
-                use x
-                unfold coverSet
-                refine Iio_mem_nhds ?_
-                exact lt_add_one x
-              apply continuous_of_cover_nhds converSetMap
-              intro S
-              have funcongr: Set.EqOn
-                (fun x ↦ ∑' (pq : ℕ × ℕ), ↑(Jₚ pq) * smStep μ (x - (pq.1 * s + pq.2 * t)))
-                (fun x ↦ ∑ pq ∈ Λceiled s t (S + 1), ↑(Jₚ pq) * smStep μ (x - (pq.1 * s + pq.2 * t)))
-                (coverSet S) := by
-                intro x xmem
-                unfold coverSet at xmem
-                simp only [Set.mem_Iio] at xmem
-                simp only
-                apply tsum_eq_sum
-                intro pq pqnotmem
-                unfold Λceiled at pqnotmem
-                simp only [Set.mem_toFinset, Set.mem_setOf_eq, not_le] at pqnotmem
-                apply mul_eq_zero_of_right
-                unfold smStep
-                have cond: x - (pq.1 * s + pq.2 * t) ≤ 0 := sub_nonpos_of_le (le_of_lt (lt_trans xmem pqnotmem))
-                simp only [cond, ↓reduceIte]
-              refine ContinuousOn.congr ?_ funcongr
-              apply Continuous.continuousOn
-              apply continuous_finset_sum
-              intro pq pqmem
-              apply Continuous.mul
-              · exact continuous_const
-              · apply Continuous.comp (smStepContinuous μ)
-                continuity
+        · apply φRegMeasurable
     · apply Filter.Eventually.of_forall
       intro x
       rw [norm_mul]
@@ -707,3 +743,74 @@ lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [
   · refine MeasureTheory.IntegrableOn.congr_fun_ae ?_ Rightfcongr.symm
     apply integrable_exp_mul_complex_Ioi
     exact hl
+
+noncomputable
+def φRegFourierResult (s t μ σ f: ℝ) := (2 * π * f * I + σ)⁻¹ +
+  (1 - (cexp (-(2 * π * f * I + σ) * s) + cexp (-(2 * π * f * I + σ) * t)))⁻¹ *
+  ((1 - cexp (-(2 * π * f * I + σ) * μ)) / ((2 * π * f * I + σ) ^ 2 * μ))
+
+lemma φReg_Fourier (s t μ σ: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) [PosReal s] [PosReal t] [PosReal μ]:
+𝓕 (fun x ↦ (φReg s t μ σ x:ℂ)) = φRegFourierResult s t μ σ := by
+  ext f
+  have σpos: 0 < σ:= by
+    refine lt_trans ?_ σBound
+    apply div_pos (log_pos (by norm_num))
+    simp only [lt_inf_iff]
+    exact ⟨PosReal.pos, PosReal.pos⟩
+  have σBound': Real.log 2 < σ * (s ⊓ t) := by
+    refine (div_lt_iff₀ ?_).mp σBound;
+    simp only [lt_inf_iff]
+    exact ⟨PosReal.pos, PosReal.pos⟩
+  rw [mul_min_of_nonneg _ _ (le_of_lt σpos)] at σBound'
+  obtain ⟨sBound, tBound⟩ := lt_inf_iff.mp σBound'
+  rw [φReg_Fourier2 _ _ _ _ _ σBound]
+  rw [φRegFourierIntegrantRightExchange _ _ _ _ _ σBound]
+  have h: (-(2 * π * f * I + σ)).re < 0 := by
+    simp only [neg_add_rev, add_re, neg_re, ofReal_re, mul_re, re_ofNat, im_ofNat, ofReal_im,
+      mul_zero, sub_zero, mul_im, zero_mul, add_zero, I_re, I_im, mul_one, sub_self, neg_zero,
+      Left.neg_neg_iff]
+    exact σpos
+  conv in (fun pq ↦ _) =>
+    ext pq
+    rw [φRegFourierIntegrantRightSummandEq _ _ _ h]
+    rw [Complex.ofReal_add, mul_comm _ s, mul_comm _ t, Complex.ofReal_mul, Complex.ofReal_mul,
+       mul_add, Complex.exp_add, ← mul_assoc _ (s:ℂ) _, ← mul_assoc _ (t:ℂ) _, ]
+    simp only [ofReal_natCast]
+    rw [mul_comm _ (pq.1:ℂ), mul_comm _ (pq.2:ℂ), Complex.exp_nat_mul, Complex.exp_nat_mul]
+    rw [← mul_div, ← mul_assoc, ← mul_assoc]
+  rw [tsum_mul_right]
+  rw [neg_pow_two]
+  congr
+  refine (bigeometric_series (cexp (-(2 * π * f * I + σ) * s)) (cexp (-(2 * π * f * I + σ) * t)) ?_ ?_).tsum_eq
+  all_goals
+  · rw [Complex.norm_exp]
+    simp only [neg_add_rev, mul_re, add_re, neg_re, ofReal_re, re_ofNat, im_ofNat, ofReal_im,
+      mul_zero, sub_zero, mul_im, zero_mul, add_zero, I_re, I_im, mul_one, sub_self, neg_zero,
+      neg_mul, add_im, neg_im, zero_add]
+    rw [Real.exp_neg]
+    refine (inv_lt_inv₀ (by apply exp_pos) (by norm_num)).mpr ?_
+    refine (log_lt_iff_lt_exp (by norm_num)).mp ?_
+    try exact sBound
+    try exact tBound
+
+/-
+lemma φReg_FourierInv (s t μ σ x: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) (xBound: 0 < x)
+[PosReal s] [PosReal t] [PosReal μ]:
+𝓕⁻ (φRegFourierResult s t μ σ) x = φReg s t μ σ x := by
+  rw [← φReg_Fourier _ _ _ _ σBound]
+  apply MeasureTheory.Integrable.fourier_inversion
+  · obtain finteg := φReg_FourierIntegrable s t μ σ 0 σBound
+    unfold φRegFourierIntegrant at finteg
+    conv at finteg in (fun x ↦ _) =>
+      ext x
+      rw [(by simp only [neg_mul, mul_zero, zero_mul, ofReal_zero, Complex.exp_zero]:
+        cexp ((-2 * π * 0 * x: ℝ) * I) = 1)]
+      rw [one_mul]
+    exact finteg
+  · rw [φReg_Fourier _ _ _ _ σBound]
+    unfold φRegFourierResult
+    sorry
+  · apply ContinuousAt.comp continuous_ofReal.continuousAt
+    apply φRegContinuousAt
+    exact ne_of_gt xBound
+-/
