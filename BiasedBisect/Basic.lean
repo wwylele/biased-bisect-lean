@@ -68,6 +68,9 @@ class PosReal (x : ℝ) : Prop where
 instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a * b) where
   pos := mul_pos PosReal.pos PosReal.pos
 
+instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a + b) where
+  pos := add_pos PosReal.pos PosReal.pos
+
 instance PNat_is_pos (s: ℕ+): PosReal s where
   pos := by
     have nat: (s: ℕ) > 0 := by exact PNat.pos s

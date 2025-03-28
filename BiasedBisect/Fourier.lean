@@ -305,7 +305,7 @@ Measurable (φReg s t μ σ) := by
 
 noncomputable
 def φRegFourierIntegrant (s t μ σ f x: ℝ): ℂ :=
-  cexp ((((-2 * π * f * x: ℝ) * I))) * (rexp (- σ * x) * (Set.indicator (Set.Ici 0) (fun _ ↦ 1) x + ∑' pq, Jₚ pq * (smStep μ (x - (pq.1 * s + pq.2 * t)))): ℝ)
+  cexp ((-2 * π * f * x: ℝ) * I) * (rexp (- σ * x) * (Set.indicator (Set.Ici 0) (fun _ ↦ 1) x + ∑' pq, Jₚ pq * (smStep μ (x - (pq.1 * s + pq.2 * t)))): ℝ)
 
 lemma φReg_Fourier1 (s t μ σ f: ℝ):
 𝓕 (fun x ↦ (φReg s t μ σ x:ℂ)) f =
@@ -698,7 +698,7 @@ lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [
         ((l * 1) * cexp (l * x) * ((l * x - l * δ - 1) / (l ^ 2 * μ)): ℂ) + (cexp (l * x) * ((l * 1) / (l^2 * μ)): ℂ))]
       apply HasDerivAt.mul
       · rw [mul_comm]
-        apply ((Complex.hasDerivAt_exp _).comp x _)
+        apply (Complex.hasDerivAt_exp _).comp x _
         exact ((hasDerivAt_id (x : ℂ)).const_mul _).comp_ofReal
       · apply HasDerivAt.div_const
         simp only [hasDerivAt_sub_const_iff]
@@ -814,3 +814,13 @@ lemma φReg_FourierInv (s t μ σ x: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ)
     apply φRegContinuousAt
     exact ne_of_gt xBound
 -/
+
+def rootSet (s t: ℝ): Set ℂ := sorry
+
+noncomputable
+def φRegFourierDecompTerm (s t μ: ℝ) (z r: ℂ) :=
+  (1 - cexp (-μ * r)) / (μ * r ^ 2 * (z - r) * (s * cexp (-s * r) + t * cexp (-t * r)))
+
+lemma φRegFourierDecomp (s t μ σ f: ℝ):
+φRegFourierResult s t μ σ f = ∑' r: rootSet s t, φRegFourierDecompTerm s t μ (2 * π * f * I + σ) r := by
+  sorry
