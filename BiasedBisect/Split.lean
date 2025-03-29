@@ -1,5 +1,30 @@
 import BiasedBisect.Basic
 
+/-
+In this file, we will prove a family of "split" theorems.
+
+When applying perturbation to s and t, a single Λline set that pass through
+multiple lattice points will split into several sets.
+Consequently, more nₖ are inserted, and the piecewise function E and w split
+into finer pieces.
+
+Finally, we will prove that wₗᵢ uniformly shifts towards one direction during splitting,
+which is a  prerequisite for monocity of wₗᵢ over s/t.
+
+While these are true for all positive s and t, it is only interesting when s/t is rational.
+If s/t is irrational, all Λline are already singletons, so they won't split further.
+
+We describe perturbation in δ-ε-like language. The larger n or k we look at, the smaller
+perturbation is allowed. We will develope an allowed bound for ε for the given range of k.
+By convention, we use capital K to represent the bound for k
+
+For simplicity, we will mostly only consider a positive perturbation on t, and leave the rest
+to symmetry.
+-/
+
+/-
+Λₖ is just Λline of δₖ, which will be a group of lattice points where splitting happens
+-/
 def Λₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t] := Λline s t (δₖ s t k)
 
 lemma ΛₖNonempty (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: (Λₖ s t k).Nonempty := by
@@ -10,34 +35,19 @@ lemma ΛₖNonempty (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: (Λₖ s t k).N
     simp only [Set.mem_range, Prod.exists]
     apply δₖ_in_Δ
 
-lemma Λ₀ (s t: ℝ) [PosReal s] [PosReal t]: Λₖ s t 0 = {(0, 0)} := by
-  unfold Λₖ Λline δₚ
-  rw [δ₀]
-  simp only
-  ext pq
-  constructor
-  · intro pqmem
-    simp only [Set.mem_preimage] at pqmem
-    apply Set.mem_singleton_iff.mp at pqmem
-    obtain ⟨ps, qt⟩ := sum_to_zero _ _ (mul_nonneg (by apply Nat.cast_nonneg') (le_of_lt PosReal.pos))
-      (mul_nonneg (by apply Nat.cast_nonneg') (le_of_lt PosReal.pos))  (le_of_eq pqmem)
-    obtain p := (mul_eq_zero_iff_right (ne_of_gt PosReal.pos: s ≠ 0)).mp ps
-    obtain q := (mul_eq_zero_iff_right (ne_of_gt PosReal.pos: t ≠ 0)).mp qt
-    norm_cast at p q
-    exact Set.mem_singleton_of_eq (Prod.ext_iff.mpr ⟨p, q⟩)
-  · intro pqmem
-    apply Set.mem_singleton_iff.mp at pqmem
-    simp only [Set.mem_preimage]
-    rw [pqmem]
-    simp only [CharP.cast_eq_zero, zero_mul, add_zero]
-    exact Set.mem_singleton_of_eq rfl
-
 noncomputable instance (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 Fintype (Λₖ s t k) := by unfold Λₖ; infer_instance
 
-
+/-
+Since we will only consider k under a certain bound K, we will lump all lattice points beyond
+into a single set
+-/
 def Λfloored (s t: ℝ) (K: ℕ) [PosReal s] [PosReal t] := {pq: ℕ × ℕ | δₚ s t pq > δₖ s t K}
 
+/-
+We define εBound using the minimal gap (in terms of δ) between Λₖ.
+This bound isn't sharp. We only need one that's convinient for computation.
+-/
 noncomputable
 def minGap (s t: ℝ) (K: ℕ) [PosReal s] [PosReal t] :=
   ((Finset.range (K + 1)).image (fun k ↦ δₖ s t (k + 1) - δₖ s t k)).min' (by
@@ -48,6 +58,9 @@ def minGap (s t: ℝ) (K: ℕ) [PosReal s] [PosReal t] :=
 noncomputable
 def εBound (s t: ℝ) (K: ℕ) [PosReal s] [PosReal t] := minGap s t K / (δₖ s t (K + 1))
 
+/-
+Check that our bound is positive to be effective
+-/
 lemma εBoundPos (s t: ℝ) (K: ℕ) [PosReal s] [PosReal t]: 0 < εBound s t K := by
   apply div_pos
   · unfold minGap
@@ -60,6 +73,10 @@ lemma εBoundPos (s t: ℝ) (K: ℕ) [PosReal s] [PosReal t]: 0 < εBound s t K 
     apply δₖ_mono
     exact Nat.zero_lt_succ K
 
+/-
+During splitting, points from different Λₖ will not mix in terms of ordering,
+as long as ε stays within the bound
+-/
 lemma ΛₖIsolated (s t ε: ℝ) (k K: ℕ) (kbound: k < K) [PosReal s] [PosReal t]
 (εpos: 0 ≤ ε) (εbound: ε < t * εBound s t K):
 ∀ pq ∈ Λₖ s t k, ∀ pq' ∈ Λₖ s t (k + 1), δₚ s (t + ε) pq < δₚ s (t + ε) pq' := by
@@ -100,6 +117,9 @@ lemma ΛₖIsolated (s t ε: ℝ) (k K: ℕ) (kbound: k < K) [PosReal s] [PosRea
   use k
   exact ⟨Nat.lt_add_right 1 kbound, rfl⟩
 
+/-
+Likewise, Λₖ below the K bound will not mix with Λfloored during splitting.
+-/
 lemma ΛflooredIsolated (s t ε: ℝ) (K: ℕ)  [PosReal s] [PosReal t]
 (εpos: 0 ≤ ε) (εbound: ε < t * εBound s t K):
 ∀ pq ∈ Λₖ s t K, ∀ pq' ∈ Λfloored s t K, δₚ s (t + ε) pq < δₚ s (t + ε) pq' := by
@@ -154,6 +174,10 @@ lemma ΛflooredIsolated (s t ε: ℝ) (K: ℕ)  [PosReal s] [PosReal t]
   use K
   exact ⟨lt_add_one K, rfl⟩
 
+/-
+To restate the previous statements, δₚ is strictly monotonic over (pre-split) k after splitting.
+We only require the lower element k1 to be within the K bound.
+-/
 lemma ΛₖMono (s t ε: ℝ) (k1 k2 K: ℕ) (kh: k1 < k2) (kbound: k1 ≤ K) [PosReal s] [PosReal t]
 (εpos: 0 ≤ ε) (εbound: ε < t * εBound s t K):
 ∀ pq ∈ Λₖ s t k1, ∀ pq' ∈ Λₖ s t k2, δₚ s (t + ε) pq < δₚ s (t + ε) pq' := by
@@ -191,6 +215,10 @@ lemma ΛₖMono (s t ε: ℝ) (k1 k2 K: ℕ) (kh: k1 < k2) (kbound: k1 ≤ K) [P
       intro pq1 pq1mem
       exact ΛflooredIsolated _ _ _ _ εpos εbound pq1 pq1mem pq2 k2InFloored
 
+/-
+Λₖ splits completely within itself:
+each lattice point becomes a singleton for the δ.
+-/
 lemma ΛₖSplit (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε]:
 ∀ pq ∈ Λₖ s t k, ∀ pq' ∈ Λₖ s t k, pq = pq' ↔ δₚ s (t + ε) pq = δₚ s (t + ε) pq' := by
   intro pq pqmem pq' pq'mem
@@ -215,6 +243,11 @@ lemma ΛₖSplit (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε]:
     norm_cast at δeq pqeq
     exact Prod.ext pqeq δeq
 
+/-
+Combining with monotonicity, we can extent the previous property globally:
+all Λₖ below the K bound splits completely, and
+each lattice point becomes a singleton.
+-/
 lemma ΛₖSplit' (s t ε: ℝ) (k K: ℕ) (kbound: k ≤ K) [PosReal s] [PosReal t] [PosReal ε]
 (εbound: ε < t * εBound s t K):
 ∀ pq ∈ Λₖ s t k, ∀ pq', pq = pq' ↔ δₚ s (t + ε) pq = δₚ s (t + ε) pq' := by
@@ -243,12 +276,15 @@ lemma ΛₖSplit' (s t ε: ℝ) (k K: ℕ) (kbound: k ≤ K) [PosReal s] [PosRea
       simp only [lt_self_iff_false] at mono
 
 
-
 lemma ΛₖtoδNonempty (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] :
 ((Λₖ s t k).toFinset.image (δₚ s (t + ε))).Nonempty := by
   simp only [Finset.image_nonempty, Set.toFinset_nonempty]
   apply ΛₖNonempty
 
+/-
+Among lattice points in a Λₖ, we can find the one with the highest δ after splitting,
+which we call the "max point".
+-/
 noncomputable
 def δₚSplitMax (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε] :=
   ((Λₖ s t k).toFinset.image (δₚ s (t + ε))).max' (ΛₖtoδNonempty s t ε k)
@@ -270,6 +306,9 @@ lemma δₚSplitMaxSpec (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal 
   obtain le_max := Finset.le_max' _ _ mem
   exact le_max
 
+/-
+These max points have new k assigned to them
+-/
 noncomputable
 def kSplitMax (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε] :=
 (δₖ_surjΔ _ _ _ (δₚSplitMaxInΔ s t ε k)).choose
@@ -281,6 +320,13 @@ def kSplitMaxSpec (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε]:
   rw [spec]
   apply δₚSplitMaxSpec
 
+/-
+We show that the max point corresponds to the same Λceiled set as the pre-split set.
+Intuitively, this is because
+ - all lower Λₖ still stays below due to the isolation property.
+ - the max point of the top Λₖ covers all members of Λₖ by definition.
+ - all higher Λₖ still stays above, again due to isolation
+-/
 lemma ΛceiledSplit (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k ≤ K) (εbound: ε < t * εBound s t K):
 Λceiled s t (δₖ s t k) = Λceiled s (t + ε) (δₖ s (t + ε) (kSplitMax s t ε k)) := by
@@ -329,6 +375,9 @@ lemma ΛceiledSplit (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε
     rw [← pq'eq]
     apply ΛₖMono s t ε k k' K kltk' kBound (le_of_lt PosReal.pos) εbound _ pq'mem _ pqmemSplit
 
+/-
+The previous statement can also be said for the shifted Λceiled set
+-/
 lemma ΛceiledSplit_s (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k ≤ K) (εbound: ε < t * εBound s t K):
 Λceiled s t (δₖ s t k - s) = Λceiled s (t + ε) (δₖ s (t + ε) (kSplitMax s t ε k) - s) := by
@@ -354,7 +403,11 @@ lemma ΛceiledSplit_s (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal 
   simp only [Set.mem_setOf_eq] at ΛsplitExt
   exact ΛsplitExt (pq.1 + 1, pq.2)
 
-
+/-
+We can now describe the splitting behavior of nₖ.
+The original elements of nₖ stays after splitting,
+while new elemtns are inserted in between.
+-/
 lemma nₖSplit (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k ≤ K) (εbound: ε < t * εBound s t K):
 nₖ s t (k + 1) = nₖ s (t + ε) (kSplitMax s t ε k + 1) := by
@@ -366,6 +419,9 @@ nₖ s t (k + 1) = nₖ s (t + ε) (kSplitMax s t ε k + 1) := by
   simp only [Set.toFinset_inj]
   apply ΛceiledSplit s t ε k K kBound εbound
 
+/-
+The same behavior can be seen in wₖ and wₖ'
+-/
 lemma wₖ'Split (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k ≤ K) (εbound: ε < t * εBound s t K):
 wₖ' s t (k + 1) = wₖ' s (t + ε) (kSplitMax s t ε k + 1) := by
@@ -387,6 +443,20 @@ wₖ s t (k + 1) = wₖ s (t + ε) (kSplitMax s t ε k + 1) := by
   rw [← w'] at n
   exact Nat.add_right_cancel n
 
+/-
+At this point, we can easily see that during splitting,
+the piecewise function wₗᵢ breaks into smaller segments,
+while preserving the original nodes.
+
+We start working on a stronger statement: new segments are
+always below the original segments (or at stay the same if it didn't split).
+-/
+
+/-
+For each new δₖ inserted in between, we can find the corresponding lattice point.
+In fact such point is unique due as we have shown before.
+Intuitively, every lattice point below the K bound will generate a segment in wₖ
+-/
 lemma δₖSplitBetween (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k < K) (εbound: ε < t * εBound s t K)
 (k'left: kSplitMax s t ε k < k') (k'right: k' ≤ kSplitMax s t ε (k + 1)):
@@ -456,12 +526,16 @@ def pqOfδₖSplit (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal 
 (k'left: kSplitMax s t ε k < k') (k'right: k' ≤ kSplitMax s t ε (k + 1)) :=
 (δₖSplitBetween s t ε k K k' kBound εbound k'left k'right).choose
 
+/-
+We define the "slope" of each lattice point,
+and show that it is the same slope as the segment in wₗᵢ generated by the point.
+-/
 noncomputable
-def pqslot (pq: ℕ × ℕ) := (pq.2 / (pq.1 + pq.2): ℝ)
+def pqslope (pq: ℕ × ℕ) := (pq.2 / (pq.1 + pq.2): ℝ)
 
 lemma Jslope (pq: ℕ × ℕ) (h: pq.2 ≠ 0):
-(Jₚ (pq.1, pq.2 - 1) / Jₚ pq: ℝ) = pqslot pq := by
-  unfold pqslot
+(Jₚ (pq.1, pq.2 - 1) / Jₚ pq: ℝ) = pqslope pq := by
+  unfold pqslope
   refine (div_eq_div_iff ?_ ?_).mpr ?_
   · norm_cast
     apply ne_of_gt
@@ -476,11 +550,10 @@ lemma Jslope (pq: ℕ × ℕ) (h: pq.2 ≠ 0):
     convert Nat.choose_mul_succ_eq (pq.1 + (pq.2 - 1)) pq.1
     omega
 
-
 lemma wslope (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k < K) (εbound: ε < t * εBound s t K)
 (k'left: kSplitMax s t ε k < k') (k'right: k' ≤ kSplitMax s t ε (k + 1)):
-((Jtₖ s (t + ε) k') / (Jₖ s (t + ε) k'): ℝ) = pqslot (pqOfδₖSplit s t ε k K k' kBound εbound k'left k'right) := by
+((Jtₖ s (t + ε) k') / (Jₖ s (t + ε) k'): ℝ) = pqslope (pqOfδₖSplit s t ε k K k' kBound εbound k'left k'right) := by
 
   unfold Jtₖ Jₖ Jline
   obtain ⟨exist, eq⟩ := (δₖSplitBetween s t ε k K k' kBound εbound k'left k'right).choose_spec
@@ -529,7 +602,7 @@ lemma wslope (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
       simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false] at qeq
     rw [rwJt]
     simp only [Finset.sum_empty, CharP.cast_eq_zero, Finset.sum_singleton, zero_div]
-    unfold pqslot
+    unfold pqslope
     rw [q0]
     simp only [CharP.cast_eq_zero, add_zero, zero_div]
   · have q1: 1 ≤ (pqOfδₖSplit s t ε k K k' kBound εbound k'left k'right).2 := by
@@ -571,6 +644,10 @@ noncomputable
 def slopeₖ (s t: ℝ) [PosReal s] [PosReal t] (k: ℕ) :=
   ((wₖ s t (k + 1) - wₖ s t k) / (nₖ s t (k + 1) - nₖ s t k): ℝ)
 
+/-
+We can show the slope is strictly monotonic within a Λₖ.
+This comes from the fact that these lattice points are in fact ordered by their q-coordinate.
+-/
 lemma wslopeMono (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k < K) (εbound: ε < t * εBound s t K):
 StrictMonoOn
@@ -603,7 +680,7 @@ StrictMonoOn
   rw [k1k2] at δlt
   simp only [add_lt_add_iff_left] at δlt
   obtain qlt := (mul_lt_mul_iff_of_pos_right PosReal.pos).mp δlt
-  unfold pqslot
+  unfold pqslope
   nth_rw 2 [add_comm] at k1k2
   obtain k1k2': pq1.1 * s - pq2.1 * s = pq2.2 * t - pq1.2 * t := sub_eq_sub_iff_add_eq_add.mpr k1k2
   rw [← sub_mul, ← sub_mul] at k1k2'
@@ -632,6 +709,11 @@ StrictMonoOn
     exact plt
   apply lt_trans left right
 
+/-
+Because the slopes within Λₖ are monotonic, the post-split wₗᵢ is
+convex within Λₖ, which is lower than the linear pre-split wₗᵢ.
+We first show this for all the nodes.
+-/
 lemma wₗᵢunder (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k < K) (εbound: ε < t * εBound s t K)
 (k'left: kSplitMax s t ε k < k') (k'right: k' < kSplitMax s t ε (k + 1)):
@@ -866,7 +948,9 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
   obtain what := lt_of_le_of_lt slopele mono
   simp only [lt_self_iff_false] at what
 
-
+/-
+... and then show this for the continuous wₗᵢ.
+-/
 lemma wₗᵢunder' (s t ε: ℝ) (k K: ℕ) (n: ℝ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k < K) (εbound: ε < t * εBound s t K)
 (nleft: nₖ s t (k + 1) ≤ n) (nright: n < nₖ s t (k + 2)):
@@ -1003,8 +1087,10 @@ wₗᵢ s (t + ε) n ≤ wₗᵢ s t n := by
     apply (nₖ_mono _ _).le_iff_le.mpr
     exact Nat.le_add_right k' 1
 
-
-open Topology in
+/-
+Finally, we show the entire wₗᵢ moves downwards for a sufficiently small perturbation on t,
+and hide the explicit bound definition.
+-/
 lemma wₗᵢtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
 ∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
   have: PosReal ε := { pos := εpos }
@@ -1038,6 +1124,9 @@ lemma wₗᵢtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
     · rw [(by unfold K; simp only [Nat.reduceEqDiff]; exact Nat.sub_add_cancel k1: K + 2 = k + 1)]
       exact right
 
+/-
+By symmetry, wₗᵢ moves upwards when the perturbation is on s
+-/
 lemma wₗᵢsSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
 ∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
   have: PosReal ε := { pos := εpos }
