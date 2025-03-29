@@ -449,21 +449,6 @@ lemma δₖSplitBetween (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [Pos
         simp only [lt_self_iff_false] at what
   · rfl
 
-/-
-lemma δₖSplitBetweenUnique (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
-(kBound: k < K) (εbound: ε < t * εBound s t K)
-(k'left: kSplitMax s t ε k < k') (k'right: k' ≤ kSplitMax s t ε (k + 1)):
-∃!pq, pq ∈ Λₖ s t (k + 1) ∧ δₖ s (t + ε) k' = δₚ s (t + ε) pq := by
-  obtain ⟨pq, pqeq⟩ := δₖSplitBetween s t ε k K k' kBound εbound k'left k'right
-  use pq
-  simp only [and_imp]
-  constructor
-  · exact pqeq
-  · intro pq' pq'eq δeq
-    obtain ⟨pqmem, pqeq⟩ := pqeq
-    rw [δeq] at pqeq
-    exact (ΛₖSplit s t ε (k + 1) _ pq'eq _ pqmem).mpr pqeq
-    -/
 
 noncomputable
 def pqOfδₖSplit (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
@@ -581,3 +566,302 @@ lemma wslope (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
     rw [rwJt]
     simp only [Finset.sum_singleton]
     apply Jslope _ q0
+
+noncomputable
+def slopeₖ (s t: ℝ) [PosReal s] [PosReal t] (k: ℕ) :=
+  ((wₖ s t (k + 1) - wₖ s t k) / (nₖ s t (k + 1) - nₖ s t k): ℝ)
+
+lemma wslopeMono (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε]
+(kBound: k < K) (εbound: ε < t * εBound s t K):
+StrictMonoOn
+  (slopeₖ s (t + ε))
+  (Set.Ioc (kSplitMax s t ε k) (kSplitMax s t ε (k + 1))) := by
+
+  intro k1 k1mem k2 k2mem lt
+  obtain ⟨k1left, k1right⟩ := k1mem
+  obtain ⟨k2left, k2right⟩ := k2mem
+  unfold slopeₖ
+  rw [wₖ, wₖ, nₖ, nₖ]
+  simp only [Nat.cast_add, add_sub_cancel_left, add_tsub_cancel_right]
+  rw [wslope s t ε k K k1 kBound εbound k1left k1right]
+  rw [wslope s t ε k K k2 kBound εbound k2left k2right]
+  obtain δlt := δₖ_mono s (t + ε) lt
+  obtain ⟨k1mem, k1eq⟩ := (δₖSplitBetween s t ε k K k1 kBound εbound k1left k1right).choose_spec
+  obtain ⟨k2mem, k2eq⟩ := (δₖSplitBetween s t ε k K k2 kBound εbound k2left k2right).choose_spec
+  rw [k1eq, k2eq] at δlt
+  unfold pqOfδₖSplit
+  set pq1 := (δₖSplitBetween s t ε k K k1 kBound εbound k1left k1right).choose
+  set pq2 := (δₖSplitBetween s t ε k K k2 kBound εbound k2left k2right).choose
+  unfold Λₖ Λline δₚ at k1mem k2mem
+  simp only [Set.mem_preimage] at k1mem k2mem
+  apply Set.mem_singleton_iff.mp at k1mem
+  apply Set.mem_singleton_iff.mp at k2mem
+  obtain k1k2 := Eq.trans k1mem k2mem.symm
+  unfold δₚ at δlt
+  simp only at δlt
+  rw [mul_add, mul_add, ← add_assoc, ← add_assoc] at δlt
+  rw [k1k2] at δlt
+  simp only [add_lt_add_iff_left] at δlt
+  obtain qlt := (mul_lt_mul_iff_of_pos_right PosReal.pos).mp δlt
+  unfold pqslot
+  nth_rw 2 [add_comm] at k1k2
+  obtain k1k2': pq1.1 * s - pq2.1 * s = pq2.2 * t - pq1.2 * t := sub_eq_sub_iff_add_eq_add.mpr k1k2
+  rw [← sub_mul, ← sub_mul] at k1k2'
+  have qsub : (pq2.2 - pq1.2: ℝ) > 0 := sub_pos.mpr qlt
+  have qsub': (pq2.2 - pq1.2: ℝ) * t > 0 := mul_pos qsub (PosReal.pos)
+  rw [← k1k2'] at qsub'
+  have psub : (pq1.1 - pq2.1: ℝ) > 0 := pos_of_mul_pos_left qsub' (le_of_lt PosReal.pos)
+  have plt: (pq2.1: ℝ) < pq1.1 := lt_add_neg_iff_lt.mp psub
+
+  have p1: (0:ℝ) < pq1.1 := lt_of_le_of_lt (Nat.cast_nonneg' pq2.1) plt
+  have p2: (0:ℝ) ≤ pq2.1 := Nat.cast_nonneg' pq2.1
+  have q1: (0:ℝ) ≤ pq1.2 := Nat.cast_nonneg' pq1.2
+  have q2: (0:ℝ) ≤ pq2.2 := Nat.cast_nonneg' pq2.2
+  have q2': (0:ℝ) < pq2.2 := lt_of_le_of_lt q1 qlt
+  have p1q1: (0:ℝ) < pq1.1 + pq1.2 := Right.add_pos_of_pos_of_nonneg p1 q1
+  have p1q2: (0:ℝ) < pq1.1 + pq2.2 := Right.add_pos_of_pos_of_nonneg p1 q2
+  have p2q2: (0:ℝ) < pq2.1 + pq2.2 := add_pos_of_nonneg_of_pos p2 q2'
+  have left: (pq1.2 / (pq1.1 + pq1.2): ℝ) < (pq2.2 / (pq1.1 + pq2.2): ℝ) := by
+    apply (div_lt_div_iff₀ p1q1 p1q2).mpr
+    rw [mul_add, mul_add, mul_comm (pq1.2:ℝ) (pq2.2:ℝ)]
+    simp only [add_lt_add_iff_right]
+    exact (mul_lt_mul_iff_of_pos_right p1).mpr qlt
+  have right: (pq2.2 / (pq1.1 + pq2.2): ℝ) < (pq2.2 / (pq2.1 + pq2.2): ℝ) := by
+    refine div_lt_div_of_pos_left q2' p2q2 ?_
+    simp only [add_lt_add_iff_right]
+    exact plt
+  apply lt_trans left right
+
+lemma wₗᵢunder (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
+(kBound: k < K) (εbound: ε < t * εBound s t K)
+(k'left: kSplitMax s t ε k < k') (k'right: k' < kSplitMax s t ε (k + 1)):
+wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
+  by_contra peak
+  simp only [not_lt] at peak
+
+  let rule := slopeₖ s t (k + 1)
+
+  unfold wₗᵢ at peak
+  have knk: kₙ s t (nₖ s (t + ε) (k' + 1)) = some (k + 1) := by
+    apply kₙ_inv'
+    · rw [nₖSplit s t ε k K (Nat.le_of_succ_le kBound) εbound]
+      simp only [ge_iff_le, Nat.cast_le]
+      apply (nₖ_mono _ _).le_iff_le.mpr
+      exact Nat.le_add_right_of_le k'left
+    · rw [nₖSplit s t ε (k + 1) K (kBound) εbound]
+      simp only [Nat.cast_lt]
+      apply (nₖ_mono _ _).lt_iff_lt.mpr
+      exact Nat.add_lt_add_right k'right 1
+  rw [knk] at peak
+  simp only at peak
+
+  have deno: (0:ℝ) < (nₖ s t (k + 1 + 1)) - (nₖ s t (k + 1)) := by
+    simp only [sub_pos, Nat.cast_lt]
+    apply nₖ_mono
+    exact lt_add_one (k + 1)
+
+  rw [one_sub_div (Ne.symm (ne_of_lt deno))] at peak
+  rw [div_mul_eq_mul_div, div_mul_eq_mul_div, ← add_div] at peak
+  apply (div_le_iff₀ deno).mp at peak
+
+  have left: ∃ kLeft ∈ Set.Ioc (kSplitMax s t ε k) k', rule ≤ slopeₖ s (t + ε) kLeft := by
+    by_contra slopeChain
+    simp only [not_exists, not_and, not_le] at slopeChain
+    unfold slopeₖ at slopeChain
+    have slopeChain' (x: ℕ) (h: x ∈ Set.Ioc (kSplitMax s t ε k) k'):
+      (wₖ s (t + ε) (x + 1) - wₖ s (t + ε) x: ℝ) < rule * (nₖ s (t + ε) (x + 1) - nₖ s (t + ε) x: ℝ) := by
+      obtain chain := slopeChain x h
+      refine (div_lt_iff₀ ?_).mp chain
+      simp only [sub_pos, Nat.cast_lt]
+      apply nₖ_mono
+      exact lt_add_one x
+    let set := Finset.range (k' - kSplitMax s t ε k)
+    let g := (kSplitMax s t ε k + 1 + · )
+    have setmap: (Set.Ioc (kSplitMax s t ε k) k').toFinset = set.image g := by
+      unfold g set
+      simp only [Set.toFinset_Ioc]
+      ext x
+      rw [Finset.mem_image]
+      constructor
+      · intro xmem
+        simp only [Finset.mem_Ioc] at xmem
+        obtain ⟨xleft, xright⟩ := xmem
+        use (x - (kSplitMax s t ε k + 1))
+        constructor
+        · simp only [Finset.mem_range]
+          apply (Nat.sub_lt_iff_lt_add xleft).mpr
+          rw [Nat.succ_add]
+          apply Nat.lt_succ_iff.mpr
+          convert xright
+          exact Nat.add_sub_of_le (Nat.le_of_succ_le k'right)
+        · exact Nat.add_sub_of_le xleft
+      · rintro ⟨a, ⟨amem, aeq⟩⟩
+        simp only [Finset.mem_range] at amem
+        simp only [Finset.mem_Ioc]
+        rw [← aeq]
+        constructor
+        · rw [add_right_comm]
+          apply Nat.lt_succ_iff.mpr
+          exact Nat.le_add_right k' a
+        · rw [add_right_comm]
+          apply Nat.succ_le.mpr
+          exact Nat.add_lt_of_lt_sub' amem
+    have one: ∀x ∈ set, ∀ y ∈ set, g x = g y → x = y := by
+      intro x xmem y ymem eq
+      unfold g at eq
+      exact Nat.add_left_cancel eq
+    have g1: ∀x, g x + 1 = g (x + 1) := by
+      intro x
+      unfold g
+      rw [add_assoc]
+    let wsum := ∑ x ∈ Set.Ioc (kSplitMax s t ε k) k', (wₖ s (t + ε) (x + 1) - wₖ s (t + ε) x: ℝ)
+    let nsum := ∑ x ∈ Set.Ioc (kSplitMax s t ε k) k', (nₖ s (t + ε) (x + 1) - nₖ s (t + ε) x: ℝ)
+    have wsumeq: wsum = (wₖ s (t + ε) (k' + 1) - wₖ s (t + ε) (kSplitMax s t ε k + 1): ℝ) := by
+      unfold wsum
+      rw [setmap, Finset.sum_image one]
+      simp_rw [g1]
+      unfold set
+      rw [Finset.sum_range_sub (fun (x:ℕ) ↦ (wₖ s (t + ε) (g x) : ℝ)) (k' - kSplitMax s t ε k)]
+      unfold g
+      simp only [add_zero, sub_left_inj, Nat.cast_inj]
+      congr 1
+      zify [k'left]
+      ring
+    have nsumeq: nsum = (nₖ s (t + ε) (k' + 1) - nₖ s (t + ε) (kSplitMax s t ε k + 1): ℝ) := by
+      unfold nsum
+      rw [setmap, Finset.sum_image one]
+      simp_rw [g1]
+      unfold set
+      rw [Finset.sum_range_sub (fun (x:ℕ) ↦ (nₖ s (t + ε) (g x) : ℝ)) (k' - kSplitMax s t ε k)]
+      unfold g
+      simp only [add_zero, sub_left_inj, Nat.cast_inj]
+      congr 1
+      zify [k'left]
+      ring
+    have wnsum: (wₖ s (t + ε) (k' + 1) - wₖ s (t + ε) (kSplitMax s t ε k + 1): ℝ) <
+      rule * (nₖ s (t + ε) (k' + 1) - nₖ s (t + ε) (kSplitMax s t ε k + 1): ℝ) := by
+      rw [← wsumeq, ← nsumeq]
+      unfold wsum nsum
+      rw [Finset.mul_sum]
+      gcongr with x xmem
+      · simp only [Set.toFinset_Ioc, Finset.nonempty_Ioc]
+        exact k'left
+      · simp only [Set.mem_toFinset] at xmem
+        exact slopeChain' x xmem
+    unfold rule slopeₖ at wnsum
+    rw [← nₖSplit s t ε k K (Nat.le_of_succ_le kBound) εbound] at wnsum
+    rw [← wₖSplit s t ε k K (Nat.le_of_succ_le kBound) εbound] at wnsum
+    contrapose wnsum
+    simp only [not_lt]
+    rw [div_mul_eq_mul_div]
+    apply (div_le_iff₀ deno).mpr
+    linarith only [peak]
+
+  have right: ∃ kRight ∈ Set.Ioc k' (kSplitMax s t ε (k + 1)), slopeₖ s (t + ε) kRight ≤ rule := by
+    by_contra slopeChain
+    simp only [not_exists, not_and, not_le] at slopeChain
+    unfold slopeₖ at slopeChain
+    have slopeChain' (x: ℕ) (h: x ∈ Set.Ioc k' (kSplitMax s t ε (k + 1))):
+      rule * (nₖ s (t + ε) (x + 1) - nₖ s (t + ε) x: ℝ) < (wₖ s (t + ε) (x + 1) - wₖ s (t + ε) x: ℝ) := by
+      obtain chain := slopeChain x h
+      refine (lt_div_iff₀ ?_).mp chain
+      simp only [sub_pos, Nat.cast_lt]
+      apply nₖ_mono
+      exact lt_add_one x
+    let set := Finset.range (kSplitMax s t ε (k + 1) - k')
+    let g := (k' + 1 + · )
+    have setmap: (Set.Ioc k' (kSplitMax s t ε (k + 1))).toFinset = set.image g := by
+      unfold g set
+      simp only [Set.toFinset_Ioc]
+      ext x
+      rw [Finset.mem_image]
+      constructor
+      · intro xmem
+        simp only [Finset.mem_Ioc] at xmem
+        obtain ⟨xleft, xright⟩ := xmem
+        use (x - (k' + 1))
+        constructor
+        · simp only [Finset.mem_range]
+          apply (Nat.sub_lt_iff_lt_add xleft).mpr
+          rw [Nat.succ_add]
+          apply Nat.lt_succ_iff.mpr
+          convert xright
+          exact Nat.add_sub_of_le (Nat.le_of_succ_le k'right)
+        · exact Nat.add_sub_of_le xleft
+      · rintro ⟨a, ⟨amem, aeq⟩⟩
+        simp only [Finset.mem_range] at amem
+        simp only [Finset.mem_Ioc]
+        rw [← aeq]
+        constructor
+        · rw [add_right_comm]
+          apply Nat.lt_succ_iff.mpr
+          exact Nat.le_add_right k' a
+        · rw [add_right_comm]
+          apply Nat.succ_le.mpr
+          exact Nat.add_lt_of_lt_sub' amem
+    have one: ∀x ∈ set, ∀ y ∈ set, g x = g y → x = y := by
+      intro x xmem y ymem eq
+      unfold g at eq
+      exact Nat.add_left_cancel eq
+    have g1: ∀x, g x + 1 = g (x + 1) := by
+      intro x
+      unfold g
+      rw [add_assoc]
+    let wsum := ∑ x ∈ Set.Ioc k' (kSplitMax s t ε (k + 1)), (wₖ s (t + ε) (x + 1) - wₖ s (t + ε) x: ℝ)
+    let nsum := ∑ x ∈ Set.Ioc k' (kSplitMax s t ε (k + 1)), (nₖ s (t + ε) (x + 1) - nₖ s (t + ε) x: ℝ)
+    have wsumeq: wsum = (wₖ s (t + ε) (kSplitMax s t ε (k + 1) + 1) - wₖ s (t + ε) (k' + 1): ℝ) := by
+      unfold wsum
+      rw [setmap, Finset.sum_image one]
+      simp_rw [g1]
+      unfold set
+      rw [Finset.sum_range_sub (fun (x:ℕ) ↦ (wₖ s (t + ε) (g x) : ℝ)) (kSplitMax s t ε (k + 1) - k')]
+      unfold g
+      simp only [add_zero, sub_left_inj, Nat.cast_inj]
+      congr 1
+      zify [k'right]
+      ring
+    have nsumeq: nsum = (nₖ s (t + ε) (kSplitMax s t ε (k + 1) + 1) - nₖ s (t + ε) (k' + 1): ℝ) := by
+      unfold nsum
+      rw [setmap, Finset.sum_image one]
+      simp_rw [g1]
+      unfold set
+      rw [Finset.sum_range_sub (fun (x:ℕ) ↦ (nₖ s (t + ε) (g x) : ℝ)) (kSplitMax s t ε (k + 1) - k')]
+      unfold g
+      simp only [add_zero, sub_left_inj, Nat.cast_inj]
+      congr 1
+      zify [k'right]
+      ring
+    have wnsum: rule * (nₖ s (t + ε) (kSplitMax s t ε (k + 1) + 1) - nₖ s (t + ε) (k'+ 1): ℝ) <
+      (wₖ s (t + ε) (kSplitMax s t ε (k + 1) + 1) - wₖ s (t + ε) (k'+ 1): ℝ) := by
+      rw [← wsumeq, ← nsumeq]
+      unfold wsum nsum
+      rw [Finset.mul_sum]
+      gcongr with x xmem
+      · simp only [Set.toFinset_Ioc, Finset.nonempty_Ioc]
+        exact k'right
+      · simp only [Set.mem_toFinset] at xmem
+        exact slopeChain' x xmem
+    unfold rule slopeₖ at wnsum
+    rw [← nₖSplit s t ε (k + 1) K kBound εbound] at wnsum
+    rw [← wₖSplit s t ε (k + 1) K kBound εbound] at wnsum
+    contrapose wnsum
+    simp only [not_lt]
+    rw [div_mul_eq_mul_div]
+    apply (le_div_iff₀ deno).mpr
+    linarith only [peak]
+
+  obtain ⟨left, ⟨⟨leftleft, leftrange⟩, leftle⟩⟩ := left
+  obtain ⟨right, ⟨⟨rightrange, rightright⟩, rightle⟩⟩ := right
+  obtain slopele := le_trans rightle leftle
+  obtain lr := lt_of_le_of_lt leftrange rightrange
+  have leftmem: left ∈ Set.Ioc (kSplitMax s t ε k) (kSplitMax s t ε (k + 1)) := by
+    constructor
+    · exact leftleft
+    · exact le_of_lt (lt_of_lt_of_le lr rightright)
+  have rightmem: right ∈ Set.Ioc (kSplitMax s t ε k) (kSplitMax s t ε (k + 1)) := by
+    constructor
+    · exact lt_trans leftleft lr
+    · exact rightright
+  obtain mono := ((wslopeMono s t ε k K kBound εbound).lt_iff_lt leftmem rightmem).mpr lr
+  obtain what := lt_of_le_of_lt slopele mono
+  simp only [lt_self_iff_false] at what
