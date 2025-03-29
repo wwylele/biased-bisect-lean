@@ -693,7 +693,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
           rw [Nat.succ_add]
           apply Nat.lt_succ_iff.mpr
           convert xright
-          exact Nat.add_sub_of_le (Nat.le_of_succ_le k'right)
+          exact Nat.add_sub_of_le (Nat.le_of_succ_le k'left)
         · exact Nat.add_sub_of_le xleft
       · rintro ⟨a, ⟨amem, aeq⟩⟩
         simp only [Finset.mem_range] at amem
@@ -702,7 +702,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
         constructor
         · rw [add_right_comm]
           apply Nat.lt_succ_iff.mpr
-          exact Nat.le_add_right k' a
+          exact Nat.le_add_right (kSplitMax s t ε k) a
         · rw [add_right_comm]
           apply Nat.succ_le.mpr
           exact Nat.add_lt_of_lt_sub' amem
@@ -865,3 +865,192 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
   obtain mono := ((wslopeMono s t ε k K kBound εbound).lt_iff_lt leftmem rightmem).mpr lr
   obtain what := lt_of_le_of_lt slopele mono
   simp only [lt_self_iff_false] at what
+
+
+lemma wₗᵢunder' (s t ε: ℝ) (k K: ℕ) (n: ℝ) [PosReal s] [PosReal t] [PosReal ε]
+(kBound: k < K) (εbound: ε < t * εBound s t K)
+(nleft: nₖ s t (k + 1) ≤ n) (nright: n < nₖ s t (k + 2)):
+wₗᵢ s (t + ε) n ≤ wₗᵢ s t n := by
+  unfold wₗᵢ
+  have krw: kₙ s t n = some (k + 1) := kₙ_inv' _ _ _ _ nleft nright
+  obtain ⟨k', k'eq⟩ := kₙ_exist s (t + ε) n (by
+    refine le_trans ?_ nleft
+    simp only [Nat.one_le_cast]
+    nth_rw 1 [← n₀ s t]
+    apply (nₖ_mono s t).le_iff_le.mpr
+    exact Nat.le_add_left 0 (k + 1)
+  )
+  rw [krw, k'eq]
+  simp only
+
+  obtain ⟨k'eq1, k'eq2⟩ := nₖ_inv s (t + ε) n k' k'eq
+  have k'left: kSplitMax s t ε k + 1 ≤ k' := by
+    suffices kSplitMax s t ε k + 1 < k' + 1 from Nat.le_of_lt_succ this
+    apply (nₖ_mono s (t + ε)).lt_iff_lt.mp
+    rw [← nₖSplit s t ε k K (le_of_lt kBound) εbound]
+    rify
+    exact lt_of_le_of_lt nleft k'eq2
+
+  have k'right: k' ≤ kSplitMax s t ε (k + 1) := by
+    suffices k' < kSplitMax s t ε (k + 1) + 1 from Nat.le_of_lt_succ this
+    apply (nₖ_mono s (t + ε)).lt_iff_lt.mp
+    rw [← nₖSplit s t ε (k + 1) K kBound εbound]
+    rw [(by ring: k + 1 + 1 = k + 2)]
+    rify
+    exact lt_of_le_of_lt k'eq1 nright
+
+  have leftEnd: wₖ s (t + ε) k' ≤ wₗᵢ s t (nₖ s (t + ε) k') := by
+    obtain eq|lt := eq_or_lt_of_le k'left
+    · apply le_of_eq
+      rw [← eq]
+      rw [← nₖSplit s t ε k K (le_of_lt kBound) εbound]
+      rw [← wₖSplit s t ε k K (le_of_lt kBound) εbound]
+      unfold wₗᵢ
+      rw [kₙ_inv]
+      simp only [sub_self, zero_div, sub_zero, one_mul, zero_mul, add_zero]
+    · apply le_of_lt
+      have k0: 0 < k' := (Nat.one_le_of_lt k'left)
+      rw [((Nat.sub_eq_iff_eq_add k0).mp rfl: k' = k' - 1 + 1)]
+      apply wₗᵢunder s t ε k K (k' - 1) kBound εbound (Nat.lt_sub_of_add_lt lt)
+        (Nat.sub_one_lt_of_le k0 k'right)
+
+  have rightEnd: wₖ s (t + ε) (k' + 1) ≤ wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
+    obtain eq|lt := eq_or_lt_of_le k'right
+    · apply le_of_eq
+      rw [eq]
+      rw [← nₖSplit s t ε (k + 1) K kBound εbound]
+      rw [← wₖSplit s t ε (k + 1) K kBound εbound]
+      unfold wₗᵢ
+      rw [kₙ_inv]
+      simp only [sub_self, zero_div, sub_zero, one_mul, zero_mul, add_zero]
+    · apply le_of_lt
+      apply wₗᵢunder s t ε k K k' kBound εbound k'left lt
+
+  have rightrw: (
+    (1 - (n - nₖ s t (k + 1)) / (nₖ s t (k + 1 + 1) - nₖ s t (k + 1))) * wₖ s t (k + 1) +
+    (     n - nₖ s t (k + 1)) / (nₖ s t (k + 1 + 1) - nₖ s t (k + 1))  * wₖ s t (k + 1 + 1): ℝ) =
+    (1 - (n - nₖ s (t + ε) k') / (nₖ s (t + ε) (k' + 1) - nₖ s (t + ε) k')) * wₗᵢ s t (nₖ s (t + ε) k') +
+    (     n - nₖ s (t + ε) k') / (nₖ s (t + ε) (k' + 1) - nₖ s (t + ε) k')  * wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
+    unfold wₗᵢ
+
+    have k'rw: kₙ s t (nₖ s (t + ε) k') = (k + 1: ℕ) := by
+      apply kₙ_inv'
+      · simp only [Nat.cast_add, Nat.cast_id, Nat.cast_one, ge_iff_le, Nat.cast_le]
+        rw [nₖSplit s t ε k K (Nat.le_of_succ_le kBound) εbound]
+        exact (nₖ_mono s (t + ε)).le_iff_le.mpr k'left
+      · simp only [Nat.cast_add, Nat.cast_id, Nat.cast_one]
+        rw [(by ring: k + 1 + 1 = k + 2)]
+        exact lt_of_le_of_lt k'eq1 nright
+
+    rw [k'rw]
+
+    have deno0: (nₖ s t (k + 1 + 1) - nₖ s t (k + 1): ℝ) ≠ 0 := by
+      refine ne_of_gt (sub_pos_of_lt ?_)
+      norm_cast
+      apply nₖ_mono
+      apply lt_add_one
+
+    obtain eq|lt := eq_or_lt_of_le k'right
+    · have nₖeq: nₖ s (t + ε) (k' + 1) = nₖ s (t + ε) (kSplitMax s t ε (k + 1) + 1) := by
+        congr
+      rw [← nₖSplit s t ε (k + 1) K kBound εbound] at nₖeq
+      rw [nₖeq, kₙ_inv]
+      simp only [Nat.cast_add, Nat.cast_id, Nat.cast_one, sub_self, zero_div, sub_zero, one_mul,
+        zero_mul, add_zero]
+      have deno2: (nₖ s t (k + 1 + 1) - nₖ s (t + ε) k': ℝ) ≠ 0 := by
+        rw [← nₖeq]
+        refine ne_of_gt (sub_pos_of_lt ?_)
+        norm_cast
+        apply nₖ_mono
+        apply lt_add_one
+
+      field_simp [deno0, deno2]
+      ring
+    · have deno1: (nₖ s (t + ε) (k' + 1) - nₖ s (t + ε) k': ℝ) ≠ 0 := by
+        refine ne_of_gt (sub_pos_of_lt ?_)
+        norm_cast
+        apply nₖ_mono
+        apply lt_add_one
+
+      have k'rw': kₙ s t (nₖ s (t + ε) (k' + 1)) = (k + 1: ℕ) := by
+          apply kₙ_inv'
+          · exact le_of_lt (lt_of_le_of_lt nleft k'eq2)
+          · simp only [Nat.cast_add, Nat.cast_id, Nat.cast_one, Nat.cast_lt]
+            rw [nₖSplit s t ε (k + 1) K kBound εbound]
+            apply (nₖ_mono s (t + ε)).lt_iff_lt.mpr
+            simp only [add_lt_add_iff_right]
+            exact lt
+
+      rw [k'rw']
+      simp only
+
+      field_simp [deno0, deno1]
+      ring
+
+  rw [rightrw]
+  apply add_le_add
+  · apply mul_le_mul_of_nonneg_left leftEnd
+    apply sub_nonneg_of_le
+    refine (div_le_one ?_).mpr (sub_le_sub_right (le_of_lt k'eq2) _)
+    apply sub_pos_of_lt
+    norm_cast
+    apply nₖ_mono
+    apply lt_add_one
+  · apply mul_le_mul_of_nonneg_left rightEnd
+    apply div_nonneg (sub_nonneg_of_le k'eq1)
+    apply sub_nonneg_of_le
+    norm_cast
+    apply (nₖ_mono _ _).le_iff_le.mpr
+    exact Nat.le_add_right k' 1
+
+
+open Topology in
+lemma wₗᵢtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
+  have: PosReal ε := { pos := εpos }
+  wₗᵢ s (t + ε) n ≤ wₗᵢ s t n
+) := by
+  obtain ⟨k, keq⟩ := kₙ_exist s t n (le_trans (by norm_num) n2)
+  have k1: k ≥ 1 := by
+    have mem: 1 ∈ (kceiled s t n).toFinset := by
+      simp only [Set.mem_toFinset]
+      unfold kceiled
+      simp only [Set.mem_setOf_eq]
+      rw [n₁]
+      exact n2
+    apply Finset.le_max_of_eq mem keq
+  let K := k - 1
+  have krw: k = K + 1 := by
+    unfold K
+    exact (Nat.sub_eq_iff_eq_add k1).mp rfl
+
+  use t * εBound s t (K + 1)
+  constructor
+  · apply mul_pos PosReal.pos
+    exact εBoundPos s t (K + 1)
+  · intro ε εpos εbound
+    simp only
+    obtain ⟨left, right⟩ := nₖ_inv s t n k keq
+    have: PosReal ε := { pos := εpos }
+    apply wₗᵢunder' s t ε K (K + 1) n (lt_add_one K) εbound
+    · rw [← krw]
+      exact left
+    · rw [(by unfold K; simp only [Nat.reduceEqDiff]; exact Nat.sub_add_cancel k1: K + 2 = k + 1)]
+      exact right
+
+lemma wₗᵢsSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
+  have: PosReal ε := { pos := εpos }
+  wₗᵢ s t n ≤ wₗᵢ (s + ε) t n
+) := by
+  obtain ⟨εbound, ⟨εboundPos, h⟩⟩ := wₗᵢtSplit t s n n2
+  use εbound
+  constructor
+  · exact εboundPos
+  · intro ε εpos εb
+    have: PosReal ε := { pos := εpos }
+    simp only
+    rw [(by nth_rw 2 [← wₗᵢ_rec s t n n2]; ring: wₗᵢ s t n = n - wₗᵢ t s n)]
+    rw [(by nth_rw 2 [← wₗᵢ_rec (s + ε) t n n2]; ring: wₗᵢ (s + ε) t n = n - wₗᵢ t (s + ε) n)]
+    apply sub_le_sub_left
+    exact h ε εpos εb
