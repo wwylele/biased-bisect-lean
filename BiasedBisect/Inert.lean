@@ -2105,21 +2105,3 @@ wₗᵢ s t n = n - 1 := by
   nth_rw 2 [← wₗᵢ_rec t s n h]
   rw [wₗᵢ_inert_edge N t s n left h nbound]
   simp only [add_sub_cancel_left]
-
-def genNode(n: ℕ+) (input: List (ℕ+ × ℕ+)): List (ℕ+ × ℕ+) := match input with
-| .nil => .nil
-| .cons head tail => match genNode n tail with
-  | .nil => [head]
-  | .cons prevhead prevtail =>
-    if nBranching head.1 head.2 prevhead.1 prevhead.2 < n then
-      [head, (head.1 + prevhead.1, head.2 + prevhead.2), prevhead] ++ prevtail
-    else
-      [head, prevhead] ++ prevtail
-
-def nodeList(n: ℕ+): List (ℕ+ × ℕ+) :=
-PNat.recOn n [] (fun prevn prev ↦
-  if prevn < 2 then [] else if prevn = 2 then [(1, 1)] else
-  genNode (prevn + 1) ([((prevn - 1), 1)] ++ prev ++ [(1, (prevn - 1))])
-)
-
-#eval nodeList 30

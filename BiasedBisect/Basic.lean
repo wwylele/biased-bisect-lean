@@ -68,6 +68,9 @@ class PosReal (x : ℝ) : Prop where
 instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a * b) where
   pos := mul_pos PosReal.pos PosReal.pos
 
+instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a / b) where
+  pos := div_pos PosReal.pos PosReal.pos
+
 instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a + b) where
   pos := add_pos PosReal.pos PosReal.pos
 
