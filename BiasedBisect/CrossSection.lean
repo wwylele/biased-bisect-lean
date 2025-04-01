@@ -1,5 +1,9 @@
 import BiasedBisect.Inert
 import BiasedBisect.Split
+import Mathlib.Order.Monotone.Union
+
+
+instance: PosReal 1 := {pos := by norm_num}
 
 @[ext]
 structure InertSeg where
@@ -172,7 +176,9 @@ PNat.recOn n [] (fun prevn prev ↦
   genSeg (prevn + 1) ([⟨prevn - 1, 1, prevn - 2, 1⟩] ++ prev ++ [⟨1, prevn - 2, 1, prevn - 1⟩])
 )
 
-#eval segList 4
+lemma segList4: segList 4 =
+[{ a := 2, b := 1, c := 1, d := 1 }, { a := 1, b := 1, c := 1, d := 2 }] := by
+  rfl
 
 lemma segListSucc (n: ℕ+) (h: ¬ n < 3):
 segList (n + 1) = genSeg (n + 1) ([⟨n - 1, 1, n - 2, 1⟩] ++ (segList n) ++ [⟨1, n - 2, 1, n - 1⟩]) := by
@@ -293,7 +299,10 @@ lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
           simp only [Nat.ofNat_pos, mul_lt_mul_right]
           exact pmem
 
-def intervalList (n: ℕ+) := (segList n).map (fun seg ↦ Set.Icc (seg.b / seg.a: ℝ) (seg.d / seg.c))
+
+def segToInterval (seg: InertSeg) := Set.Icc (seg.b / seg.a: ℝ) (seg.d / seg.c)
+
+def intervalList (n: ℕ+) := (segList n).map segToInterval
 
 lemma intervalPositive (n: ℕ+): (intervalList n).Forall (· ⊆ Set.Ioi 0) := by
   unfold intervalList
@@ -329,7 +338,6 @@ lemma wₗᵢAntiOnInterval (N: ℕ+) (n: ℝ) (hn: n ≤ N) (n2: 2 ≤ n):
   have ypos: y > 0 := intervalsub ymem
   have: PosReal x := {pos := xpos}
   have: PosReal y := {pos := ypos}
-  have: PosReal 1 := {pos := by norm_num}
   unfold wₗᵢex
   simp only [xpos, ypos, gt_iff_lt, zero_lt_one, ↓reduceDIte]
   simp at intervalmem
@@ -432,3 +440,404 @@ lemma wₗᵢAntiOnInterval (N: ℕ+) (n: ℝ) (hn: n ≤ N) (n2: 2 ≤ n):
         exact wₗᵢ_inert seg.a seg.b seg.c seg.d 1 y 1 x n
           det (yleft' (lt_of_lt_of_le xgtleft xley)) (yright' yltright)
           (xleft' xgtleft) (xright' xltright) n2 hBranching
+
+def SetsCover (list: List (Set ℝ)) (a b: ℝ): Prop := match list with
+| [] => False
+| [single] => single = Set.Icc a b ∧ a ≤ b
+| head::tail => ∃c, head = Set.Icc a c ∧ a ≤ c ∧ SetsCover tail c b
+
+lemma LeOfSetsCover (list: List (Set ℝ)) (a b: ℝ) (cover: SetsCover list a b):
+a ≤ b := by match list with
+| [] =>
+  unfold SetsCover at cover
+  exact False.elim cover
+| [single] =>
+  unfold SetsCover at cover
+  obtain ⟨singleeq, aleb⟩ := cover
+  exact aleb
+| head::head2::tail =>
+  unfold SetsCover at cover
+  obtain ⟨c, ⟨headeq, alec, tailcover⟩⟩ := cover
+  obtain cleb := LeOfSetsCover (head2::tail) c b tailcover
+  exact le_trans alec cleb
+
+def SetsCoverAppend {l1 l2: List (Set ℝ)} {a b c: ℝ}
+(h1: SetsCover l1 a b) (h2: SetsCover l2 b c):
+SetsCover (l1 ++ l2) a c := by
+  have l2long: ¬ l2 = [] := by
+    by_contra l2empty
+    rw [l2empty] at h2
+    unfold SetsCover at h2
+    exact h2
+  match l1 with
+  | [] =>
+    unfold SetsCover at h1
+    exact False.elim h1
+  | [single] =>
+    unfold SetsCover at h1
+    obtain ⟨h1Icc, h1le⟩ := h1
+    unfold SetsCover
+    simp only [List.cons_append, List.nil_append, l2long]
+    use b
+  | head::head2::tail =>
+    unfold SetsCover at h1
+    obtain ⟨a', headIcc, aleb, tailcover⟩ := h1
+    set tail' := head2 :: tail
+    simp only [List.cons_append]
+    use a'
+    constructor
+    · exact headIcc
+    · constructor
+      · exact aleb
+      · exact SetsCoverAppend tailcover h2
+
+
+lemma antitoneListUnion (f: ℝ → ℝ) (list: List (Set ℝ)) (a b: ℝ)
+(cover: SetsCover list a b) (antitone: list.Forall (AntitoneOn f)):
+AntitoneOn f (Set.Icc a b) := by match list with
+| [] =>
+  unfold SetsCover at cover
+  exact False.elim cover
+| [single] =>
+  unfold SetsCover at cover
+  obtain ⟨singleeq, aleb⟩ := cover
+  rw [List.Forall, singleeq] at antitone
+  exact antitone
+| head::head2::tail =>
+  unfold SetsCover at cover
+  obtain ⟨c, ⟨headeq, alec, tailcover⟩⟩ := cover
+  unfold List.Forall at antitone
+  rw [headeq] at antitone
+  obtain ⟨headanti, tailanti⟩ := antitone
+  obtain cleb := LeOfSetsCover (head2::tail) c b tailcover
+  rw [(Eq.symm (Set.Icc_union_Icc_eq_Icc alec cleb):
+    Set.Icc a b = Set.Icc a c ∪ Set.Icc c b)]
+  obtain tailanti' := antitoneListUnion f (head2::tail) c b tailcover tailanti
+  obtain greatest: IsGreatest (Set.Icc a c) c := isGreatest_Icc alec
+  obtain least: IsLeast (Set.Icc c b) c := isLeast_Icc cleb
+  exact AntitoneOn.union_right headanti tailanti' greatest least
+
+lemma IccEq {a b a' b': ℝ} (h: Set.Icc a b = Set.Icc a' b') (le: a ≤ b):
+a = a' ∧ b = b' := by
+  obtain nonempty := Set.nonempty_Icc.mpr le
+  rw [h] at nonempty
+  obtain le' := Set.nonempty_Icc.mp nonempty
+  obtain least := isLeast_Icc le
+  obtain least' := isLeast_Icc le'
+  obtain greatest := isGreatest_Icc le
+  obtain greatest' := isGreatest_Icc le'
+  rw [h] at least greatest
+  constructor
+  · exact IsLeast.unique least least'
+  · exact IsGreatest.unique greatest greatest'
+
+
+lemma genSegPreserveCovers (n: ℕ+) (list: List InertSeg) (a b: ℝ)
+(hdet: list.Forall InertSeg.det1)
+(hcover: SetsCover (list.map segToInterval) a b):
+SetsCover ((genSeg n list).map segToInterval) a b := by match list with
+| [] =>
+  unfold SetsCover at hcover
+  simp only [List.map_nil] at hcover
+| [head] =>
+  simp only [List.Forall] at hdet
+  simp only [List.map_cons, List.map_nil] at hcover
+  unfold genSeg
+  split
+  · unfold SetsCover segToInterval at hcover
+    obtain ⟨abeq, aleb⟩ := hcover
+    unfold SetsCover segToInterval
+    simp only [List.cons_append, List.nil_append, List.map_cons, PNat.add_coe, Nat.cast_add]
+    use ((head.b + head.d) / (head.a + head.c))
+    obtain ⟨aeq, beq⟩ := IccEq abeq.symm aleb
+    rw [aeq, beq]
+    simp only [true_and]
+    constructor
+    · apply (div_le_div_iff₀ (by simp) (add_pos (by simp) (by simp))).mpr
+      norm_cast
+      rw [(by ring: head.b * (head.a + head.c) = head.a * head.b + head.b * head.c)]
+      rw [(by ring: (head.b + head.d) * head.a = head.a * head.b + head.a * head.d)]
+      simp only [add_le_add_iff_left]
+      rw [hdet]
+      exact le_of_lt (PNat.lt_add_right (head.b * head.c) 1)
+    · unfold genSeg SetsCover
+      simp only [List.map_nil, true_and]
+      apply (div_le_div_iff₀ (add_pos (by simp) (by simp)) (by simp)).mpr
+      norm_cast
+      rw [(by ring: (head.b + head.d) * head.c = head.b * head.c + head.d * head.c)]
+      rw [(by ring: head.d * (head.a + head.c) = head.a * head.d + head.d * head.c)]
+      simp only [add_le_add_iff_right]
+      rw [hdet]
+      exact le_of_lt (PNat.lt_add_right (head.b * head.c) 1)
+  · unfold genSeg
+    simp only [List.append_nil, List.map_cons, List.map_nil]
+    exact hcover
+| head::head2::tail =>
+  have longtail: ¬ List.map segToInterval (genSeg n (head2 :: tail)) = [] := by
+    unfold genSeg
+    split
+    · simp
+    · simp
+  unfold List.Forall at hdet
+  obtain ⟨headdet, taildet⟩ := hdet
+  unfold SetsCover at hcover
+  simp at hcover
+  obtain ⟨c, headIsIcc, alec, tailcover⟩ := hcover
+  obtain tailcover' := genSegPreserveCovers n (head2::tail) _ _ taildet tailcover
+  unfold genSeg
+  split
+  · simp only [List.cons_append, List.nil_append, List.map_cons]
+    unfold SetsCover
+    use ((head.b + head.d) / (head.a + head.c))
+    unfold segToInterval at headIsIcc
+    obtain ⟨aeq, ceq⟩ := IccEq headIsIcc.symm alec
+    rw [aeq]
+    constructor
+    · unfold segToInterval
+      simp only [PNat.add_coe, Nat.cast_add]
+    · constructor
+      · apply (div_le_div_iff₀ (by simp) (add_pos (by simp) (by simp))).mpr
+        norm_cast
+        rw [(by ring: head.b * (head.a + head.c) = head.a * head.b + head.b * head.c)]
+        rw [(by ring: (head.b + head.d) * head.a = head.a * head.b + head.a * head.d)]
+        simp only [add_le_add_iff_left]
+        rw [headdet]
+        exact le_of_lt (PNat.lt_add_right (head.b * head.c) 1)
+      · unfold SetsCover
+        simp only [longtail]
+        use c
+        constructor
+        · unfold segToInterval
+          rw [ceq]
+          simp only [PNat.add_coe, Nat.cast_add]
+        · constructor
+          · rw [ceq]
+            apply (div_le_div_iff₀ (add_pos (by simp) (by simp)) (by simp)).mpr
+            norm_cast
+            rw [(by ring: (head.b + head.d) * head.c = head.b * head.c + head.d * head.c)]
+            rw [(by ring: head.d * (head.a + head.c) = head.a * head.d + head.d * head.c)]
+            simp only [add_le_add_iff_right]
+            rw [headdet]
+            exact le_of_lt (PNat.lt_add_right (head.b * head.c) 1)
+          · exact tailcover'
+  · simp only [List.cons_append, List.nil_append, List.map_cons]
+    unfold SetsCover
+    simp only [longtail]
+    use c
+
+
+lemma intervalListCover (n: ℕ+):
+SetsCover (intervalList (n + 3)) (1 / (n + 1)) (n + 1) := by
+  induction n with
+  | one =>
+    unfold intervalList
+    rw [(by rfl: (1 + 3: ℕ+) = 4)]
+    rw [segList4]
+    unfold segToInterval
+    simp only [List.map_cons, PNat.val_ofNat, Nat.cast_one, Nat.cast_ofNat, ne_eq,
+      one_ne_zero, not_false_eq_true, div_self, div_one, List.map_nil]
+    norm_num
+    unfold SetsCover
+    use 1
+    constructor
+    · rfl
+    · constructor
+      · norm_num
+      · unfold SetsCover
+        exact ⟨rfl, by norm_num⟩
+  | succ prev ih =>
+    rw [(by rfl: prev + 1 + 3 = prev + 3 + 1)]
+    unfold intervalList
+    have cond: ¬ prev + 3 < 3 := by exact of_decide_eq_false rfl
+    rw [segListSucc _ cond]
+    apply genSegPreserveCovers _ _ _ _
+    · apply (List.forall_append _ _ _).mpr
+      constructor
+      · apply (List.forall_append _ _ _).mpr
+        constructor
+        · unfold InertSeg.det1
+          simp only [List.Forall, mul_one, one_mul]
+          rfl
+        · exact segListDet (prev + 3)
+      · unfold InertSeg.det1
+        simp only [List.Forall, mul_one, one_mul]
+        rfl
+    · simp only [List.map_append]
+      refine SetsCoverAppend (SetsCoverAppend ?_ ih) ?_
+      · unfold segToInterval SetsCover
+        simp only [List.map_cons, PNat.val_ofNat, Nat.cast_one, one_div, List.map_nil, PNat.add_coe,
+          Nat.cast_add]
+        constructor
+        · apply congr
+          · apply congr rfl
+            simp only [inv_inj]
+            norm_cast
+          · simp only [inv_inj]
+            norm_cast
+        · apply (inv_le_inv₀ (by linarith) (by linarith)).mpr
+          simp only [le_add_iff_nonneg_right, zero_le_one]
+      · unfold segToInterval SetsCover
+        simp only [List.map_cons, PNat.val_ofNat, Nat.cast_one, div_one, List.map_nil, PNat.add_coe,
+          Nat.cast_add, le_add_iff_nonneg_right, zero_le_one, and_true]
+        apply congr
+        · apply congr rfl
+          norm_cast
+        · norm_cast
+
+lemma wₗᵢAntiOnMiddle (N: ℕ+) (n: ℝ) (hn: n ≤ N + 3) (n2: 2 ≤ n):
+AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Icc (1 / (N + 1)) (N + 1)) := by
+  apply antitoneListUnion
+  · apply intervalListCover
+  · apply wₗᵢAntiOnInterval
+    · push_cast
+      exact hn
+    · exact n2
+
+lemma wₗᵢAntiOnLeft (N: ℕ+) (n: ℝ) (hn: n ≤ N + 3) (n2: 2 ≤ n):
+AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ioc 0 (1 / (N + 1))) := by
+  have nN: n ≤ (N + 1: ℕ+) + 2 := by
+    push_cast
+    rw [add_assoc]
+    norm_num
+    exact hn
+  intro x xmem y ymem xley
+  simp only [one_div, Set.mem_Ioc] at xmem
+  obtain ⟨xpos, xle⟩ := xmem
+  simp only [one_div, Set.mem_Ioc] at ymem
+  obtain ⟨ypos, yle⟩ := ymem
+  have: PosReal x := {pos := xpos}
+  have: PosReal y := {pos := ypos}
+  unfold wₗᵢex
+  simp only [gt_iff_lt, zero_lt_one, ↓reduceDIte, ypos, xpos, ge_iff_le]
+  obtain ylt|yeq := lt_or_eq_of_le yle
+  · obtain xlt := lt_of_le_of_lt xley ylt
+    apply le_of_eq
+    obtain ylt':= (inv_mul_lt_one₀
+      (by simp only [inv_pos]; norm_cast; exact PNat.pos (N + 1))).mpr ylt
+    simp only [inv_inv] at ylt'
+    obtain xlt':= (inv_mul_lt_one₀
+      (by simp only [inv_pos]; norm_cast; exact PNat.pos (N + 1))).mpr xlt
+    simp only [inv_inv] at xlt'
+    rw [wₗᵢ_inert_edge' (N + 1) 1 y n (by push_cast; exact ylt') n2 nN]
+    rw [wₗᵢ_inert_edge' (N + 1) 1 x n (by push_cast; exact xlt') n2 nN]
+  · obtain xlt|xeq := lt_or_eq_of_le xle
+    · obtain ⟨εb, εbpos, εspec⟩ := wₗᵢsSplit 1 y n n2
+      obtain ⟨ε, ⟨εpos, εlt⟩⟩: (Set.Ioo 0 εb).Nonempty := by
+        simp only [Set.nonempty_Ioo]
+        exact εbpos
+      have: PosReal ε := {pos := by exact εpos}
+      obtain split := εspec ε εpos εlt
+      simp only at split
+      apply le_trans split
+      apply le_of_eq
+      obtain xlt':= (inv_mul_lt_one₀
+        (by simp only [inv_pos]; norm_cast; exact PNat.pos (N + 1))).mpr xlt
+      simp only [inv_inv] at xlt'
+      rw [wₗᵢ_inert_edge' (N + 1) 1 x n (by push_cast; exact xlt') n2 nN]
+      rw [wₗᵢ_inert_edge' (N + 1) (1 + ε) y n (by
+        rw [yeq];
+        norm_cast
+        rw [(mul_inv_eq_one₀ (by symm; apply NeZero.ne')).mpr rfl]
+        exact lt_add_of_pos_right 1 εpos
+      ) n2 nN]
+    · simp_rw [xeq, yeq]
+      rfl
+
+lemma wₗᵢAntiOnRight (N: ℕ+) (n: ℝ) (hn: n ≤ N + 3) (n2: 2 ≤ n):
+AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ici (N + 1)) := by
+  have nN: n ≤ (N + 1: ℕ+) + 2 := by
+    push_cast
+    rw [add_assoc]
+    norm_num
+    exact hn
+  intro x xle y yle xley
+  simp only [Set.mem_Ici] at xle
+  simp only [Set.mem_Ici] at yle
+  have xpos: 0 < x := lt_of_lt_of_le (by apply Nat.cast_add_one_pos) xle
+  have ypos: 0 < y := lt_of_lt_of_le (by apply Nat.cast_add_one_pos) yle
+  have: PosReal x := {pos := xpos}
+  have: PosReal y := {pos := ypos}
+  unfold wₗᵢex
+  simp only [gt_iff_lt, zero_lt_one, ↓reduceDIte, ypos, xpos, ge_iff_le]
+  obtain xlt|xeq := lt_or_eq_of_le xle
+  · have ylt: N + 1 < y := lt_of_lt_of_le xlt xley
+    rw [wₗᵢ_inert_edge (N + 1) 1 x n (by simpa using xlt) n2 nN]
+    rw [wₗᵢ_inert_edge (N + 1) 1 y n (by simpa using ylt) n2 nN]
+  · obtain ylt|yeq := lt_or_eq_of_le yle
+    · obtain ⟨εb, εbpos, εspec⟩ := wₗᵢtSplit 1 x n n2
+      obtain ⟨ε, ⟨εpos, εlt⟩⟩: (Set.Ioo 0 εb).Nonempty := by
+        simp only [Set.nonempty_Ioo]
+        exact εbpos
+      have: PosReal ε := {pos := by exact εpos}
+      obtain split := εspec ε εpos εlt
+      simp only at split
+      refine le_trans ?_ split
+      apply le_of_eq
+      rw [wₗᵢ_inert_edge (N + 1) 1 y n (by simpa using ylt) n2 nN]
+      rw [wₗᵢ_inert_edge (N + 1) 1 (x + ε) n (by
+        simp only [PNat.add_coe, PNat.val_ofNat, Nat.cast_add, Nat.cast_one, mul_one, gt_iff_lt]
+        apply lt_of_le_of_lt xle
+        exact lt_add_of_pos_right x εpos
+      )  n2 nN]
+
+    · simp_rw [← xeq, ← yeq]
+      rfl
+
+
+lemma wₗᵢAnti (n: ℝ) (n2: 2 ≤ n):
+AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ioi 0) := by
+  let N' := max 4 (Nat.ceil n) - 3
+  let N: ℕ+ := ⟨N', (by unfold N'; simp)⟩
+  have hn: n ≤ N + 3 := by
+    unfold N N'
+    simp only [PNat.mk_coe, le_sup_iff, Nat.reduceLeDiff, true_or, Nat.cast_sub, Nat.cast_max,
+      Nat.cast_ofNat, sub_add_cancel]
+    right
+    exact Nat.le_ceil n
+  obtain left := wₗᵢAntiOnLeft N n hn n2
+  obtain mid := wₗᵢAntiOnMiddle N n hn n2
+  obtain right := wₗᵢAntiOnRight N n hn n2
+
+  have midinv: (1:ℝ) / (↑↑N + 1) ≤ ↑↑N + 1 := by
+    simp only [one_div]
+    refine le_trans ?_ (by simp: (1:ℝ) ≤ N + 1)
+    apply inv_le_one_of_one_le₀
+    simp
+
+  have setrwleft: Set.Ioc 0 (1 / (N + 1):ℝ) ∪ Set.Icc (1 / (N + 1):ℝ) (N + 1) = Set.Ioc 0 (N + 1:ℝ) := by
+    refine Set.Ioc_union_Icc_eq_Ioc ?_ midinv
+    simp only [one_div, inv_pos]
+    exact Nat.cast_add_one_pos N
+  have setrw: Set.Ioi (0:ℝ) = Set.Ioc 0 (1 / (N + 1):ℝ)
+    ∪ Set.Icc (1 / (N + 1):ℝ) (N + 1)
+    ∪ Set.Ici (N + 1:ℝ) := by
+    rw [setrwleft]
+    symm
+    apply Set.Ioc_union_Ici_eq_Ioi
+    exact Nat.cast_add_one_pos ↑N
+
+  have leftGreatest: IsGreatest (Set.Ioc 0 (1 / (N + 1):ℝ)) (1 / (N + 1):ℝ) := by
+    exact isGreatest_Ioc Nat.one_div_pos_of_nat
+  have leftLeast: IsLeast (Set.Icc (1 / (N + 1):ℝ) (N + 1)) (1 / (N + 1):ℝ) := by
+    exact isLeast_Icc midinv
+
+  have rightGreatest: IsGreatest (Set.Ioc 0 (1 / (N + 1):ℝ) ∪ Set.Icc (1 / (N + 1):ℝ) (N + 1)) (N + 1:ℝ) := by
+    rw [setrwleft]
+    exact isGreatest_Ioc (Nat.cast_add_one_pos N)
+  have rightLeast: IsLeast (Set.Ici (N + 1:ℝ)) (N + 1:ℝ) := by
+    exact isLeast_Ici
+
+  rw [setrw]
+  exact (left.union_right mid leftGreatest leftLeast).union_right
+    right rightGreatest rightLeast
+
+lemma wₗᵢMono (s1 t1 s2 t2 n: ℝ) (n2: 2 ≤ n)
+[PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
+(h: s1 / t1 ≤ s2 / t2):
+wₗᵢ s1 t1 n ≤ wₗᵢ s2 t2 n := by
+  have rw1: wₗᵢ s1 t1 n = wₗᵢ 1 (t1 / s1) n := by
+    --apply wₗᵢ_homo
+    sorry
+
+
+  sorry

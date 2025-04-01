@@ -3412,10 +3412,8 @@ and a strategy function w is called optimal if it is the set for StratEval to re
 def StratEval (Efun: ℝ → ℝ) (s t n w: ℝ) :=
   Efun w + Efun (n - w) + t * w + s * (n - w)
 
-def HasMin (s: Set ℝ) (m: ℝ): Prop := m ∈ s ∧ ∀ a ∈ s, a ≥ m
-
 def IsOptimalCost (Efun: ℝ → ℝ) (s t: ℝ): Prop :=
-  ∀ n ≥ 2, HasMin ((StratEval Efun s t n) '' (Set.Icc 1 (n - 1))) (Efun n)
+  ∀ n ≥ 2, IsLeast ((StratEval Efun s t n) '' (Set.Icc 1 (n - 1))) (Efun n)
 
 def IsOptimalStrat (Efun: ℝ → ℝ) (wfun: ℝ → Set ℝ) (s t: ℝ): Prop :=
   ∀ n ≥ 2, ∀ w ∈ (Set.Icc 1 (n - 1)), StratEval Efun s t n w = Efun n ↔ w ∈ wfun n
@@ -3427,7 +3425,7 @@ theorem E_IsOptimalCost (s t: ℝ) [PosReal s] [PosReal t]:
 IsOptimalCost (E s t) s t := by
   unfold IsOptimalCost
   intro n n2
-  unfold HasMin
+  unfold IsLeast lowerBounds
   unfold StratEval
   constructor
   · simp only [Set.mem_image, Set.mem_Icc]
@@ -3535,7 +3533,7 @@ def StratEvalℤ (Efun: ℤ → ℝ) (s t: ℝ) (n w: ℤ) :=
   Efun w + Efun (n - w) + t * w + s * (n - w)
 
 def IsOptimalCostℤ (Efun: ℤ → ℝ) (s t: ℝ): Prop :=
-  ∀ n ≥ 2, HasMin ((StratEvalℤ Efun s t n) '' (Set.Icc 1 (n - 1))) (Efun n)
+  ∀ n ≥ 2, IsLeast ((StratEvalℤ Efun s t n) '' (Set.Icc 1 (n - 1))) (Efun n)
 
 def IsOptimalStratℤ (Efun: ℤ → ℝ) (wfun: ℤ → Set ℤ) (s t: ℝ): Prop :=
   ∀ n ≥ 2, ∀ w ∈ (Set.Icc 1 (n - 1)), StratEvalℤ Efun s t n w = Efun n ↔ w ∈ wfun n
@@ -3545,7 +3543,7 @@ IsOptimalCostℤ (Eℤ s t) s t := by
   unfold IsOptimalCostℤ
   intro n n2
   rify at n2
-  unfold HasMin
+  unfold IsLeast lowerBounds
   unfold StratEvalℤ
   constructor
   · simp only [Set.mem_image, Set.mem_Icc]
@@ -3633,15 +3631,6 @@ theorem Eℤ₁ (s t: ℝ) [PosReal s] [PosReal t]: Eℤ s t 1 = 0 := by
   rw [δ₀]
   simp only [Nat.cast_one, sub_self, zero_add, zero_mul, add_zero]
 
-lemma HasMinEq (s: Set ℝ) (m n: ℝ) (mMin: HasMin s m) (nMin: HasMin s n): m = n := by
-  unfold HasMin at mMin
-  unfold HasMin at nMin
-  rcases mMin with ⟨mmem, mle⟩
-  rcases nMin with ⟨nmem, nle⟩
-  apply le_antisymm
-  · apply mle n nmem
-  · apply nle m mmem
-
 theorem Eℤ_Unique (s t: ℝ) (Efun: ℤ → ℝ) [PosReal s] [PosReal t]
 (E1: Efun 1 = 0) (opt: IsOptimalCostℤ Efun s t):
 ∀n ≥ 1, Efun n = Eℤ s t n := by
@@ -3678,7 +3667,7 @@ theorem Eℤ_Unique (s t: ℝ) (Efun: ℤ → ℝ) [PosReal s] [PosReal t]
             · simp only [tsub_le_iff_right, add_le_add_iff_left]
               apply wlow
         rw [StratEq] at EFunOpt
-        apply HasMinEq _ _ _ EFunOpt Eℤopt
+        apply IsLeast.unique EFunOpt Eℤopt
 
   intro n n1
   apply alt n n1 n n1
