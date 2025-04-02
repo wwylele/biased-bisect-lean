@@ -1,5 +1,5 @@
-import Mathlib.Tactic
-import Mathlib.Util.Delaborators
+import Mathlib.MeasureTheory.Integral.IntervalIntegral
+import Mathlib.Tactic.Rify
 
 /-
 
@@ -74,7 +74,12 @@ instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a / b) where
 instance (a b: ℝ) [PosReal a] [PosReal b]: PosReal (a + b) where
   pos := add_pos PosReal.pos PosReal.pos
 
-instance PNat_is_pos (s: ℕ+): PosReal s where
+instance (a: ℝ) [PosReal a]: PosReal a⁻¹ where
+  pos := by simp only [gt_iff_lt, inv_pos]; exact PosReal.pos
+
+instance: PosReal 1 := {pos := by norm_num}
+
+instance (s: ℕ+): PosReal s where
   pos := by
     have nat: (s: ℕ) > 0 := by exact PNat.pos s
     exact Nat.cast_pos'.mpr nat
@@ -2043,7 +2048,8 @@ lemma dE_symm (s t n: ℝ) [PosReal s] [PosReal t]: dE s t n = dE t s n := by
 /-
 ... homogeneous
 -/
-lemma dE_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: l * dE s t n = dE (l * s) (l * t) n := by
+lemma dE_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
+l * dE s t n = dE (l * s) (l * t) n := by
   unfold dE
   rw [← kₙ_homo]
   cases kₙ s t n with
@@ -2663,6 +2669,23 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
   field_simp [deno0]
   ring
 
+/-
+wₘᵢₙ, wₘₐₓ, and wₗᵢ are all homogeneous
+-/
+lemma wₘᵢₙ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
+wₘᵢₙ s t n = wₘᵢₙ (l * s) (l * t) n := by
+  unfold wₘᵢₙ
+  rw [kₙ_homo s t n l, wₖ_homo s t l, nₖ_homo s t l]
+
+lemma wₘₐₓ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
+wₘₐₓ s t n = wₘₐₓ (l * s) (l * t) n := by
+  unfold wₘₐₓ
+  rw [kₙ_homo s t n l, wₖ_homo s t l, nₖ_homo s t l]
+
+lemma wₗᵢ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
+wₗᵢ s t n = wₗᵢ (l * s) (l * t) n := by
+  unfold wₗᵢ
+  rw [kₙ_homo s t n l, wₖ_homo s t l, nₖ_homo s t l]
 
 /-
 We define the "strategy evaluation differential function"

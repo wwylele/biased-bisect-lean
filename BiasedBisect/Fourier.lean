@@ -1,10 +1,8 @@
 import BiasedBisect.Inv
 import BiasedBisect.Multigeometric
 import Mathlib.Analysis.Fourier.FourierTransform
-import Mathlib.Analysis.Fourier.Inversion
-import Mathlib.Analysis.SpecialFunctions.Log.ERealExp
-import Mathlib.MeasureTheory.Integral.ExpDecay
 import Mathlib.Analysis.SpecialFunctions.Integrals
+import Mathlib.MeasureTheory.Integral.ExpDecay
 
 
 open Real

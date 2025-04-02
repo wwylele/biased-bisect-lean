@@ -1,4 +1,5 @@
 import BiasedBisect.Basic
+import Mathlib.Data.PNat.Prime
 
 /-
 In this file, we prove a family of "inert" theorems.

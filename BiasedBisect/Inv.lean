@@ -1,8 +1,4 @@
 import BiasedBisect.Basic
-import Mathlib.Analysis.Fourier.FourierTransform
-
-open Real
-open FourierTransform
 
 /-
 In this file, we will explore more about the function φ,

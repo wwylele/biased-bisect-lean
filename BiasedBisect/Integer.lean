@@ -1,11 +1,10 @@
-import BiasedBisect.Basic
 import BiasedBisect.Inv
 import BiasedBisect.Multigeometric
-
-import Mathlib.Data.Complex.ExponentialBounds
+import Mathlib.Analysis.Complex.Arg
+import Mathlib.Analysis.Complex.Polynomial.Basic
+import Mathlib.Data.PNat.Prime
 import Mathlib.LinearAlgebra.Lagrange
 import Mathlib.RingTheory.Int.Basic
-
 /-
 
 This file discusses when s and t are positive integers.
@@ -1712,7 +1711,7 @@ Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds limit) :=
 
   have flim: Filter.Tendsto f Filter.atTop (Filter.atTop ×ˢ Filter.principal (Set.Icc 0 1)) := by
     unfold f
-    apply Filter.Tendsto.prod_mk
+    apply Filter.Tendsto.prodMk
     · apply Filter.tendsto_atTop_atTop.mpr
       intro k
       use nₖ s t k
