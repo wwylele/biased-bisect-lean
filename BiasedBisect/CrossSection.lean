@@ -233,13 +233,6 @@ segList (n + 1) = genSeg (n + 1) ([⟨n - 1, 1, n - 2, 1⟩] ++ (segList n) ++ [
   simp only [PNat.recOn_succ, h, ↓reduceIte]
   rfl
 
-lemma List.forall_append (p : α → Prop) (xs ys : List α) :
-    Forall p (xs ++ ys) ↔ Forall p xs ∧ Forall p ys := by
-  match xs with
-  | .nil => simp
-  | .cons x xtail =>
-    rw [cons_append, forall_cons, forall_cons, List.forall_append, and_assoc]
-
 /-
 segList always has ad - bc = 1 for all elements
 -/
@@ -744,9 +737,9 @@ SetsCover (intervalList (n + 3)) (1 / (n + 1)) (n + 1) := by
     have cond: ¬ prev + 3 < 3 := by exact of_decide_eq_false rfl
     rw [segListSucc _ cond]
     apply genSegPreserveCovers _ _ _ _
-    · apply (List.forall_append _ _ _).mpr
+    · rw [List.forall_append]
       constructor
-      · apply (List.forall_append _ _ _).mpr
+      · rw [List.forall_append]
         constructor
         · unfold InertSeg.det1
           simp only [List.Forall, mul_one, one_mul]
