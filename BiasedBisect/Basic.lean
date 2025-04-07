@@ -1329,6 +1329,16 @@ Jceiled s t δ = 0 := by
   rw [empty]
   exact rfl
 
+lemma Jceiled_pos (s t δ: ℝ) (neg: 0 ≤ δ) [PosReal s] [PosReal t]:
+0 < Jceiled s t δ := by
+  unfold Jceiled
+  apply Finset.sum_pos
+  · intro pq pqmem
+    exact Jₚ_nonzero pq
+  · use (0, 0)
+    unfold Λceiled
+    simp [neg]
+
 /-
 Now we can define the sequence nₖ as partial sums of Jₖ.
 
@@ -2105,6 +2115,12 @@ lemma dE_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (dE s t) := by
     simp only [Set.subset_toFinset, Set.coe_toFinset, Set.setOf_subset_setOf]
     intro k km
     apply le_trans km mnle
+
+lemma dE₁ (s t: ℝ) [PosReal s] [PosReal t]: dE s t 1 = 0 := by
+  unfold dE
+  rw [k₁]
+  simp only
+  rw [δ₀ s t]
 
 /-
 The following three lemma show the nice property of wₖ when applied to dE:

@@ -3,8 +3,394 @@ import BiasedBisect.Integer
 import BiasedBisect.MathlibTopologyOrderIsLUB
 
 /-
-In this file, we generalize asymtotic theorems for integer s and t to real numbers
+In this file, we show asymptotic behavior of E and w:
+E(s, t, n) ~ n * log(n) / ρ(s, t)
+w(s, t, n) ~ g(s, t) * n
+
+These generalizes the result we have in Integer.lean of aysmptotic behavior when s and t are integers
 -/
+
+lemma ρ_exist (s t: ℝ) [PosReal s] [PosReal t]:
+∃! ρ ≥ 0, Real.exp (-s * ρ) + Real.exp (-t * ρ) = 1 := by
+  let f := (fun (ρ:ℝ) ↦ Real.exp (-s * ρ) + Real.exp (-t * ρ) )
+  have tend: Filter.Tendsto f Filter.atTop (nhds 0) := by
+    rw [(by simp: (0:ℝ) = 0 + 0)]
+    apply Filter.Tendsto.add
+    all_goals
+    · apply Real.tendsto_exp_comp_nhds_zero.mpr
+      apply Filter.Tendsto.neg_mul_atTop (neg_lt_zero.mpr PosReal.pos)
+        tendsto_const_nhds
+      exact fun ⦃U⦄ a ↦ a
+  obtain ⟨ρbound, ρboundspec⟩ := tendsto_atTop_nhds.mp tend (Set.Iio 1) (by simp) isOpen_Iio
+  obtain ρboundspec := Set.mem_Iio.mp (ρboundspec ρbound (le_refl _))
+
+  have cont: ContinuousOn f (Set.Icc 0 ρbound) := by fun_prop
+  have mono: StrictAnti f := by
+    apply StrictAnti.add
+    all_goals
+    · apply StrictMono.comp_strictAnti (Real.exp_strictMono)
+      exact strictAnti_mul_left (neg_lt_zero.mpr PosReal.pos)
+  have ρ0: 0 < ρbound := by
+    apply mono.lt_iff_lt.mp
+    apply lt_trans ρboundspec
+    unfold f
+    simp
+
+  obtain ⟨ρs, ρssubset, ρsspec⟩ := Set.subset_image_iff.mp (
+    intermediate_value_Icc' (le_of_lt ρ0) cont)
+
+  have onemem: 1 ∈ f '' ρs := by
+    rw [ρsspec]
+    simp only [Set.mem_Icc]
+    constructor
+    · exact le_of_lt ρboundspec
+    · unfold f
+      simp
+  obtain ⟨ρ, ρrange, ρspec⟩  := (Set.mem_image _ _ _).mp onemem
+  use ρ
+  constructor
+  · constructor
+    · refine Set.mem_of_mem_of_subset ρrange (ρssubset.trans ?_)
+      exact (Set.Icc_subset_Ici_iff (le_of_lt ρ0)).mpr (le_refl _)
+    · exact ρspec
+  · intro q ⟨qrange, qeq⟩
+    apply ((mono.strictAntiOn Set.univ).eq_iff_eq (by simp) (by simp)).mp
+    unfold f
+    rw [qeq]
+    exact ρspec
+
+noncomputable
+def ρ (s t: ℝ) [PosReal s] [PosReal t] := (ρ_exist s t).choose
+
+lemma ρ_satisfies (s t: ℝ) [PosReal s] [PosReal t]:
+Real.exp (-s * ρ s t) + Real.exp (-t * ρ s t) = 1 := by
+  obtain ⟨⟨_, eq⟩, _⟩ := (ρ_exist s t).choose_spec
+  exact eq
+
+lemma ρ_range (s t: ℝ) [PosReal s] [PosReal t]: 0 < ρ s t := by
+  obtain ⟨⟨range, eq⟩, _⟩ := (ρ_exist s t).choose_spec
+  apply lt_of_le_of_ne range
+  contrapose! eq
+  rw [← eq]
+  simp
+
+lemma δₖ_infinity (s t: ℝ) [PosReal s] [PosReal t]:
+Filter.Tendsto (δₖ s t) Filter.atTop Filter.atTop := by
+  apply Filter.tendsto_atTop_atTop.mpr
+  intro ceil
+  by_contra! allunder
+  have allunder' (k): δₖ s t k < ceil := by
+    obtain ⟨k', k'range, k'under⟩ := allunder k
+    refine lt_of_le_of_lt ?_ k'under
+    exact (δₖ_mono s t).le_iff_le.mpr k'range
+  have δmem: Nat.ceil (ceil / s) * s ∈ Δ s t := by
+    use Nat.ceil (ceil / s), 0
+    ring
+  obtain ⟨k, keq⟩ := δₖ_surjΔ s t _ δmem
+  obtain what := allunder' k
+  rw [keq] at what
+  obtain what' := lt_of_le_of_lt (Nat.le_ceil _) ((lt_div_iff₀ PosReal.pos).mpr what)
+  simp at what'
+
+lemma φ_bound (s t x: ℝ) (h: -max s t ≤ x) [PosReal s] [PosReal t]:
+(φ s t x: ℝ) ∈ Set.Icc (Real.exp (ρ s t * x)) (Real.exp (ρ s t * (x + max s t))) := by
+  have inductor (n: ℕ): ∀ x ∈ Set.Ico (- max s t) (n * min s t),
+    (φ s t x: ℝ) ∈ Set.Icc (Real.exp (ρ s t * x)) (Real.exp (ρ s t * (x + max s t))) := by
+    induction n with
+    | zero =>
+      intro x ⟨xleft, xright⟩
+      simp only [CharP.cast_eq_zero, zero_mul] at xright
+      rw [φ_neg s t x xright]
+      simp only [Nat.cast_one, Set.mem_Icc, Real.exp_le_one_iff]
+      constructor
+      · exact le_of_lt (mul_neg_of_pos_of_neg (ρ_range s t) xright)
+      · rw [← Real.exp_zero]
+        apply Real.exp_monotone
+        exact mul_nonneg (le_of_lt (ρ_range s t)) (neg_le_iff_add_nonneg.mp xleft)
+    | succ n prev =>
+      intro x ⟨xleft, xright⟩
+      obtain small|large := lt_or_ge x (n * min s t)
+      · exact prev x ⟨xleft, small⟩
+      · have nstpos: 0 ≤ n * min s t :=
+          (mul_nonneg (by simp) (le_of_lt (lt_min_iff.mpr ⟨PosReal.pos, PosReal.pos⟩)))
+        rw [φ_rec s t x (le_trans nstpos large)]
+        push_cast
+        have stle: -max s t ≤ x - s ∧ -max s t ≤ x - t := by
+          constructor
+          all_goals
+          apply le_sub_right_of_add_le
+          exact le_trans (le_trans (by simp) nstpos) large
+        have xlest: x - s < n * min s t ∧ x - t < n * min s t := by
+          constructor
+          all_goals
+          apply sub_right_lt_of_lt_add
+          refine lt_of_lt_of_le xright ?_
+          push_cast
+          rw [add_one_mul]
+          simp
+        obtain prevs := prev (x - s) ⟨stle.1, xlest.1⟩
+        obtain prevt := prev (x - t) ⟨stle.2, xlest.2⟩
+        obtain prevst := Set.add_mem_add prevs prevt
+        apply Set.mem_of_mem_of_subset prevst
+        apply Set.Subset.trans (Set.Icc_add_Icc_subset _ _ _ _)
+        apply le_of_eq
+        have exprec: Real.exp (ρ s t * (x - s)) + Real.exp (ρ s t * (x - t))
+          = Real.exp (ρ s t * x) := by
+          rw [mul_sub, mul_sub, sub_eq_add_neg, sub_eq_add_neg, Real.exp_add, Real.exp_add, ← mul_add]
+          convert mul_one (Real.exp (ρ s t * x))
+          rw [mul_comm _ s, mul_comm _ t, ← neg_mul, ← neg_mul]
+          apply ρ_satisfies
+        rw [mul_add, mul_add, mul_add, Real.exp_add, Real.exp_add, Real.exp_add, ← add_mul, exprec]
+
+  let n := (⌈x / min s t⌉ + 1).toNat
+  have bound: x ∈ Set.Ico (- max s t) (n * min s t) := by
+    simp only [Set.mem_Ico]
+    constructor
+    · exact h
+    · apply (div_lt_iff₀ (by simp only [lt_inf_iff]; exact ⟨PosReal.pos, PosReal.pos⟩)).mp
+      unfold n
+      have toNatRaise: (⌈x / (s ⊓ t)⌉ + 1: ℝ) ≤ ((⌈x / (s ⊓ t)⌉ + 1).toNat: ℝ) := by
+        norm_cast
+        apply Int.self_le_toNat
+      refine lt_of_lt_of_le (lt_of_le_of_lt (by apply Int.le_ceil) ?_) toNatRaise
+      apply lt_add_of_pos_right
+      norm_num
+
+  exact inductor n x bound
+
+lemma φ_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
+Filter.Tendsto (fun x ↦ x * (ρ s t) / Real.log (φ s t x)) Filter.atTop (nhds 1) := by
+  have logφpos (x: ℝ) (h: 0 ≤ x): 0 < Real.log (φ s t x) := by
+    apply Real.log_pos
+    unfold φ
+    norm_cast
+    simp only [lt_add_iff_pos_right]
+    exact Jceiled_pos s t x h
+
+  have maxst: 0 < max s t := lt_max_of_lt_left PosReal.pos
+
+  have left (x: ℝ) (h: 0 ≤ x): x / (x + max s t) ≤ x * (ρ s t) / Real.log (φ s t x) := by
+    apply (le_div_iff₀ (logφpos x h)).mpr
+    rw [← mul_div_right_comm]
+    apply (div_le_iff₀ (add_pos_of_nonneg_of_pos h maxst)).mpr
+    rw [mul_assoc]
+    refine mul_le_mul_of_nonneg_left ?_ h
+    apply (Real.log_le_iff_le_exp (by unfold φ; norm_cast; simp)).mpr
+    exact (φ_bound s t x (le_trans (Left.neg_nonpos_iff.mpr (le_of_lt maxst)) h)).2
+
+  have right (x: ℝ) (h: 0 ≤ x): x * (ρ s t) / Real.log (φ s t x) ≤ 1 := by
+    apply (div_le_one₀ (logφpos x h)).mpr
+    apply (Real.le_log_iff_exp_le (by unfold φ; norm_cast; simp)).mpr
+    rw [mul_comm]
+    exact (φ_bound s t x (le_trans (Left.neg_nonpos_iff.mpr (le_of_lt maxst)) h)).1
+
+  have left': ∀ᶠ x in Filter.atTop, x / (x + max s t) ≤ x * (ρ s t) / Real.log (φ s t x) := by
+    apply Filter.eventually_atTop.mpr
+    use 0
+  have right': ∀ᶠ x in Filter.atTop, x * (ρ s t) / Real.log (φ s t x) ≤ 1 := by
+    apply Filter.eventually_atTop.mpr
+    use 0
+
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' ?_ tendsto_const_nhds left' right'
+  conv in fun x ↦ _ =>
+    ext x
+    rw [← inv_div]
+    rw [add_div]
+  rw [(by simp: (1:ℝ) = (1 + 0)⁻¹)]
+  refine Filter.Tendsto.inv₀ (Filter.Tendsto.add (tendsto_const_nhds.congr' ?_) ?_) (by simp)
+  · apply Filter.eventually_atTop.mpr
+    use 1
+    intro x x1
+    simp only
+    rw [div_self (ne_of_gt (lt_of_lt_of_le (by simp) x1))]
+  · exact Filter.Tendsto.const_div_atTop (fun ⦃U⦄ a ↦ a) _
+
+lemma δₖ_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
+Filter.Tendsto (fun k ↦ δₖ s t k * (ρ s t) / Real.log (nₖ s t (k + 1))) Filter.atTop (nhds 1) := by
+  simp_rw [← φδₖ]
+  exact Filter.Tendsto.comp (φ_Asymptotic s t) (δₖ_infinity s t)
+
+lemma δₖ_slowGrow (s t: ℝ) [PosReal s] [PosReal t]:
+Filter.Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) Filter.atTop (nhds 1) := by
+  have smallgap (k: ℕ): δₖ s t (k + 1) ≤ δₖ s t k + s := by
+    rw [δₖ]
+    apply Set.IsWF.min_le
+    unfold Δfloored
+    simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, lt_add_iff_pos_right]
+    constructor
+    · obtain ⟨p, q, pqeq⟩ := δₖ_in_Δ s t k
+      use p + 1, q
+      rw [← pqeq]
+      push_cast
+      ring
+    · exact PosReal.pos
+
+  have right (k: ℕ): δₖ s t (k + 1) / δₖ s t k ≤ (δₖ s t k + s) / δₖ s t k := by
+    apply div_le_div_of_nonneg_right
+    · apply smallgap
+    · rw [← δ₀ s t]
+      apply (δₖ_mono s t).le_iff_le.mpr
+      simp
+  have right': ∀ᶠ k in Filter.atTop, δₖ s t (k + 1) / δₖ s t k ≤ (δₖ s t k + s) / δₖ s t k := by
+    apply Filter.eventually_atTop.mpr
+    use 0
+    intro k k0
+    exact right k
+
+  have left (k: ℕ) (k1: 1 ≤ k): 1 ≤ δₖ s t (k + 1) / δₖ s t k := by
+    refine (one_le_div₀ ?_).mpr ?_
+    · rw [← δ₀ s t]
+      apply (δₖ_mono s t).lt_iff_lt.mpr
+      exact k1
+    · apply (δₖ_mono s t).le_iff_le.mpr
+      simp
+
+  have left': ∀ᶠ k in Filter.atTop, 1 ≤ δₖ s t (k + 1) / δₖ s t k := by
+    apply Filter.eventually_atTop.mpr
+    use 1
+
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds ?_ left' right'
+  rw [(by simp: (1:ℝ) = (1 + (s * 0)))]
+  conv in fun k ↦ _ =>
+    ext k
+    rw [add_div]
+  apply Filter.Tendsto.add
+  · apply tendsto_const_nhds.congr'
+    apply Filter.eventually_atTop.mpr
+    use 1
+    intro k k1
+    simp only
+    refine (div_self ?_).symm
+    apply ne_of_gt
+    rw [← δ₀ s t]
+    exact δₖ_mono s t k1
+  · apply Filter.Tendsto.const_mul
+    exact Filter.Tendsto.comp tendsto_inv_atTop_zero (δₖ_infinity s t)
+
+
+lemma dE_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
+Filter.Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) Filter.atTop (nhds 1) := by
+  let kₙ'proof (n: ℝ): (max n 1) ≥ 1 := by simp
+  let kₙ' (n: ℝ) := (kₙ_exist s t _ (kₙ'proof n))
+  let left := fun n ↦ δₖ s t ((kₙ' n).choose) * (ρ s t) / Real.log (nₖ s t ((kₙ' n).choose + 1))
+  let right := fun n ↦ δₖ s t ((kₙ' n).choose) * (ρ s t) / Real.log (nₖ s t (kₙ' n).choose)
+
+  have kₙ'inv (n: ℝ) (n1: 1 ≤ n): nₖ s t (kₙ' n).choose ≤ n ∧ n < nₖ s t ((kₙ' n).choose + 1) := by
+    obtain kₙ'spec := (kₙ' n).choose_spec
+    convert nₖ_inv _ _ _ _ kₙ'spec
+    all_goals
+      symm
+      exact max_eq_left n1
+
+  have nₖleft (n: ℝ) (n1: 1 ≤ n) := (kₙ'inv n n1).1
+  have nₖright (n: ℝ) (n1: 1 ≤ n) := (kₙ'inv n n1).2
+  have δₖeq (n: ℝ) (n1: 1 ≤ n): δₖ s t ((kₙ' n).choose) = dE s t n := by
+    obtain kₙ'spec := (kₙ' n).choose_spec
+    rw [← max_eq_left n1]
+    unfold dE
+    rw [kₙ'spec]
+    simp
+
+  have dEρnonneg (n: ℝ) (n1: 1 ≤ n): 0 ≤ (dE s t n) * (ρ s t) := by
+    apply mul_nonneg
+    · rw [← dE₁ s t]
+      apply (dE_mono s t)
+      exact n1
+    . exact le_of_lt (ρ_range s t)
+
+  have leftle (n: ℝ) (n1: 1 < n): left n ≤ (dE s t n) * (ρ s t) / Real.log n := by
+    unfold left
+
+    rw [δₖeq n (le_of_lt n1)]
+    apply div_le_div_of_nonneg_left (dEρnonneg n (le_of_lt n1)) (Real.log_pos n1)
+    apply Real.log_le_log (lt_trans (by simp) n1)
+    exact le_of_lt (nₖright n (le_of_lt n1))
+
+  have rightle (n: ℝ) (n2: 2 ≤ n): (dE s t n) * (ρ s t) / Real.log n ≤ right n := by
+    have n1: 1 < n := lt_of_lt_of_le (by simp) n2
+    have k1: (kₙ' n).choose ≥ 1 := by
+      have mem: 1 ∈ (kceiled s t (max n 1)).toFinset := by
+        simp only [Set.mem_toFinset]
+        unfold kceiled
+        simp only [Set.mem_setOf_eq]
+        rw [n₁]
+        simp only [Nat.cast_ofNat, le_sup_iff, Nat.not_ofNat_le_one, or_false]
+        exact n2
+      exact Finset.le_max_of_eq mem (kₙ' n).choose_spec
+    unfold right
+    rw [δₖeq n (le_of_lt n1)]
+    have onele: 1 < nₖ s t ((kₙ' n).choose) := by
+      apply Nat.lt_of_succ_le
+      norm_num
+      rw [← n₁ s t]
+      exact (nₖ_mono s t).le_iff_le.mpr k1
+    apply div_le_div_of_nonneg_left (dEρnonneg n (le_of_lt n1))
+    · apply Real.log_pos
+      exact Nat.one_lt_cast.mpr onele
+    · apply Real.log_le_log
+      · exact lt_trans (by simp: (0:ℝ) < 1) (Nat.one_lt_cast.mpr onele)
+      · exact nₖleft n (le_of_lt n1)
+
+  have leftle': ∀ᶠ n in Filter.atTop, left n ≤ (dE s t n) * (ρ s t) / Real.log n := by
+    apply Filter.eventually_atTop.mpr
+    use 2
+    intro n n2
+    exact leftle n (lt_of_lt_of_le (by simp) n2)
+
+  have rightle': ∀ᶠ n in Filter.atTop, (dE s t n) * (ρ s t) / Real.log n ≤ right n := by
+    apply Filter.eventually_atTop.mpr
+    use 2
+
+  have ktends: Filter.Tendsto (fun n ↦ (kₙ' n).choose) Filter.atTop Filter.atTop := by
+    apply Filter.tendsto_atTop_atTop.mpr
+    intro k
+    use nₖ s t (k + 1)
+    intro n nbound
+    apply le_of_add_le_add_right (a := 1)
+    apply (nₖ_mono s t).le_iff_le.mp
+    rify
+    refine le_trans nbound (le_of_lt (nₖright _ ?_))
+    refine le_trans ?_ nbound
+    norm_cast
+    nth_rw 1 [← n₀ s t]
+    apply (nₖ_mono s t).le_iff_le.mpr
+    simp
+
+  have righttends: Filter.Tendsto (fun k ↦ δₖ s t (k + 1 + 1) * (ρ s t) / Real.log (nₖ s t (k + 1 + 1)))
+    Filter.atTop (nhds 1) := by
+
+    conv in fun k ↦ _ =>
+      ext k
+      rw [(by
+        refine (div_mul_cancel₀ _ ?_).symm
+        apply ne_of_gt
+        rw [← δ₀ s t]
+        apply δₖ_mono
+        simp
+        :δₖ s t (k + 1 + 1) = δₖ s t (k + 1 + 1) / δₖ s t (k + 1) * δₖ s t (k + 1))]
+      rw [(by ring:
+         δₖ s t (k + 1 + 1) / δₖ s t (k + 1) * δₖ s t (k + 1) * (ρ s t) / Real.log (nₖ s t (k + 1 + 1))
+        = δₖ s t (k + 1 + 1) / δₖ s t (k + 1) * (δₖ s t (k + 1) * (ρ s t) / Real.log (nₖ s t (k + 1 + 1))))]
+    rw [(by simp: (1:ℝ) = 1 * 1)]
+    refine Filter.Tendsto.mul ?_ ?_
+    · exact Filter.Tendsto.comp (δₖ_slowGrow s t) (Filter.tendsto_add_atTop_nat 1)
+    · exact Filter.Tendsto.comp (δₖ_Asymptotic s t) (Filter.tendsto_add_atTop_nat 1)
+
+  have righttends': Filter.Tendsto (fun k ↦ δₖ s t k * (ρ s t) / Real.log (nₖ s t k))
+    Filter.atTop (nhds 1) := by
+    apply (righttends.comp (Filter.tendsto_sub_atTop_nat 2)).congr'
+    apply Filter.eventually_atTop.mpr
+    use 2
+    intro k k2
+    simp only [Function.comp_apply]
+    congr
+    all_goals
+    zify [k2]
+    ring
+
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' ?_ ?_ leftle' rightle'
+  · exact Filter.Tendsto.comp (δₖ_Asymptotic s t) ktends
+  · exact Filter.Tendsto.comp righttends' ktends
 
 /-
 The limit of (w / n) is called g. We first gives a formula of g in terms of a solution
