@@ -14,106 +14,24 @@ open MeasureTheory
 lemma ne_zero_of_re_neg {s : ℂ} (hs : 0 > s.re) : s ≠ 0 :=
   fun h ↦ (Complex.zero_re ▸ h ▸ hs).false
 
-lemma φBound (s t x: ℝ) (h: x ≥ - max s t) [PosReal s] [PosReal t]:
+lemma φ_grossBound (s t x: ℝ) (h: x ≥ - max s t) [PosReal s] [PosReal t]:
 φ s t x ≤ rexp ((Real.log 2 / (min s t)) * x) * rexp (Real.log 2 / (min s t) * max s t) := by
-  have inductor (n: ℕ): ∀ x ∈ Set.Ico (- max s t) (n * min s t), φ s t x ≤ rexp ((Real.log 2 / (min s t)) * x) * rexp (Real.log 2 / (min s t) * max s t)  := by
-    induction n with
-    | zero =>
-      rintro x ⟨xleft, xright⟩
-      simp only [CharP.cast_eq_zero, zero_mul] at xright
-      unfold φ
-      rw [Jceiled_neg _ _ _ xright]
-      rw [← Real.exp_add]
-      rw [← mul_add]
-      simp only [add_zero, Nat.cast_one, one_le_exp_iff]
-      apply mul_nonneg
-      · apply le_of_lt
-        apply div_pos
-        · exact log_pos (by norm_num)
-        · simp only [lt_inf_iff]
-          exact ⟨PosReal.pos, PosReal.pos⟩
-      · exact neg_le_iff_add_nonneg.mp xleft
-    | succ n prev =>
-      rintro x ⟨xleft, xright⟩
-      by_cases xInPrev: x < n * (s ⊓ t)
-      · have inprev: x ∈ Set.Ico (-(s ⊔ t)) (n * (s ⊓ t)) := by
-          simp only [Set.mem_Ico]
-          exact ⟨xleft, xInPrev⟩
-        exact prev x inprev
-      · simp only [not_lt] at xInPrev
-        have x0: 0 ≤ x := by
-          refine le_trans ?_ xInPrev
-          apply mul_nonneg
-          · exact Nat.cast_nonneg' n
-          · simp only [le_inf_iff]
-            exact ⟨le_of_lt PosReal.pos, le_of_lt PosReal.pos⟩
-        rw [φ_rec s t x x0]
-        push_cast
-        have sInPrev: x - s ∈ Set.Ico (-(s ⊔ t)) (n * (s ⊓ t)) := by
-          simp only [Set.mem_Ico]
-          constructor
-          · simp only [neg_le_sub_iff_le_add]
-            exact le_trans (by apply le_max_left: s ≤ max s t) (le_add_of_nonneg_left x0)
-          · apply sub_lt_iff_lt_add.mpr
-            apply lt_of_lt_of_le xright
-            push_cast
-            rw [add_one_mul]
-            apply add_le_add_left
-            exact min_le_left s t
-        have tInPrev: x - t ∈ Set.Ico (-(s ⊔ t)) (n * (s ⊓ t)) := by
-          simp only [Set.mem_Ico]
-          constructor
-          · simp only [neg_le_sub_iff_le_add]
-            exact le_trans (by apply le_max_right: t ≤ max s t) (le_add_of_nonneg_left x0)
-          · apply sub_lt_iff_lt_add.mpr
-            apply lt_of_lt_of_le xright
-            push_cast
-            rw [add_one_mul]
-            apply add_le_add_left
-            exact min_le_right s t
-        obtain leLeft := add_le_add (prev _ sInPrev) (prev _ tInPrev)
-        apply le_trans leLeft
-        rw [← add_mul]
-        refine mul_le_mul_of_nonneg_right ?_ (by apply exp_nonneg)
-        have split: rexp (Real.log 2 / (min s t) * x) =
-          rexp (Real.log 2 / (min s t) * (x - min s t)) + rexp (Real.log 2 / (min s t) * (x - min s t)) := by
-          rw [← mul_two]
-          nth_rw 3 [(by refine Eq.symm (Real.exp_log ?_); norm_num: 2 = rexp (Real.log 2))]
-          rw [← Real.exp_add]
-          congr
-          apply sub_eq_iff_eq_add'.mp
-          rw [← mul_sub]
-          simp only [sub_sub_cancel]
-          rw [div_mul_cancel₀ _ (by apply ne_of_gt; simp only [lt_inf_iff]; exact ⟨PosReal.pos, PosReal.pos⟩)]
-        rw [split]
-        apply add_le_add
-        all_goals
-        · gcongr
-          · apply le_of_lt
-            apply div_pos
-            · exact log_pos (by norm_num)
-            · simp only [lt_inf_iff]
-              exact ⟨PosReal.pos, PosReal.pos⟩
-          · simp only [inf_le_left, inf_le_right]
-
-  let n := (⌈x / min s t⌉ + 1).toNat
-  have bound: x ∈ Set.Ico (- max s t) (n * min s t) := by
-    simp only [Set.mem_Ico]
-    constructor
-    · exact h
-    · apply (div_lt_iff₀ (by simp only [lt_inf_iff]; exact ⟨PosReal.pos, PosReal.pos⟩)).mp
-      unfold n
-      have toNatRaise: (⌈x / (s ⊓ t)⌉ + 1: ℝ) ≤ ((⌈x / (s ⊓ t)⌉ + 1).toNat: ℝ) := by
-        norm_cast
-        apply Int.self_le_toNat
-      refine lt_of_lt_of_le ?_ toNatRaise
-      apply lt_of_le_of_lt
-      · show x / (s ⊓ t) ≤ ↑⌈x / (s ⊓ t)⌉
-        apply Int.le_ceil
-      · apply lt_add_of_pos_right
-        norm_num
-
-  exact inductor n x bound
+  apply le_trans (φ_bound s t x h).2
+  rw [← Real.exp_add, ← mul_add]
+  apply Real.exp_monotone
+  refine mul_le_mul_of_nonneg_right ?_ (neg_le_iff_add_nonneg.mp h)
+  apply (ρf_anti s t).le_iff_le.mp
+  rw [ρ_satisfies]
+  unfold ρf
+  rw [(by norm_num: (1:ℝ) = 2⁻¹ + 2⁻¹)]
+  apply add_le_add
+  all_goals
+  · apply (le_inv_comm₀ (by simp) (Real.exp_pos _)).mp
+    rw [← Real.exp_neg, neg_mul, neg_neg, ← mul_div_assoc, mul_comm, mul_div_assoc,
+      Real.exp_mul, Real.exp_log (by simp)]
+    apply self_le_rpow_of_one_le (by simp)
+    apply (one_le_div₀ (lt_min PosReal.pos PosReal.pos)).mpr
+    simp
 
 noncomputable
 def smStep (μ x: ℝ): ℝ := if x ≤ 0 then 0 else if x ≤ μ then x / μ else 1
@@ -208,7 +126,7 @@ lemma φRegBound (s t μ σ x: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
   · rw [sub_eq_neg_add, add_mul, Real.exp_add, mul_assoc]
     apply le_trans (φRegLe s t μ σ x)
     refine mul_le_mul_of_nonneg_left ?_ (by apply exp_nonneg)
-    apply φBound
+    apply φ_grossBound
     apply le_of_lt
     refine lt_of_lt_of_le ?_ xpos
     simp only [Left.neg_neg_iff, lt_sup_iff]

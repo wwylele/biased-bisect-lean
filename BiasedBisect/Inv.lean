@@ -259,3 +259,137 @@ lemma φ_rec (s t δ: ℝ) (dpos: δ ≥ 0) [PosReal s] [PosReal t]:
     simp only [Prod.mk_zero_zero, Set.mem_toFinset, Set.mem_setOf_eq, Prod.fst_zero,
       CharP.cast_eq_zero, zero_mul, Prod.snd_zero, add_zero]
     exact dpos
+
+noncomputable
+def ρf (s t: ℝ) [PosReal s] [PosReal t] (ρ: ℝ) := Real.exp (-s * ρ) + Real.exp (-t * ρ)
+
+lemma ρf_anti (s t: ℝ) [PosReal s] [PosReal t]: StrictAnti (ρf s t) := by
+  apply StrictAnti.add
+  all_goals
+  · apply StrictMono.comp_strictAnti (Real.exp_strictMono)
+    exact strictAnti_mul_left (neg_lt_zero.mpr PosReal.pos)
+
+lemma ρ_exist (s t: ℝ) [PosReal s] [PosReal t]:
+∃! ρ ≥ 0, ρf s t ρ = 1 := by
+  have tend: Filter.Tendsto (ρf s t) Filter.atTop (nhds 0) := by
+    rw [(by simp: (0:ℝ) = 0 + 0)]
+    apply Filter.Tendsto.add
+    all_goals
+    · apply Real.tendsto_exp_comp_nhds_zero.mpr
+      apply Filter.Tendsto.neg_mul_atTop (neg_lt_zero.mpr PosReal.pos)
+        tendsto_const_nhds
+      exact fun ⦃U⦄ a ↦ a
+  obtain ⟨ρbound, ρboundspec⟩ := tendsto_atTop_nhds.mp tend (Set.Iio 1) (by simp) isOpen_Iio
+  obtain ρboundspec := Set.mem_Iio.mp (ρboundspec ρbound (le_refl _))
+
+  have cont: ContinuousOn (ρf s t) (Set.Icc 0 ρbound) := by unfold ρf; fun_prop
+  have ρ0: 0 < ρbound := by
+    apply (ρf_anti s t).lt_iff_lt.mp
+    apply lt_trans ρboundspec
+    unfold ρf
+    simp
+
+  obtain ⟨ρs, ρssubset, ρsspec⟩ := Set.subset_image_iff.mp (
+    intermediate_value_Icc' (le_of_lt ρ0) cont)
+
+  have onemem: 1 ∈ ρf s t '' ρs := by
+    rw [ρsspec]
+    simp only [Set.mem_Icc]
+    constructor
+    · exact le_of_lt ρboundspec
+    · unfold ρf
+      simp
+  obtain ⟨ρ, ρrange, ρspec⟩  := (Set.mem_image _ _ _).mp onemem
+  use ρ
+  constructor
+  · constructor
+    · refine Set.mem_of_mem_of_subset ρrange (ρssubset.trans ?_)
+      exact (Set.Icc_subset_Ici_iff (le_of_lt ρ0)).mpr (le_refl _)
+    · exact ρspec
+  · intro q ⟨qrange, qeq⟩
+    apply (((ρf_anti s t).strictAntiOn Set.univ).eq_iff_eq (by simp) (by simp)).mp
+    rw [qeq]
+    unfold ρf
+    exact ρspec
+
+noncomputable
+def ρ (s t: ℝ) [PosReal s] [PosReal t] := (ρ_exist s t).choose
+
+lemma ρ_satisfies (s t: ℝ) [PosReal s] [PosReal t]:
+ρf s t (ρ s t) = 1 := by
+  obtain ⟨⟨_, eq⟩, _⟩ := (ρ_exist s t).choose_spec
+  exact eq
+
+lemma ρ_range (s t: ℝ) [PosReal s] [PosReal t]: 0 < ρ s t := by
+  obtain ⟨⟨range, eq⟩, _⟩ := (ρ_exist s t).choose_spec
+  apply lt_of_le_of_ne range
+  contrapose! eq
+  rw [← eq]
+  unfold ρf
+  simp
+
+lemma φ_bound (s t x: ℝ) (h: -max s t ≤ x) [PosReal s] [PosReal t]:
+(φ s t x: ℝ) ∈ Set.Icc (Real.exp (ρ s t * x)) (Real.exp (ρ s t * (x + max s t))) := by
+  have inductor (n: ℕ): ∀ x ∈ Set.Ico (- max s t) (n * min s t),
+    (φ s t x: ℝ) ∈ Set.Icc (Real.exp (ρ s t * x)) (Real.exp (ρ s t * (x + max s t))) := by
+    induction n with
+    | zero =>
+      intro x ⟨xleft, xright⟩
+      simp only [CharP.cast_eq_zero, zero_mul] at xright
+      rw [φ_neg s t x xright]
+      simp only [Nat.cast_one, Set.mem_Icc, Real.exp_le_one_iff]
+      constructor
+      · exact le_of_lt (mul_neg_of_pos_of_neg (ρ_range s t) xright)
+      · rw [← Real.exp_zero]
+        apply Real.exp_monotone
+        exact mul_nonneg (le_of_lt (ρ_range s t)) (neg_le_iff_add_nonneg.mp xleft)
+    | succ n prev =>
+      intro x ⟨xleft, xright⟩
+      obtain small|large := lt_or_ge x (n * min s t)
+      · exact prev x ⟨xleft, small⟩
+      · have nstpos: 0 ≤ n * min s t :=
+          (mul_nonneg (by simp) (le_of_lt (lt_min_iff.mpr ⟨PosReal.pos, PosReal.pos⟩)))
+        rw [φ_rec s t x (le_trans nstpos large)]
+        push_cast
+        have stle: -max s t ≤ x - s ∧ -max s t ≤ x - t := by
+          constructor
+          all_goals
+          apply le_sub_right_of_add_le
+          exact le_trans (le_trans (by simp) nstpos) large
+        have xlest: x - s < n * min s t ∧ x - t < n * min s t := by
+          constructor
+          all_goals
+          apply sub_right_lt_of_lt_add
+          refine lt_of_lt_of_le xright ?_
+          push_cast
+          rw [add_one_mul]
+          simp
+        obtain prevs := prev (x - s) ⟨stle.1, xlest.1⟩
+        obtain prevt := prev (x - t) ⟨stle.2, xlest.2⟩
+        obtain prevst := Set.add_mem_add prevs prevt
+        apply Set.mem_of_mem_of_subset prevst
+        apply Set.Subset.trans (Set.Icc_add_Icc_subset _ _ _ _)
+        apply le_of_eq
+        have exprec: Real.exp (ρ s t * (x - s)) + Real.exp (ρ s t * (x - t))
+          = Real.exp (ρ s t * x) := by
+          rw [mul_sub, mul_sub, sub_eq_add_neg, sub_eq_add_neg, Real.exp_add, Real.exp_add, ← mul_add]
+          convert mul_one (Real.exp (ρ s t * x))
+          rw [mul_comm _ s, mul_comm _ t, ← neg_mul, ← neg_mul]
+          apply ρ_satisfies
+        rw [mul_add, mul_add, mul_add, Real.exp_add, Real.exp_add, Real.exp_add, ← add_mul, exprec]
+
+  let n := (⌈x / min s t⌉ + 1).toNat
+  have bound: x ∈ Set.Ico (- max s t) (n * min s t) := by
+    simp only [Set.mem_Ico]
+    constructor
+    · exact h
+    · apply (div_lt_iff₀ (by simp only [lt_inf_iff]; exact ⟨PosReal.pos, PosReal.pos⟩)).mp
+      unfold n
+      have toNatRaise: (⌈x / (s ⊓ t)⌉ + 1: ℝ) ≤ ((⌈x / (s ⊓ t)⌉ + 1).toNat: ℝ) := by
+        norm_cast
+        apply Int.self_le_toNat
+      refine lt_of_lt_of_le (lt_of_le_of_lt (by apply Int.le_ceil) ?_) toNatRaise
+      apply lt_add_of_pos_right
+      norm_num
+
+  exact inductor n x bound
