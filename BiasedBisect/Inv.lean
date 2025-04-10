@@ -260,6 +260,13 @@ lemma φ_rec (s t δ: ℝ) (dpos: δ ≥ 0) [PosReal s] [PosReal t]:
       CharP.cast_eq_zero, zero_mul, Prod.snd_zero, add_zero]
     exact dpos
 
+/-
+We will show φ grows as fast as exponential, with a rate we define as ρ
+-/
+
+/-
+ρ is the unique solution to the equation ρf = 1
+-/
 noncomputable
 def ρf (s t: ℝ) [PosReal s] [PosReal t] (ρ: ℝ) := Real.exp (-s * ρ) + Real.exp (-t * ρ)
 
@@ -328,6 +335,9 @@ lemma ρ_range (s t: ℝ) [PosReal s] [PosReal t]: 0 < ρ s t := by
   unfold ρf
   simp
 
+/-
+Here we show the exponential growth with an undetermined, but bounded coefficient.
+-/
 lemma φ_bound (s t x: ℝ) (h: -max s t ≤ x) [PosReal s] [PosReal t]:
 (φ s t x: ℝ) ∈ Set.Icc (Real.exp (ρ s t * x)) (Real.exp (ρ s t * (x + max s t))) := by
   have inductor (n: ℕ): ∀ x ∈ Set.Ico (- max s t) (n * min s t),

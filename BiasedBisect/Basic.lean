@@ -2427,13 +2427,13 @@ The strategy function w is defined by finding wₖ after clamping to the nearest
 The parallelogram is formed by taking certain min and max
 -/
 noncomputable
-def wₘᵢₙ (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
+def wₘᵢₙ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
   match kₙ s t n with
   | some k => max (wₖ s t k) ((wₖ s t (k + 1)) + n - (nₖ s t (k + 1)))
   | none => 0
 
 noncomputable
-def wₘₐₓ (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
+def wₘₐₓ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
   match kₙ s t n with
   | some k => min (wₖ s t (k + 1)) ((wₖ s t k) + n - (nₖ s t k))
   | none => 0
@@ -2528,7 +2528,7 @@ We also define a third kind of w function wₗᵢ,
 which is the diagonals of parallelograms formed by wₘᵢₙ and wₘₐₓ
 -/
 noncomputable
-def wₗᵢ (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
+def wₗᵢ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
   match kₙ s t n with
   | some k =>
     let a := (n - nₖ s t k) / (nₖ s t (k + 1) - nₖ s t k)
@@ -2541,7 +2541,7 @@ We could have done the same for wₘᵢₙ and wₘₐₓ,
 but we omitted them as they don't add much value
 -/
 noncomputable
-def wₗᵢ' (s t n: ℝ) [PosReal s] [PosReal t]: ℝ :=
+def wₗᵢ' (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
   match kₙ s t n with
   | some k =>
     let a := (n - nₖ s t k) / (nₖ s t (k + 1) - nₖ s t k)
@@ -2702,6 +2702,172 @@ lemma wₗᵢ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
 wₗᵢ s t n = wₗᵢ (l * s) (l * t) n := by
   unfold wₗᵢ
   rw [kₙ_homo s t n l, wₖ_homo s t l, nₖ_homo s t l]
+
+
+lemma wₘᵢₙ_mono (s t: ℝ) [PosReal s] [PosReal t]:
+Monotone (wₘᵢₙ s t) := by
+  intro m n mlen
+  unfold wₘᵢₙ
+  obtain nlt1|nge1 := lt_or_ge n 1
+  · obtain mlt1: m < 1 := lt_of_le_of_lt mlen nlt1
+    obtain kmNot := kₙ_not_exist s t m mlt1
+    obtain knNot := kₙ_not_exist s t n nlt1
+    rw [kmNot, knNot]
+  · obtain ⟨kn, kneq⟩ := kₙ_exist s t n nge1
+    obtain mlt1|mge1 := lt_or_ge m 1
+    · obtain kmNot := kₙ_not_exist s t m mlt1
+      rw [kmNot, kneq]
+      simp
+    · obtain ⟨km, kmeq⟩ := kₙ_exist s t m mge1
+      have ⟨mleft, mright⟩ := nₖ_inv s t m km kmeq
+      have ⟨nleft, nright⟩ := nₖ_inv s t n kn kneq
+      rw [kmeq, kneq]
+      simp only
+      have kmlekn: km ≤ kn := by
+        obtain chain := lt_of_le_of_lt (le_trans mleft mlen) nright
+        norm_cast at chain
+        exact Nat.le_of_lt_succ ((nₖ_mono s t).lt_iff_lt.mp chain)
+      obtain kmltkn|kmeqkn := lt_or_eq_of_le kmlekn
+      · trans (wₖ s t (km + 1): ℝ)
+        · simp only [sup_le_iff, Nat.cast_le, tsub_le_iff_right, add_le_add_iff_left]
+          constructor
+          · exact wₖ_mono s t (Nat.le_add_right km 1)
+          · exact le_of_lt mright
+        · trans (wₖ s t kn: ℝ)
+          · norm_cast
+            exact wₖ_mono s t kmltkn
+          · simp
+      · rw [kmeqkn]
+        gcongr
+
+lemma wₘₐₓ_mono (s t: ℝ) [PosReal s] [PosReal t]:
+Monotone (wₘₐₓ s t) := by
+  intro m n mlen
+  obtain nlt1|nge1 := lt_or_ge n 1
+  · obtain mlt1: m < 1 := lt_of_le_of_lt mlen nlt1
+    obtain kmNot := kₙ_not_exist s t m mlt1
+    obtain knNot := kₙ_not_exist s t n nlt1
+    unfold wₘₐₓ
+    rw [kmNot, knNot]
+  · obtain ⟨kn, kneq⟩ := kₙ_exist s t n nge1
+    obtain mlt1|mge1 := lt_or_ge m 1
+    · obtain kmNot := kₙ_not_exist s t m mlt1
+      nth_rw 1 [wₘₐₓ]
+      rw [kmNot]
+      simp only
+      refine le_trans ?_ (wₘₘ_order s t n)
+      unfold wₘᵢₙ
+      rw [kneq]
+      simp
+    · obtain ⟨km, kmeq⟩ := kₙ_exist s t m mge1
+      have ⟨mleft, mright⟩ := nₖ_inv s t m km kmeq
+      have ⟨nleft, nright⟩ := nₖ_inv s t n kn kneq
+      unfold wₘₐₓ
+      rw [kmeq, kneq]
+      simp only
+      have kmlekn: km ≤ kn := by
+        obtain chain := lt_of_le_of_lt (le_trans mleft mlen) nright
+        norm_cast at chain
+        exact Nat.le_of_lt_succ ((nₖ_mono s t).lt_iff_lt.mp chain)
+      obtain kmltkn|kmeqkn := lt_or_eq_of_le kmlekn
+      · trans (wₖ s t (km + 1): ℝ)
+        · simp
+        · trans (wₖ s t kn: ℝ)
+          · norm_cast
+            exact wₖ_mono s t kmltkn
+          · simp only [le_inf_iff, Nat.cast_le]
+            constructor
+            · exact wₖ_mono s t (Nat.le_add_right kn 1)
+            · linarith
+      · rw [kmeqkn]
+        gcongr
+
+lemma wₗᵢ_mono (s t: ℝ) [PosReal s] [PosReal t]:
+Monotone (wₗᵢ s t) := by
+  intro m n mlen
+  obtain nlt1|nge1 := lt_or_ge n 1
+  · obtain mlt1: m < 1 := lt_of_le_of_lt mlen nlt1
+    obtain kmNot := kₙ_not_exist s t m mlt1
+    obtain knNot := kₙ_not_exist s t n nlt1
+    unfold wₗᵢ
+    rw [kmNot, knNot]
+  · obtain ⟨kn, kneq⟩ := kₙ_exist s t n nge1
+    obtain mlt1|mge1 := lt_or_ge m 1
+    · obtain kmNot := kₙ_not_exist s t m mlt1
+      nth_rw 1 [wₗᵢ]
+      rw [kmNot]
+      simp only
+      refine le_trans ?_ (wₗᵢ_range s t n).1
+      unfold wₘᵢₙ
+      rw [kneq]
+      simp
+    · obtain ⟨km, kmeq⟩ := kₙ_exist s t m mge1
+      have ⟨mleft, mright⟩ := nₖ_inv s t m km kmeq
+      have ⟨nleft, nright⟩ := nₖ_inv s t n kn kneq
+      unfold wₗᵢ
+      rw [kmeq, kneq]
+      simp only
+      have kmlekn: km ≤ kn := by
+        obtain chain := lt_of_le_of_lt (le_trans mleft mlen) nright
+        norm_cast at chain
+        exact Nat.le_of_lt_succ ((nₖ_mono s t).lt_iff_lt.mp chain)
+      have mdeno: (0: ℝ) < nₖ s t (km + 1) - nₖ s t km := by
+        simp only [sub_pos, Nat.cast_lt]
+        exact nₖ_mono s t (lt_add_one km)
+      have ndeno: (0: ℝ) < nₖ s t (kn + 1) - nₖ s t kn := by
+        simp only [sub_pos, Nat.cast_lt]
+        exact nₖ_mono s t (lt_add_one kn)
+      have mw: (0: ℝ) ≤ wₖ s t (km + 1) - wₖ s t km := by
+        simp only [sub_nonneg, Nat.cast_le]
+        exact wₖ_mono s t (Nat.le_add_right km 1)
+      have nw: (0: ℝ) ≤ wₖ s t (kn + 1) - wₖ s t kn := by
+        simp only [sub_nonneg, Nat.cast_le]
+        exact wₖ_mono s t (Nat.le_add_right kn 1)
+      obtain kmltkn|kmeqkn := lt_or_eq_of_le kmlekn
+      · trans (wₖ s t (km + 1): ℝ)
+        · rw [one_sub_div (ne_of_gt mdeno)]
+          rw [← mul_div_right_comm, ← mul_div_right_comm]
+          rw [← add_div]
+          apply div_le_of_le_mul₀ (le_of_lt mdeno) (by simp)
+          rw [(by ring: (nₖ s t (km + 1) - nₖ s t km - (m - nₖ s t km)) * wₖ s t km +
+            (m - nₖ s t km) * wₖ s t (km + 1)
+            = nₖ s t (km + 1) * wₖ s t km - nₖ s t km * wₖ s t (km + 1) + m * (wₖ s t (km + 1) - wₖ s t km))]
+          rw [(by ring: (wₖ s t (km + 1) * (nₖ s t (km + 1) - nₖ s t km): ℝ) =
+            nₖ s t (km + 1) * wₖ s t km - nₖ s t km * wₖ s t (km + 1) + nₖ s t (km + 1) * (wₖ s t (km + 1) - wₖ s t km))]
+          apply add_le_add_left
+          exact mul_le_mul_of_nonneg_right (le_of_lt mright) mw
+        · trans (wₖ s t kn: ℝ)
+          · norm_cast
+            exact wₖ_mono s t kmltkn
+          · rw [one_sub_div (ne_of_gt ndeno)]
+            rw [← mul_div_right_comm, ← mul_div_right_comm]
+            rw [← add_div]
+            apply (le_div_iff₀ ndeno).mpr
+            rw [(by ring: ((wₖ s t kn * (nₖ s t (kn + 1) - nₖ s t kn)): ℝ) =
+              nₖ s t (kn + 1) * wₖ s t kn - nₖ s t kn * wₖ s t (kn + 1) + nₖ s t kn * (wₖ s t (kn + 1) - wₖ s t kn))]
+            rw [(by ring: (nₖ s t (kn + 1) - nₖ s t kn - (n - nₖ s t kn)) * wₖ s t kn + (n - nₖ s t kn) * wₖ s t (kn + 1) =
+              nₖ s t (kn + 1) * wₖ s t kn - nₖ s t kn * wₖ s t (kn + 1) + n * (wₖ s t (kn + 1) - wₖ s t kn))]
+            apply add_le_add_left
+            exact mul_le_mul_of_nonneg_right nleft nw
+      · rw [kmeqkn]
+        rw [one_sub_div (ne_of_gt ndeno), one_sub_div (ne_of_gt ndeno)]
+        rw [← mul_div_right_comm, ← mul_div_right_comm, ← mul_div_right_comm, ← mul_div_right_comm]
+        rw [← add_div, ← add_div]
+        refine div_le_div_of_nonneg_right ?_ (le_of_lt ndeno)
+        rw [(by ring: (nₖ s t (kn + 1) - nₖ s t kn - (m - nₖ s t kn)) * wₖ s t kn
+           + (m - nₖ s t kn) * wₖ s t (kn + 1) =
+             (nₖ s t (kn + 1) - nₖ s t kn) * wₖ s t kn + nₖ s t kn * wₖ s t kn - nₖ s t kn * wₖ s t (kn + 1)
+             + m * (wₖ s t (kn + 1) - wₖ s t kn)
+          )]
+        rw [(by ring: (nₖ s t (kn + 1) - nₖ s t kn - (n - nₖ s t kn)) * wₖ s t kn
+           + (n - nₖ s t kn) * wₖ s t (kn + 1) =
+             (nₖ s t (kn + 1) - nₖ s t kn) * wₖ s t kn + nₖ s t kn * wₖ s t kn - nₖ s t kn * wₖ s t (kn + 1)
+             + n * (wₖ s t (kn + 1) - wₖ s t kn)
+          )]
+        simp only [add_le_add_iff_left]
+        refine mul_le_mul_of_nonneg_right mlen ?_
+        simp only [sub_nonneg, Nat.cast_le]
+        exact wₖ_mono s t (Nat.le_add_right kn 1)
 
 /-
 We define the "strategy evaluation differential function"

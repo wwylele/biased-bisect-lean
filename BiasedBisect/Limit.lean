@@ -10,9 +10,11 @@ w(s, t, n) ~ g(s, t) * n
 These generalizes the result we have in Integer.lean of aysmptotic behavior when s and t are integers
 -/
 
+open Asymptotics Filter
+
 lemma δₖ_infinity (s t: ℝ) [PosReal s] [PosReal t]:
-Filter.Tendsto (δₖ s t) Filter.atTop Filter.atTop := by
-  apply Filter.tendsto_atTop_atTop.mpr
+Tendsto (δₖ s t) atTop atTop := by
+  apply tendsto_atTop_atTop.mpr
   intro ceil
   by_contra! allunder
   have allunder' (k): δₖ s t k < ceil := by
@@ -29,7 +31,7 @@ Filter.Tendsto (δₖ s t) Filter.atTop Filter.atTop := by
   simp at what'
 
 lemma φ_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
-Filter.Tendsto (fun x ↦ x * (ρ s t) / Real.log (φ s t x)) Filter.atTop (nhds 1) := by
+Tendsto (fun x ↦ x * (ρ s t) / Real.log (φ s t x)) atTop (nhds 1) := by
   have logφpos (x: ℝ) (h: 0 ≤ x): 0 < Real.log (φ s t x) := by
     apply Real.log_pos
     unfold φ
@@ -54,11 +56,11 @@ Filter.Tendsto (fun x ↦ x * (ρ s t) / Real.log (φ s t x)) Filter.atTop (nhds
     rw [mul_comm]
     exact (φ_bound s t x (le_trans (Left.neg_nonpos_iff.mpr (le_of_lt maxst)) h)).1
 
-  have left': ∀ᶠ x in Filter.atTop, x / (x + max s t) ≤ x * (ρ s t) / Real.log (φ s t x) := by
-    apply Filter.eventually_atTop.mpr
+  have left': ∀ᶠ x in atTop, x / (x + max s t) ≤ x * (ρ s t) / Real.log (φ s t x) := by
+    apply eventually_atTop.mpr
     use 0
-  have right': ∀ᶠ x in Filter.atTop, x * (ρ s t) / Real.log (φ s t x) ≤ 1 := by
-    apply Filter.eventually_atTop.mpr
+  have right': ∀ᶠ x in atTop, x * (ρ s t) / Real.log (φ s t x) ≤ 1 := by
+    apply eventually_atTop.mpr
     use 0
 
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' ?_ tendsto_const_nhds left' right'
@@ -67,21 +69,21 @@ Filter.Tendsto (fun x ↦ x * (ρ s t) / Real.log (φ s t x)) Filter.atTop (nhds
     rw [← inv_div]
     rw [add_div]
   rw [(by simp: (1:ℝ) = (1 + 0)⁻¹)]
-  refine Filter.Tendsto.inv₀ (Filter.Tendsto.add (tendsto_const_nhds.congr' ?_) ?_) (by simp)
-  · apply Filter.eventually_atTop.mpr
+  refine Tendsto.inv₀ (Tendsto.add (tendsto_const_nhds.congr' ?_) ?_) (by simp)
+  · apply eventually_atTop.mpr
     use 1
     intro x x1
     simp only
     rw [div_self (ne_of_gt (lt_of_lt_of_le (by simp) x1))]
-  · exact Filter.Tendsto.const_div_atTop (fun ⦃U⦄ a ↦ a) _
+  · exact Tendsto.const_div_atTop (fun ⦃U⦄ a ↦ a) _
 
 lemma δₖ_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
-Filter.Tendsto (fun k ↦ δₖ s t k * (ρ s t) / Real.log (nₖ s t (k + 1))) Filter.atTop (nhds 1) := by
+Tendsto (fun k ↦ δₖ s t k * (ρ s t) / Real.log (nₖ s t (k + 1))) atTop (nhds 1) := by
   simp_rw [← φδₖ]
-  exact Filter.Tendsto.comp (φ_Asymptotic s t) (δₖ_infinity s t)
+  exact Tendsto.comp (φ_Asymptotic s t) (δₖ_infinity s t)
 
 lemma δₖ_slowGrow (s t: ℝ) [PosReal s] [PosReal t]:
-Filter.Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) Filter.atTop (nhds 1) := by
+Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) atTop (nhds 1) := by
   have smallgap (k: ℕ): δₖ s t (k + 1) ≤ δₖ s t k + s := by
     rw [δₖ]
     apply Set.IsWF.min_le
@@ -101,8 +103,8 @@ Filter.Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) Filter.atTop (nhds 1)
     · rw [← δ₀ s t]
       apply (δₖ_mono s t).le_iff_le.mpr
       simp
-  have right': ∀ᶠ k in Filter.atTop, δₖ s t (k + 1) / δₖ s t k ≤ (δₖ s t k + s) / δₖ s t k := by
-    apply Filter.eventually_atTop.mpr
+  have right': ∀ᶠ k in atTop, δₖ s t (k + 1) / δₖ s t k ≤ (δₖ s t k + s) / δₖ s t k := by
+    apply eventually_atTop.mpr
     use 0
     intro k k0
     exact right k
@@ -115,8 +117,8 @@ Filter.Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) Filter.atTop (nhds 1)
     · apply (δₖ_mono s t).le_iff_le.mpr
       simp
 
-  have left': ∀ᶠ k in Filter.atTop, 1 ≤ δₖ s t (k + 1) / δₖ s t k := by
-    apply Filter.eventually_atTop.mpr
+  have left': ∀ᶠ k in atTop, 1 ≤ δₖ s t (k + 1) / δₖ s t k := by
+    apply eventually_atTop.mpr
     use 1
 
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds ?_ left' right'
@@ -124,9 +126,9 @@ Filter.Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) Filter.atTop (nhds 1)
   conv in fun k ↦ _ =>
     ext k
     rw [add_div]
-  apply Filter.Tendsto.add
+  apply Tendsto.add
   · apply tendsto_const_nhds.congr'
-    apply Filter.eventually_atTop.mpr
+    apply eventually_atTop.mpr
     use 1
     intro k k1
     simp only
@@ -134,12 +136,12 @@ Filter.Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) Filter.atTop (nhds 1)
     apply ne_of_gt
     rw [← δ₀ s t]
     exact δₖ_mono s t k1
-  · apply Filter.Tendsto.const_mul
-    exact Filter.Tendsto.comp tendsto_inv_atTop_zero (δₖ_infinity s t)
+  · apply Tendsto.const_mul
+    exact Tendsto.comp tendsto_inv_atTop_zero (δₖ_infinity s t)
 
 
-lemma dE_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
-Filter.Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) Filter.atTop (nhds 1) := by
+lemma dE_Asymptotic' (s t: ℝ) [PosReal s] [PosReal t]:
+Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) atTop (nhds 1) := by
   let kₙ'proof (n: ℝ): (max n 1) ≥ 1 := by simp
   let kₙ' (n: ℝ) := (kₙ_exist s t _ (kₙ'proof n))
   let left := fun n ↦ δₖ s t ((kₙ' n).choose) * (ρ s t) / Real.log (nₖ s t ((kₙ' n).choose + 1))
@@ -201,18 +203,18 @@ Filter.Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) Filter.atTop (nhds
       · exact lt_trans (by simp: (0:ℝ) < 1) (Nat.one_lt_cast.mpr onele)
       · exact nₖleft n (le_of_lt n1)
 
-  have leftle': ∀ᶠ n in Filter.atTop, left n ≤ (dE s t n) * (ρ s t) / Real.log n := by
-    apply Filter.eventually_atTop.mpr
+  have leftle': ∀ᶠ n in atTop, left n ≤ (dE s t n) * (ρ s t) / Real.log n := by
+    apply eventually_atTop.mpr
     use 2
     intro n n2
     exact leftle n (lt_of_lt_of_le (by simp) n2)
 
-  have rightle': ∀ᶠ n in Filter.atTop, (dE s t n) * (ρ s t) / Real.log n ≤ right n := by
-    apply Filter.eventually_atTop.mpr
+  have rightle': ∀ᶠ n in atTop, (dE s t n) * (ρ s t) / Real.log n ≤ right n := by
+    apply eventually_atTop.mpr
     use 2
 
-  have ktends: Filter.Tendsto (fun n ↦ (kₙ' n).choose) Filter.atTop Filter.atTop := by
-    apply Filter.tendsto_atTop_atTop.mpr
+  have ktends: Tendsto (fun n ↦ (kₙ' n).choose) atTop atTop := by
+    apply tendsto_atTop_atTop.mpr
     intro k
     use nₖ s t (k + 1)
     intro n nbound
@@ -226,8 +228,8 @@ Filter.Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) Filter.atTop (nhds
     apply (nₖ_mono s t).le_iff_le.mpr
     simp
 
-  have righttends: Filter.Tendsto (fun k ↦ δₖ s t (k + 1 + 1) * (ρ s t) / Real.log (nₖ s t (k + 1 + 1)))
-    Filter.atTop (nhds 1) := by
+  have righttends: Tendsto (fun k ↦ δₖ s t (k + 1 + 1) * (ρ s t) / Real.log (nₖ s t (k + 1 + 1)))
+    atTop (nhds 1) := by
 
     conv in fun k ↦ _ =>
       ext k
@@ -242,14 +244,14 @@ Filter.Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) Filter.atTop (nhds
          δₖ s t (k + 1 + 1) / δₖ s t (k + 1) * δₖ s t (k + 1) * (ρ s t) / Real.log (nₖ s t (k + 1 + 1))
         = δₖ s t (k + 1 + 1) / δₖ s t (k + 1) * (δₖ s t (k + 1) * (ρ s t) / Real.log (nₖ s t (k + 1 + 1))))]
     rw [(by simp: (1:ℝ) = 1 * 1)]
-    refine Filter.Tendsto.mul ?_ ?_
-    · exact Filter.Tendsto.comp (δₖ_slowGrow s t) (Filter.tendsto_add_atTop_nat 1)
-    · exact Filter.Tendsto.comp (δₖ_Asymptotic s t) (Filter.tendsto_add_atTop_nat 1)
+    refine Tendsto.mul ?_ ?_
+    · exact Tendsto.comp (δₖ_slowGrow s t) (tendsto_add_atTop_nat 1)
+    · exact Tendsto.comp (δₖ_Asymptotic s t) (tendsto_add_atTop_nat 1)
 
-  have righttends': Filter.Tendsto (fun k ↦ δₖ s t k * (ρ s t) / Real.log (nₖ s t k))
-    Filter.atTop (nhds 1) := by
-    apply (righttends.comp (Filter.tendsto_sub_atTop_nat 2)).congr'
-    apply Filter.eventually_atTop.mpr
+  have righttends': Tendsto (fun k ↦ δₖ s t k * (ρ s t) / Real.log (nₖ s t k))
+    atTop (nhds 1) := by
+    apply (righttends.comp (tendsto_sub_atTop_nat 2)).congr'
+    apply eventually_atTop.mpr
     use 2
     intro k k2
     simp only [Function.comp_apply]
@@ -259,8 +261,32 @@ Filter.Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) Filter.atTop (nhds
     ring
 
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' ?_ ?_ leftle' rightle'
-  · exact Filter.Tendsto.comp (δₖ_Asymptotic s t) ktends
-  · exact Filter.Tendsto.comp righttends' ktends
+  · exact Tendsto.comp (δₖ_Asymptotic s t) ktends
+  · exact Tendsto.comp righttends' ktends
+
+theorem dE_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
+dE s t ~[atTop] (Real.log · / ρ s t) := by
+  refine (isEquivalent_iff_tendsto_one ?_).mpr ?_
+  · apply eventually_atTop.mpr
+    use 2
+    intro n n2
+    simp only [ne_eq, div_eq_zero_iff, Real.log_eq_zero, not_or]
+    constructor
+    · constructor
+      · contrapose! n2
+        rw [n2]
+        norm_num
+      · constructor
+        all_goals
+        · contrapose! n2
+          rw [n2]
+          norm_num
+    · exact ne_of_gt (ρ_range _ _)
+  · apply (dE_Asymptotic' s t).congr
+    intro n
+    simp only [Pi.div_apply]
+    rw [← div_mul]
+    rw [mul_div_right_comm]
 
 /-
 The limit of (w / n) is called g. We first gives a formula of g in terms of a solution
@@ -384,7 +410,7 @@ lemma g_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: g s t = g (l * s)
 A corollary of w_Asymtotic_int: the limit holds for rational s / t
 -/
 lemma w_Asymtotic_rat (s t: ℝ) [PosReal s] [PosReal t] (rational: s / t ∈ Set.range Rat.cast):
-Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds (g s t)) := by
+Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) atTop (nhds (g s t)) := by
   obtain ⟨ST, STeq⟩ := Set.mem_range.mpr rational
   let T := Rat.pnatDen ST
   let S' := Rat.num ST
@@ -489,8 +515,8 @@ lemma ginv_comp (r: ℝ) [PosReal r]: ginv (g 1 r) = r := by
 /-
 We generalize w's asymtotic behavior to all positive s and t
 -/
-theorem w_Asymtotic (s t: ℝ) [PosReal s] [PosReal t]:
-Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds (g s t)) := by
+lemma w_Asymtotic' (s t: ℝ) [PosReal s] [PosReal t]:
+Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) atTop (nhds (g s t)) := by
   -- We first normalize to s = 1 and only consider varying t, which is now renamed to r
   let r := t / s
   have s_cancel: 1 / s * s = 1 := one_div_mul_cancel (ne_of_gt PosReal.pos)
@@ -660,3 +686,22 @@ Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds (g s t)) 
       rw [mul_two, ← add_assoc]
       simp only [add_lt_add_iff_right]
       exact belowDr.2
+
+theorem w_Asymtotic (s t: ℝ) [PosReal s] [PosReal t]:
+(wₗᵢ s t · : ℝ → ℝ) ~[atTop] (g s t * ·) := by
+  have g0: g s t ≠ 0 := ne_of_gt (g_range s t).1
+  refine (isEquivalent_iff_tendsto_one ?_).mpr ?_
+  · apply eventually_atTop.mpr
+    use 1
+    intro n n1
+    simp only [ne_eq, mul_eq_zero, not_or]
+    constructor
+    · exact g0
+    · exact ne_of_gt (lt_of_lt_of_le (by simp) n1)
+  · rw [← div_self g0]
+    have fun_rw: (wₗᵢ s t · : ℝ → ℝ) / (g s t * ·) = (fun n ↦ wₗᵢ s t n / n / g s t) := by
+      ext n
+      simp only [Pi.div_apply]
+      rw [mul_comm, div_div]
+    rw [fun_rw]
+    apply Tendsto.div (w_Asymtotic' s t) tendsto_const_nhds g0
