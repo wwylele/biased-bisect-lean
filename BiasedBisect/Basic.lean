@@ -2439,6 +2439,33 @@ def wₘₐₓ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
   | none => 0
 
 /-
+wₘᵢₙ and wₘₐₓ agree with wₖ at n = nₖ
+-/
+def wₘᵢₙnₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
+wₘᵢₙ s t (nₖ s t k) = wₖ s t k := by
+  unfold wₘᵢₙ
+  rw [kₙ_inv]
+  simp only [sup_eq_left, tsub_le_iff_right]
+  obtain lt1|ge1 := lt_or_ge k 1
+  · have k0: k = 0 := Nat.lt_one_iff.mp lt1
+    rw [k0]
+    simp only [zero_add]
+    rw [n₀, n₁, w₁]
+    norm_cast
+    simp
+  · rw [← wₖ_rec s t k ge1, ← wₖ_rec s t (k + 1) (by simp)]
+    have mono: wₖ t s k ≤ wₖ t s (k + 1) := wₖ_mono t s (Nat.le_add_right k 1)
+    norm_cast
+    linarith
+
+def wₘₐₓnₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
+wₘₐₓ s t (nₖ s t k) = wₖ s t k := by
+  unfold wₘₐₓ
+  rw [kₙ_inv]
+  simp only [add_sub_cancel_right, inf_eq_right, Nat.cast_le]
+  exact wₖ_mono s t (Nat.le_add_right k 1)
+
+/-
 Derived from wₖ_rec, we have "recurrence formula" between wₘᵢₙ and wₘₐₓ.
 -/
 lemma wₘₘ_rec (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:

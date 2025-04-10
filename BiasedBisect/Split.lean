@@ -444,6 +444,55 @@ wₖ s t (k + 1) = wₖ s (t + ε) (kSplitMax s t ε k + 1) := by
   exact Nat.add_right_cancel n
 
 /-
+From the splitting behavior of nₖ and wₖ, we can immediately deduce that
+wₘᵢₙ an wₘₐₓ "contracts" during splitting.
+-/
+lemma wₘᵢₙSplit (s t ε: ℝ) (k K: ℕ) (n: ℝ) [PosReal s] [PosReal t] [PosReal ε]
+(kBound: k < K) (εbound: ε < t * εBound s t K)
+(nleft: nₖ s t (k + 1) ≤ n) (nright: n < nₖ s t (k + 2)):
+wₘᵢₙ s t n ≤ wₘᵢₙ s (t + ε) n := by
+  obtain keq := kₙ_inv' s t n (k + 1) nleft nright
+  nth_rw 1 [wₘᵢₙ]
+  rw [keq]
+  simp only [sup_le_iff]
+  constructor
+  · rw [wₖSplit s t ε k K (le_of_lt kBound) εbound]
+    rw [← wₘᵢₙnₖ, ← nₖSplit s t ε k K (le_of_lt kBound) εbound]
+    exact wₘᵢₙ_mono s (t + ε) nleft
+  · rw [wₖSplit s t ε (k + 1) K kBound εbound]
+    rw [← wₘᵢₙnₖ, ← nₖSplit s t ε (k + 1) K kBound εbound]
+    have n2: 2 ≤ n := by
+      rw [(by simp: (2:ℝ) = ((2:ℕ):ℝ))]
+      rw [← n₁ s t]
+      refine le_trans ?_ nleft
+      norm_cast
+      exact (nₖ_mono s t).le_iff_le.mpr (by simp)
+    obtain growth := wₘᵢₙ_growth s (t + ε) n (nₖ s t (k + 1 + 1)) n2 (le_of_lt nright)
+    linarith
+
+lemma wₘₐₓSplit (s t ε: ℝ) (k K: ℕ) (n: ℝ) [PosReal s] [PosReal t] [PosReal ε]
+(kBound: k < K) (εbound: ε < t * εBound s t K)
+(nleft: nₖ s t (k + 1) ≤ n) (nright: n < nₖ s t (k + 2)):
+wₘₐₓ s (t + ε) n ≤ wₘₐₓ s t n := by
+  obtain keq := kₙ_inv' s t n (k + 1) nleft nright
+  nth_rw 2 [wₘₐₓ]
+  rw [keq]
+  simp only [le_inf_iff]
+  constructor
+  · rw [wₖSplit s t ε (k + 1) K kBound εbound]
+    rw [← wₘₐₓnₖ, ← nₖSplit s t ε (k + 1) K kBound εbound]
+    exact wₘₐₓ_mono s (t + ε) (le_of_lt nright)
+  · rw [wₖSplit s t ε k K (le_of_lt kBound) εbound]
+    rw [← wₘₐₓnₖ, ← nₖSplit s t ε k K (le_of_lt kBound) εbound]
+    have n2: (2:ℝ) ≤ nₖ s t (k + 1) := by
+      rw [(by simp: (2:ℝ) = ((2:ℕ):ℝ))]
+      rw [← n₁ s t]
+      norm_cast
+      exact (nₖ_mono s t).le_iff_le.mpr (Nat.le_add_left 1 k)
+    obtain growth := wₘₐₓ_growth s (t + ε) (nₖ s t (k + 1)) n n2 nleft
+    linarith
+
+/-
 At this point, we can easily see that during splitting,
 the piecewise function wₗᵢ breaks into smaller segments,
 while preserving the original nodes.
@@ -951,7 +1000,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
 /-
 ... and then show this for the continuous wₗᵢ.
 -/
-lemma wₗᵢunder' (s t ε: ℝ) (k K: ℕ) (n: ℝ) [PosReal s] [PosReal t] [PosReal ε]
+lemma wₗᵢSplit (s t ε: ℝ) (k K: ℕ) (n: ℝ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k < K) (εbound: ε < t * εBound s t K)
 (nleft: nₖ s t (k + 1) ≤ n) (nright: n < nₖ s t (k + 2)):
 wₗᵢ s (t + ε) n ≤ wₗᵢ s t n := by
@@ -1088,13 +1137,23 @@ wₗᵢ s (t + ε) n ≤ wₗᵢ s t n := by
     exact Nat.le_add_right k' 1
 
 /-
-Finally, we show the entire wₗᵢ moves downwards for a sufficiently small perturbation on t,
+Finally, we generalize Split theorems for wₗᵢ, wₘᵢₙ, and wₘₐₓ
+to show that the entire w moves predictively
+for a sufficiently small perturbation on t
 and hide the explicit bound definition.
+
+We first introduce a common strategy for all of them
 -/
-lemma wₗᵢtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+lemma generalizeSplit
+(prop: ∀ (s t ε : ℝ) [PosReal s] [PosReal t] [PosReal ε] (_n : ℝ), Prop)
+(localSplit:
+  ∀ (s t ε : ℝ) (k K : ℕ) (n : ℝ) [PosReal s] [PosReal t] [PosReal ε],
+  k < K → ε < t * εBound s t K →
+  ↑(nₖ s t (k + 1)) ≤ n → n < ↑(nₖ s t (k + 2)) → prop s t ε n)
+(s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
 ∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
   have: PosReal ε := { pos := εpos }
-  wₗᵢ s (t + ε) n ≤ wₗᵢ s t n
+  prop s t ε n
 ) := by
   obtain ⟨k, keq⟩ := kₙ_exist s t n (le_trans (by norm_num) n2)
   have k1: k ≥ 1 := by
@@ -1112,22 +1171,56 @@ lemma wₗᵢtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
 
   use t * εBound s t (K + 1)
   constructor
-  · apply mul_pos PosReal.pos
-    exact εBoundPos s t (K + 1)
+  · exact mul_pos PosReal.pos (εBoundPos s t (K + 1))
   · intro ε εpos εbound
     simp only
     obtain ⟨left, right⟩ := nₖ_inv s t n k keq
     have: PosReal ε := { pos := εpos }
-    apply wₗᵢunder' s t ε K (K + 1) n (lt_add_one K) εbound
+    apply localSplit s t ε K (K + 1) n (lt_add_one K) εbound
     · rw [← krw]
       exact left
-    · rw [(by unfold K; simp only [Nat.reduceEqDiff]; exact Nat.sub_add_cancel k1: K + 2 = k + 1)]
+    · rw [(by simpa using Nat.sub_add_cancel k1: K + 2 = k + 1)]
       exact right
 
 /-
-By symmetry, wₗᵢ moves upwards when the perturbation is on s
+wₗᵢ moves downwards for a positive perturbation on t
 -/
-lemma wₗᵢsSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+theorem wₗᵢtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
+  have: PosReal ε := { pos := εpos }
+  wₗᵢ s (t + ε) n ≤ wₗᵢ s t n
+) := by
+  exact generalizeSplit _ wₗᵢSplit _ _ _ n2
+
+/-
+wₘᵢₙ moves upwards for a positive perturbation on t
+-/
+theorem wₘᵢₙtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
+  have: PosReal ε := { pos := εpos }
+  wₘᵢₙ s t n ≤ wₘᵢₙ s (t + ε) n
+) := by
+  exact generalizeSplit _  wₘᵢₙSplit _ _ _ n2
+
+/-
+wₘₐₓ moves downwards for a positive perturbation on t
+-/
+theorem wₘₐₓtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
+  have: PosReal ε := { pos := εpos }
+  wₘₐₓ s (t + ε) n ≤ wₘₐₓ s t n
+) := by
+  exact generalizeSplit _  wₘₐₓSplit _ _ _ n2
+
+
+/-
+By symmetry, we can also show the behavior of perturbation on s
+-/
+
+/-
+wₗᵢ moves upwards, the opposite direction, for a positive perturbation on s
+-/
+theorem wₗᵢsSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
 ∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
   have: PosReal ε := { pos := εpos }
   wₗᵢ s t n ≤ wₗᵢ (s + ε) t n
@@ -1139,7 +1232,48 @@ lemma wₗᵢsSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
   · intro ε εpos εb
     have: PosReal ε := { pos := εpos }
     simp only
-    rw [(by nth_rw 2 [← wₗᵢ_rec s t n n2]; ring: wₗᵢ s t n = n - wₗᵢ t s n)]
-    rw [(by nth_rw 2 [← wₗᵢ_rec (s + ε) t n n2]; ring: wₗᵢ (s + ε) t n = n - wₗᵢ t (s + ε) n)]
+    rw [eq_sub_of_add_eq (wₗᵢ_rec s t n n2)]
+    rw [eq_sub_of_add_eq (wₗᵢ_rec (s + ε) t n n2)]
+    apply sub_le_sub_left
+    exact h ε εpos εb
+
+/-
+Unlike wₗᵢ, because wₘᵢₙ and wₘₐₓ swaps, their movement remains the same direction
+wₘᵢₙ moves upwards for a positive perturbation on s
+-/
+theorem wₘᵢₙsSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
+  have: PosReal ε := { pos := εpos }
+  wₘᵢₙ s t n ≤ wₘᵢₙ (s + ε) t n
+) := by
+  obtain ⟨εbound, ⟨εboundPos, h⟩⟩ := wₘₐₓtSplit t s n n2
+  use εbound
+  constructor
+  · exact εboundPos
+  · intro ε εpos εb
+    have: PosReal ε := { pos := εpos }
+    simp only
+    rw [eq_sub_of_add_eq (wₘₘ_rec s t n n2)]
+    rw [eq_sub_of_add_eq (wₘₘ_rec (s + ε) t n n2)]
+    apply sub_le_sub_left
+    exact h ε εpos εb
+
+/-
+... and wₘₐₓ moves downwards for a positive perturbation on s
+-/
+theorem wₘₐₓsSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
+∃εbound > 0, ∀(ε: ℝ), (εpos: 0 < ε) → ε < εbound → (
+  have: PosReal ε := { pos := εpos }
+  wₘₐₓ (s + ε) t n ≤ wₘₐₓ s t n
+) := by
+  obtain ⟨εbound, ⟨εboundPos, h⟩⟩ := wₘᵢₙtSplit t s n n2
+  use εbound
+  constructor
+  · exact εboundPos
+  · intro ε εpos εb
+    have: PosReal ε := { pos := εpos }
+    simp only
+    rw [eq_sub_of_add_eq' (wₘₘ_rec t s n n2)]
+    rw [eq_sub_of_add_eq' (wₘₘ_rec t (s + ε) n n2)]
     apply sub_le_sub_left
     exact h ε εpos εb
