@@ -2703,7 +2703,9 @@ wₗᵢ s t n = wₗᵢ (l * s) (l * t) n := by
   unfold wₗᵢ
   rw [kₙ_homo s t n l, wₖ_homo s t l, nₖ_homo s t l]
 
-
+/-
+wₘᵢₙ, wₘₐₓ, and wₗᵢ are all weakly monotone
+-/
 lemma wₘᵢₙ_mono (s t: ℝ) [PosReal s] [PosReal t]:
 Monotone (wₘᵢₙ s t) := by
   intro m n mlen
@@ -2868,6 +2870,30 @@ Monotone (wₗᵢ s t) := by
         refine mul_le_mul_of_nonneg_right mlen ?_
         simp only [sub_nonneg, Nat.cast_le]
         exact wₖ_mono s t (Nat.le_add_right kn 1)
+
+/-
+wₘᵢₙ, wₘₐₓ, and wₗᵢ never grow faster than n
+-/
+lemma wₘᵢₙ_growth (s t m n: ℝ) (hm: 2 ≤ m) (hn: m ≤ n) [PosReal s] [PosReal t]:
+wₘᵢₙ s t n - wₘᵢₙ s t m ≤ n - m := by
+  nth_rw 2 [← wₘₘ_rec s t m hm]
+  nth_rw 2 [← wₘₘ_rec s t n (le_trans hm hn)]
+  obtain max_mono := wₘₐₓ_mono t s hn
+  linarith
+
+lemma wₘₐₓ_growth (s t m n: ℝ) (hm: 2 ≤ m) (hn: m ≤ n) [PosReal s] [PosReal t]:
+wₘₐₓ s t n - wₘₐₓ s t m ≤ n - m := by
+  nth_rw 2 [← wₘₘ_rec t s m hm]
+  nth_rw 2 [← wₘₘ_rec t s n (le_trans hm hn)]
+  obtain min_mono := wₘᵢₙ_mono t s hn
+  linarith
+
+lemma wₗᵢ_growth (s t m n: ℝ) (hm: 2 ≤ m) (hn: m ≤ n) [PosReal s] [PosReal t]:
+wₗᵢ s t n - wₗᵢ s t m ≤ n - m := by
+  nth_rw 2 [← wₗᵢ_rec s t m hm]
+  nth_rw 2 [← wₗᵢ_rec s t n (le_trans hm hn)]
+  obtain li_mono := wₗᵢ_mono t s hn
+  linarith
 
 /-
 We define the "strategy evaluation differential function"
