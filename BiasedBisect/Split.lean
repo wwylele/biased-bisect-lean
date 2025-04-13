@@ -1142,6 +1142,30 @@ to show that the entire w moves predictively
 for a sufficiently small perturbation on t
 and hide the explicit bound definition.
 
+By the end, the w function around the neighborhood of s:t will look like
+
+                #
+      ##########|
+      **********|
+                |##########   wₘₐₓ
+      @@@@@@@@@@|
+                *
+                |
+                |**********   wₗᵢ
+                |
+                |@@@@@@@@@@   wₘᵢₙ
+                |
+                @
+
+<-----|---------|---------|----->
+  (s+ε):t      s:t      s:(t+ε)
+
+Though in reality, this shape only shows up for rational s:t.
+For irrational s:t, this degenerates to locally constant w
+
+-/
+
+/-
 We first introduce a common strategy for all of them
 -/
 lemma generalizeSplit

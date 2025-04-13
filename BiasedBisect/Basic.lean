@@ -1,4 +1,4 @@
-import Mathlib.MeasureTheory.Integral.IntervalIntegral
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.Tactic.Rify
 
 /-

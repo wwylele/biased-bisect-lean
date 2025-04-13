@@ -1,4 +1,5 @@
 import BiasedBisect.Basic
+import BiasedBisect.Continuous
 
 /-
 In this file, we will explore more about the function φ,
@@ -261,81 +262,7 @@ lemma φ_rec (s t δ: ℝ) (dpos: δ ≥ 0) [PosReal s] [PosReal t]:
     exact dpos
 
 /-
-We will show φ grows as fast as exponential, with a rate we define as ρ
--/
-
-/-
-ρ is the unique solution to the equation ρf = 1
--/
-noncomputable
-def ρf (s t: ℝ) [PosReal s] [PosReal t] (ρ: ℝ) := Real.exp (-s * ρ) + Real.exp (-t * ρ)
-
-lemma ρf_anti (s t: ℝ) [PosReal s] [PosReal t]: StrictAnti (ρf s t) := by
-  apply StrictAnti.add
-  all_goals
-  · apply StrictMono.comp_strictAnti (Real.exp_strictMono)
-    exact strictAnti_mul_left (neg_lt_zero.mpr PosReal.pos)
-
-lemma ρ_exist (s t: ℝ) [PosReal s] [PosReal t]:
-∃! ρ ≥ 0, ρf s t ρ = 1 := by
-  have tend: Filter.Tendsto (ρf s t) Filter.atTop (nhds 0) := by
-    rw [(by simp: (0:ℝ) = 0 + 0)]
-    apply Filter.Tendsto.add
-    all_goals
-    · apply Real.tendsto_exp_comp_nhds_zero.mpr
-      apply Filter.Tendsto.neg_mul_atTop (neg_lt_zero.mpr PosReal.pos)
-        tendsto_const_nhds
-      exact fun ⦃U⦄ a ↦ a
-  obtain ⟨ρbound, ρboundspec⟩ := tendsto_atTop_nhds.mp tend (Set.Iio 1) (by simp) isOpen_Iio
-  obtain ρboundspec := Set.mem_Iio.mp (ρboundspec ρbound (le_refl _))
-
-  have cont: ContinuousOn (ρf s t) (Set.Icc 0 ρbound) := by unfold ρf; fun_prop
-  have ρ0: 0 < ρbound := by
-    apply (ρf_anti s t).lt_iff_lt.mp
-    apply lt_trans ρboundspec
-    unfold ρf
-    simp
-
-  obtain ⟨ρs, ρssubset, ρsspec⟩ := Set.subset_image_iff.mp (
-    intermediate_value_Icc' (le_of_lt ρ0) cont)
-
-  have onemem: 1 ∈ ρf s t '' ρs := by
-    rw [ρsspec]
-    simp only [Set.mem_Icc]
-    constructor
-    · exact le_of_lt ρboundspec
-    · unfold ρf
-      simp
-  obtain ⟨ρ, ρrange, ρspec⟩  := (Set.mem_image _ _ _).mp onemem
-  use ρ
-  constructor
-  · constructor
-    · refine Set.mem_of_mem_of_subset ρrange (ρssubset.trans ?_)
-      exact (Set.Icc_subset_Ici_iff (le_of_lt ρ0)).mpr (le_refl _)
-    · exact ρspec
-  · intro q ⟨qrange, qeq⟩
-    apply (((ρf_anti s t).strictAntiOn Set.univ).eq_iff_eq (by simp) (by simp)).mp
-    rw [qeq]
-    unfold ρf
-    exact ρspec
-
-noncomputable
-def ρ (s t: ℝ) [PosReal s] [PosReal t] := (ρ_exist s t).choose
-
-lemma ρ_satisfies (s t: ℝ) [PosReal s] [PosReal t]:
-ρf s t (ρ s t) = 1 := by
-  obtain ⟨⟨_, eq⟩, _⟩ := (ρ_exist s t).choose_spec
-  exact eq
-
-lemma ρ_range (s t: ℝ) [PosReal s] [PosReal t]: 0 < ρ s t := by
-  obtain ⟨⟨range, eq⟩, _⟩ := (ρ_exist s t).choose_spec
-  apply lt_of_le_of_ne range
-  contrapose! eq
-  rw [← eq]
-  unfold ρf
-  simp
-
-/-
+φ grows as fast as exponential, and the rate is ρ
 Here we show the exponential growth with an undetermined, but bounded coefficient.
 -/
 lemma φ_bound (s t x: ℝ) (h: -max s t ≤ x) [PosReal s] [PosReal t]:
