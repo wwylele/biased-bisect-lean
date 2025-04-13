@@ -1,24 +1,113 @@
-import Mathlib
+import Mathlib.MeasureTheory.Integral.SetIntegral
+import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import Mathlib.Order.CompletePartialOrder
 
 open Asymptotics Filter MeasureTheory
 
-theorem integral_equivalent (f g F G : ℝ → ℝ) (a : ℝ)
+theorem integral_norm_equivalent {f : ℝ → ℝ}
     (hf_tendsto : Tendsto f atTop atTop)
-    (hfg : f ~[atTop] g)
-    (hF : ∀ x ∈ Set.Ici a, F x = ∫ t in Set.Ioc a x, f t)
-    (hG : ∀ x ∈ Set.Ici a, G x = ∫ t in Set.Ioc a x, G t):
-    F ~[atTop] g := by
+    {a : ℝ}
+    (hf_integrable : ∀ x ≥ a, IntegrableOn f (Set.Ioc a x)):
+    (∫ t in Set.Ioc a ·, f t) ~[atTop] (∫ t in Set.Ioc a ·, ‖f t‖) := by
 
-  have hf0 : ∀ᶠ x in atTop, f x ≠ 0 := Tendsto.eventually_ne_atTop hf_tendsto 0
+  obtain ⟨b, hb⟩ := Filter.tendsto_atTop_atTop.mp hf_tendsto 1
+  refine (Asymptotics.isEquivalent_iff_tendsto_one ?_).mpr ?_
+  · apply Filter.eventually_atTop.mpr
+    use 1 + max a b
+    intro x hx
+    apply ne_of_gt
+    have a_lt_x: a < x := (lt_of_lt_of_le (by apply lt_of_le_of_lt (b := max a b); all_goals simp) hx)
+    obtain integ := (hf_integrable x a_lt_x.le).norm
+    apply (MeasureTheory.integral_pos_iff_support_of_nonneg (by intro x; simp) integ).mpr
+    simp only [Real.norm_eq_abs, measurableSet_Ioc, Measure.restrict_apply']
+    apply lt_of_lt_of_le (b := volume (Set.Ioc (max a b) x))
+    · simp only [Real.volume_Ioc, ENNReal.ofReal_pos, sub_pos]
+      exact lt_of_lt_of_le (by simp) hx
+    · apply volume.mono
+      intro y ⟨yleft, yright⟩
+      simp only [Set.mem_inter_iff, Function.mem_support, ne_eq, abs_eq_zero, Set.mem_Ioc]
+      constructor
+      · obtain hb' := hb y ((max_lt_iff.mp yleft).right).le
+        exact ne_of_gt <| lt_of_lt_of_le (by simp) hb'
+      · exact ⟨(max_lt_iff.mp yleft).left, yright⟩
+  · rw [(by ring: (1:ℝ) = (0 + 1) / (0 + 1))]
 
-  obtain hgdivf := tendsto_atTop_nhds.mp ((isEquivalent_iff_tendsto_one hf0).mp hfg.symm)
+    have fun_rw (x: ℝ) (ab_lt_x: max a b < x):
+      ((∫ (t : ℝ) in Set.Ioc a x, f t) / ∫ (t : ℝ) in Set.Ioc a x, ‖f t‖) =
+      ( (((∫ (t : ℝ) in Set.Ioc a (max a b), f t) / ∫ (t : ℝ) in Set.Ioc (max a b) x, ‖f t‖) + 1) /
+        (((∫ (t : ℝ) in Set.Ioc a (max a b), ‖f t‖) / ∫ (t : ℝ) in Set.Ioc (max a b) x, ‖f t‖) + 1) ) := by
 
-  have what (u v: ℝ) (h1: 1 ∈ Set.Ioo u v): False := by
-    obtain ⟨X, hX⟩ := hgdivf (Set.Ioo u v) h1 isOpen_Ioo
-    sorry
+      have a_x_union: Set.Ioc a (a ⊔ b) ∪ Set.Ioc (a ⊔ b) x = Set.Ioc a x :=
+        Set.Ioc_union_Ioc_eq_Ioc (by simp) ab_lt_x.le
+      have a_x_disj: Disjoint (Set.Ioc a (a ⊔ b)) (Set.Ioc (a ⊔ b) x) :=
+        Set.Ioc_disjoint_Ioc_of_le (le_refl _)
+      obtain a_x_i := hf_integrable x (max_lt_iff.mp ab_lt_x).1.le
+      obtain a_x_ni := a_x_i.norm
+      obtain a_ab_i := IntegrableOn.mono_set a_x_i (Set.union_subset_iff.mp (a_x_union.le)).left
+      obtain ab_x_i := IntegrableOn.mono_set a_x_i (Set.union_subset_iff.mp (a_x_union.le)).right
+      obtain a_ab_ni := IntegrableOn.mono_set a_x_ni (Set.union_subset_iff.mp (a_x_union.le)).left
+      obtain ab_x_ni := IntegrableOn.mono_set a_x_ni (Set.union_subset_iff.mp (a_x_union.le)).right
 
+      have deno0: 0 < ∫ (t : ℝ) in Set.Ioc (max a b) x, ‖f t‖ := by
+        apply (MeasureTheory.integral_pos_iff_support_of_nonneg (by intro x; simp) ab_x_ni).mpr
+        simp only [Real.norm_eq_abs, measurableSet_Ioc, Measure.restrict_apply']
+        rw [Set.inter_eq_right.mpr ?_]
+        · simp [ab_lt_x]
+        · intro y ⟨hy, _⟩
+          obtain hb' := hb y (max_lt_iff.mp hy).2.le
+          simp only [Function.mem_support, ne_eq, abs_eq_zero]
+          exact ne_of_gt (lt_of_lt_of_le (by simp) hb')
+      rw [div_add_one deno0.ne.symm, div_add_one deno0.ne.symm]
+      rw [div_div_div_cancel_right₀ deno0.ne.symm]
+      have: (∫ (t : ℝ) in Set.Ioc (max a b) x, ‖f t‖) = ∫ (t : ℝ) in Set.Ioc (max a b) x, f t := by
+        apply integral_congr_ae
+        apply (MeasureTheory.ae_restrict_iff' measurableSet_Ioc).mpr
+        apply Eventually.of_forall
+        intro y ⟨hy, _⟩
+        simp only [Real.norm_eq_abs, abs_eq_self, ge_iff_le]
+        obtain hb' := hb y (max_lt_iff.mp hy).2.le
+        exact (lt_of_lt_of_le (by simp) hb').le
+      nth_rw 1 [this]
+      rw [← setIntegral_union a_x_disj measurableSet_Ioc a_ab_i ab_x_i]
+      rw [← setIntegral_union a_x_disj measurableSet_Ioc a_ab_ni ab_x_ni]
+      rw [a_x_union]
+    have fun_rw': (fun x ↦ (∫ (t : ℝ) in Set.Ioc a x, f t) / ∫ (t : ℝ) in Set.Ioc a x, ‖f t‖)
+      =ᶠ[atTop] (fun x ↦ (((∫ (t : ℝ) in Set.Ioc a (max a b), f t) / ∫ (t : ℝ) in Set.Ioc (max a b) x, ‖f t‖) + 1) /
+        (((∫ (t : ℝ) in Set.Ioc a (max a b), ‖f t‖) / ∫ (t : ℝ) in Set.Ioc (max a b) x, ‖f t‖) + 1) ) := by
+      apply Filter.eventually_atTop.mpr
+      use (max a b + 1)
+      intro x hx
+      exact fun_rw x (lt_of_lt_of_le (by simp) hx)
 
-  sorry
+    apply Filter.Tendsto.congr' fun_rw'.symm
+    refine Filter.Tendsto.div ?_ ?_ (by simp)
+    all_goals
+    · refine Filter.Tendsto.add_const _ (Tendsto.const_div_atTop ?_ _)
+      apply Filter.tendsto_atTop_atTop.mpr
+      intro v
+      use max 0 v + max a b
+      intro y hy
+      trans ∫ (t : ℝ) in Set.Ioc (a ⊔ b) y, 1
+      · have yab: 0 ≤ y - max a b := by
+          apply sub_nonneg_of_le
+          refine le_trans ?_ hy
+          simp
+        simp only [integral_const, MeasurableSet.univ, Measure.restrict_apply, Set.univ_inter,
+          Real.volume_Ioc, yab, ENNReal.toReal_ofReal, smul_eq_mul, mul_one, ge_iff_le]
+        apply le_sub_right_of_add_le
+        refine le_trans ?_ hy
+        simp
+      · have integ: IntegrableOn (fun a ↦ ‖f a‖) (Set.Ioc (a ⊔ b) y) := by
+          apply (IntegrableOn.mono_set (hf_integrable y (
+            by apply le_trans (by trans max a b; all_goals simp) hy)) ?_).norm
+          apply Set.Ioc_subset_Ioc (by simp) (by simp)
+        apply integral_mono_ae (by simp) integ
+        apply (MeasureTheory.ae_restrict_iff' measurableSet_Ioc).mpr
+        apply Eventually.of_forall
+        intro z ⟨zleft, zright⟩
+        simp only [Real.norm_eq_abs]
+        obtain hb' := hb z (max_lt_iff.mp zleft).right.le
+        exact le_abs.mpr (Or.inl hb')
 
 theorem Asymptotics.IsLittleO.integral {f g : ℝ → ℝ}
     (hfg : f =o[atTop] g)
@@ -26,7 +115,9 @@ theorem Asymptotics.IsLittleO.integral {f g : ℝ → ℝ}
     {a : ℝ}
     (hf_integrable : ∀ x ≥ a, IntegrableOn f (Set.Ioc a x))
     (hg_integrable : ∀ x ≥ a, IntegrableOn g (Set.Ioc a x)):
-    (∫ t in Set.Ioc a ·, f t) =o[atTop] (∫ t in Set.Ioc a ·, ‖g t‖) := by
+    (∫ t in Set.Ioc a ·, f t) =o[atTop] (∫ t in Set.Ioc a ·, g t) := by
+  refine Asymptotics.IsLittleO.trans_isBigO ?_ (integral_norm_equivalent hg_tendsto hg_integrable).isBigO_symm
+
   rw [Asymptotics.IsLittleO_def]
   intro c hc
   obtain ⟨c', ⟨hc'_pos, hc'c⟩⟩ := Set.nonempty_Ioo.mpr hc
@@ -152,3 +243,33 @@ theorem Asymptotics.IsLittleO.integral {f g : ℝ → ℝ}
     intro y ⟨hy, _⟩
     apply le_trans (hb y <| le_trans b_le_abb1 hy.le)
     apply mul_le_mul_of_nonneg_right hc'c.le (norm_nonneg _)
+
+theorem Asymptotics.IsEquivalent.integral {f g : ℝ → ℝ}
+    (hfg : f ~[atTop] g)
+    (hg_tendsto : Tendsto g atTop atTop)
+    {a : ℝ}
+    (hf_integrable : ∀ x ≥ a, IntegrableOn f (Set.Ioc a x))
+    (hg_integrable : ∀ x ≥ a, IntegrableOn g (Set.Ioc a x)):
+    (∫ t in Set.Ioc a ·, f t) ~[atTop] (∫ t in Set.Ioc a ·, g t) := by
+
+  unfold Asymptotics.IsEquivalent
+  have: (fun x ↦ ∫ (t : ℝ) in Set.Ioc a x, f t) - (fun x ↦ ∫ (t : ℝ) in Set.Ioc a x, g t)
+    = fun x ↦ ∫ (t : ℝ) in Set.Ioc a x, f t - g t := by
+    ext x
+    simp only [Pi.sub_apply]
+    have hf_integrable': IntegrableOn f (Set.Ioc a x) := by
+      obtain lt|ge := lt_or_ge x a
+      · rw [Set.Ioc_eq_empty (by simp; exact lt.le)]
+        simp
+      · exact hf_integrable x ge
+    have hg_integrable': IntegrableOn g (Set.Ioc a x) := by
+      obtain lt|ge := lt_or_ge x a
+      · rw [Set.Ioc_eq_empty (by simp; exact lt.le)]
+        simp
+      · exact hg_integrable x ge
+    rw [← integral_sub hf_integrable' hg_integrable']
+  rw [this]
+  have hfg_integrable: ∀ x ≥ a, IntegrableOn (f - g) (Set.Ioc a x) := by
+    intro x hx
+    exact (hf_integrable x hx).sub (hg_integrable x hx)
+  exact Asymptotics.IsLittleO.integral hfg hg_tendsto hfg_integrable hg_integrable

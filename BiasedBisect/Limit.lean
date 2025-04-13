@@ -1,6 +1,7 @@
 import BiasedBisect.CrossSection
 import BiasedBisect.Integer
 import BiasedBisect.MathlibTopologyOrderIsLUB
+import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
 
 /-
 In this file, we show asymptotic behavior of E and w:
@@ -264,7 +265,7 @@ Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) atTop (nhds 1) := by
   · exact Tendsto.comp (δₖ_Asymptotic s t) ktends
   · exact Tendsto.comp righttends' ktends
 
-theorem dE_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
+lemma dE_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
 dE s t ~[atTop] (Real.log · / ρ s t) := by
   refine (isEquivalent_iff_tendsto_one ?_).mpr ?_
   · apply eventually_atTop.mpr
@@ -287,6 +288,83 @@ dE s t ~[atTop] (Real.log · / ρ s t) := by
     simp only [Pi.div_apply]
     rw [← div_mul]
     rw [mul_div_right_comm]
+
+theorem E_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
+E s t ~[atTop] Eℝ s t := by
+  have congr_left: E s t =ᶠ[atTop] fun n ↦ ∫ x in Set.Ioc 1 n, dE s t x + s + t := by
+    apply eventually_atTop.mpr
+    use 1
+    intro n hn
+    simp only
+    rw [← intervalIntegral.integral_of_le hn]
+    convert E_integral s t n hn
+  have congr_right: Eℝ s t =ᶠ[atTop] fun n ↦ ∫ x in Set.Ioc 1 n, (Real.log x + 1) / ρ s t := by
+    unfold Eℝ
+    apply eventually_atTop.mpr
+    use 1
+    intro n hn
+    let f := (fun n ↦ n * Real.log n / ρ s t)
+    have: (fun n ↦ n * Real.log n / ρ s t) n =
+      f n - f 1 := by
+      unfold f
+      simp
+    rw [this]
+    simp only
+    rw [← intervalIntegral.integral_of_le hn]
+    apply (intervalIntegral.integral_eq_sub_of_hasDerivAt ?_ ?_).symm
+    · intro x hx
+      rw [Set.uIcc_of_le hn] at hx
+      have x0: x ≠ 0 := ne_of_gt <| lt_of_lt_of_le (by simp) hx.1
+      unfold f
+      apply HasDerivAt.div_const
+      have: Real.log x + 1 = 1 * Real.log x + x * x⁻¹ := by
+        simp [x0]
+      rw [this]
+      apply HasDerivAt.mul
+      · exact hasDerivAt_id' x
+      · refine Real.hasDerivAt_log x0
+    · apply ContinuousOn.intervalIntegrable
+      refine ContinuousOn.div_const (ContinuousOn.add ?_ continuousOn_const) _
+      exact Real.continuousOn_log.mono (by simp [hn])
+  refine IsEquivalent.congr_left ?_ congr_left.symm
+  refine IsEquivalent.congr_right ?_ congr_right.symm
+  refine IsEquivalent.integral ?_ ?_ ?_ ?_
+  · refine (IsEquivalent.trans ?_ (dE_Asymptotic s t)).trans ?_
+    · simp_rw [add_assoc]
+      apply IsEquivalent.add_isLittleO IsEquivalent.refl
+      refine IsLittleO.trans_isEquivalent ?_ (dE_Asymptotic s t).symm
+      refine isLittleO_const_left.mpr (Or.inr ?_)
+      have: (norm ∘ fun x ↦ Real.log x / ρ s t) =ᶠ[atTop] fun x ↦ Real.log x / ρ s t := by
+        apply eventually_atTop.mpr
+        use 1
+        intro x hx
+        simp only [Function.comp_apply, norm_div, Real.norm_eq_abs]
+        rw [abs_eq_self.mpr (Real.log_nonneg hx), abs_eq_self.mpr (ρ_range s t).le]
+      apply Filter.Tendsto.congr' this.symm
+      exact (Real.tendsto_log_atTop).atTop_div_const (ρ_range s t)
+    · refine IsEquivalent.div ?_ IsEquivalent.refl
+      refine (IsEquivalent.add_isLittleO IsEquivalent.refl ?_).symm
+      refine isLittleO_const_left.mpr (Or.inr ?_)
+      have: (norm ∘ fun x ↦ Real.log x ) =ᶠ[atTop] fun x ↦ Real.log x := by
+        apply eventually_atTop.mpr
+        use 1
+        intro x hx
+        simp only [Function.comp_apply, Real.norm_eq_abs, abs_eq_self]
+        exact Real.log_nonneg hx
+      exact Filter.Tendsto.congr' this.symm Real.tendsto_log_atTop
+  · exact (Real.tendsto_log_atTop.atTop_add tendsto_const_nhds).atTop_div_const (ρ_range s t)
+  · intro n hn
+    apply (dE_integrable' s t 1 n).def'.congr_set_ae
+    apply Eventually.of_forall
+    unfold Set.uIoc
+    intro y
+    congr
+    · exact left_eq_inf.mpr hn
+    · exact Eq.symm (max_eq_right hn)
+  · intro n hn
+    refine integrableOn_Icc_iff_integrableOn_Ioc.mp <| ContinuousOn.integrableOn_Icc ?_
+    refine ContinuousOn.div_const (ContinuousOn.add ?_ continuousOn_const) _
+    exact Real.continuousOn_log.mono (by simp)
 
 /-
 g agrees with ξ₀ that we defined in Integer.lean
