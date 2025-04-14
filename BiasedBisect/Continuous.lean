@@ -5,6 +5,28 @@ import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 
+/-!
+
+# Continuous biased bisect problem
+
+We explore a variation of the original biased bisect problem. We find a function $E: ℝ → ℝ$ that satisfies
+the functional equation
+$$
+E(n) = \min_{0 < w < n} \{E(w) + E(n - w) + w t + (n - w) s\}
+$$
+for all positive $n$. We will see that $E(n) = n \log n/ρ$, and the optimal strategy is linear to $n$.
+
+## Main statements
+ - `IsOptimalCostℝ`, `IsOptimalStratℝ` are the target properties of the solution.
+ - `Eℝ` is the optimal cost function.
+   - `Eℝ_IsOptimalCostℝ` verifies this is the solution to `IsOptimalCostℝ`.
+   - `ρ` is the coefficient in `Eℝ`.
+ - `wℝ` is the optimal strategy function.
+   - `Wℝ_IsOptimalStratℝ` verifies this is the solution to `IsOptimalStratℝ`.
+   - `g` is the coefficient in `wℝ`.
+
+-/
+
 /-
 ρ is the unique solution to the equation ρf = 1
 -/

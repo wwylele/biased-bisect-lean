@@ -3,12 +3,15 @@ import BiasedBisect.Integer
 import BiasedBisect.MathlibTopologyOrderIsLUB
 import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
 
-/-
-In this file, we show asymptotic behavior of E and w:
-E(s, t, n) ~ n * log(n) / ρ(s, t)
-w(s, t, n) ~ g(s, t) * n
+/-!
+# Asymptotics
 
-These generalizes the result we have in Integer.lean of aysmptotic behavior when s and t are integers
+We show that `E` and `wₗᵢ`, the solution to the original biased bisect problem,
+are asymptotically equivalent to `Eℝ` and `wℝ`, the solution to the continuous biased bisect problem.
+
+## Main statements
+ - `E_Asymptotic` states the asymptotic behavior of `E`.
+ - `w_Asymtotic` states the asymptotic behavior of `wₗᵢ`.
 -/
 
 open Asymptotics Filter

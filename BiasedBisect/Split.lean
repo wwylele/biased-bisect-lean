@@ -1,22 +1,31 @@
 import BiasedBisect.Basic
 
-/-
-In this file, we will prove a family of "split" theorems.
+/-!
+# Split behavior when changing $s,t$
 
-When applying perturbation to s and t, a single Λline set that pass through
+We prove a family of "split" theorems.
+
+When applying perturbation to $s$ and $t$, a single `Λline` set that pass through
 multiple lattice points will split into several sets.
-Consequently, more nₖ are inserted, and the piecewise function E and w split
-into finer pieces.
+Consequently, more `nₖ` are inserted, and the piecewise function $E$ and $w$ split
+into finer pieces. We describe the behavior of $w$ during this process.
 
-Finally, we will prove that wₗᵢ uniformly shifts towards one direction during splitting,
-which is a  prerequisite for monocity of wₗᵢ over s/t.
+Finally, we will prove that `wₗᵢ` uniformly shifts towards one direction during splitting,
+which is a prerequisite for monocity of `wₗᵢ` over $s/t$.
 
-While these are true for all positive s and t, it is only interesting when s/t is rational.
-If s/t is irrational, all Λline are already singletons, so they won't split further.
+While these are true for all positive $s$ and $t$, it is only interesting when $s/t$ is rational.
+If $s/t$ is irrational, all `Λline` are already singletons, so they won't split further.
 
-We describe perturbation in δ-ε-like language. The larger n or k we look at, the smaller
-perturbation is allowed. We will develope an allowed bound for ε for the given range of k.
-By convention, we use capital K to represent the bound for k
+## Main statements
+ - `wₗᵢsSplit` and `wₗᵢtSplit` state `wₗᵢ` moves in the direction monotonic to $s/t$.
+ - `wₘᵢₙsSplit` and `wₘᵢₙtSplit` state `wₘᵢₙ` stays or moves upwards when $s/t$ moves in either direction.
+ - `wₘₐₓsSplit` and `wₘₐₓtSplit` state `wₘₐₓ` stays or moves downwards when $s/t$ moves in either direction.
+
+## Implementation note
+
+We describe perturbation in δ-ε-like language. The larger $n$ or $k$ we look at, the smaller
+perturbation is allowed. We will develope an allowed bound for $ε$ for the given range of $k$.
+By convention, we use capital $K$ to represent the bound for $k$
 
 For simplicity, we will mostly only consider a positive perturbation on t, and leave the rest
 to symmetry.

@@ -2,15 +2,15 @@ import BiasedBisect.Inert
 import BiasedBisect.Split
 import Mathlib.Order.Monotone.Union
 
-/-
-In this file, we investigate the behavior of w when fixing n and varying s ant t.
+/-!
+# Behavior of $E_{s,t}(n)$ and $w_{s,t}(n)$ for fixed $n$ and varying $s,t$
 
-We will see that w consists of a bunch of "blocks", whose interior displays Inert behavior,
+We will see that $w$ consists of a bunch of "blocks", whose interior displays Inert behavior,
 while edges display Split behavior. We will explicitly construct this block list,
-where each block is represented by inert tuples (a, b, c, d)
+where each block is represented by inert tuples $(a, b, c, d)$.
 
-Combining results from Inert and Split, we will develope one important theorem:
-wₗᵢ is weakly monotone w.r.t. s/t
+## Main statements
+ - `wₗᵢMono`: `wₗᵢ` is weakly monotone w.r.t. $s/t$.
 -/
 
 /-

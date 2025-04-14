@@ -1,11 +1,16 @@
 import BiasedBisect.Basic
 import BiasedBisect.Continuous
 
-/-
-In this file, we will explore more about the function φ,
-which is the "inverse function" of dE
+/-!
+# Inverse function `φ`
 
-φ is simply defined as Jceiled shifted by 1
+We explore more about the function `φ`,
+which is the "inverse function" of `dE`.
+-/
+
+
+/-
+`φ` is simply defined as `Jceiled` shifted by 1.
 -/
 noncomputable
 def φ (s t δ: ℝ) [PosReal s] [PosReal t] := 1 + Jceiled s t δ

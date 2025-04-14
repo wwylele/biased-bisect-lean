@@ -1,33 +1,60 @@
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.Tactic.Rify
 
-/-
+/-!
+# Basic definition and solution to the biased bisect problem
 
-In this file, we will try to construct a solution to the following problem:
+We construct a solution to the following problem:
 
-A software has (n+1) versions v_0,v_1,...,v_n, and n changes in between.
+A software has $n+1$ versions $v_0,v_1,\dots,v_n$, and $n$ changes in between.
 It is discovered one of the change broke a feature of the software, but we don't know
-which one did. We only know v_0 is fine and v_n is broken. How do we quickly find the broken
+which one did. We only know $v_0$ is fine and $v_n$ is broken. How do we quickly find the broken
 change?
 
-Well, the answer to this classic question is to do binary search. But what if the cost of
+The answer to this classic question is to do binary search. But what if the cost of
 performing a software test depends on the outcome? For example, a broken software will result
 in a system crash and requires much longer time to reboot. Which version should we test first,
 and next?
 
-Let s and t be the cost of a successful and a failed test. The expected cost F(n) is
+Let s and t be the cost of a successful and a failed test. The expected cost $F(n)$ is
 
-F(1) = 0
-F(n) = min (1 ≤ w ≤ n - 1) {(w / n) * (F(w) + t) + ((n - w) / n) * (F(n - w) + s)}
+$$
+F(n) = \begin{cases}
+  0 & n = 1 \\
+  \min_{1 ≤ w ≤ n - 1} \{\frac{w}{n} (F(w) + t) + \frac{n - w}{n} (F(n - w) + s)\} & n \ge 2
+\end{cases}
+$$
 
-where w is the first version to test. To simplify a little bit, we normalize F(n) with
+where $w$ is the first version to test. To simplify a little bit, we normalize $F(n)$ with
 
-E(n) = n * F(n)
+$$
+E(n) = n F(n)
+$$
 
-where E(n) satisfies
+where $E(n)$ satisfies
 
-E(1) = 0
-E(n) = min (1 ≤ w ≤ n - 1) {F(w) + F(n - w) + w * t + (n - w) * s}
+$$
+E(n) = \begin{cases}
+  0 & n = 1 \\
+  \min_{1 ≤ w ≤ n - 1} \{E(w) + E(n - w) + w t + (n - w) s\}  & n \ge 2
+\end{cases}
+$$
+
+## Main statements
+
+ - `IsOptimalCostℤ` and `IsOptimalStratℤ` are the target properties of the solution.
+ - `IsOptimalCost` and `IsOptimalStrat` are the modified properties that extend the domain to ℝ.
+ - `E` is the optimal cost function of the solution with domain in ℝ.
+   - `E_IsOptimalCost` verifies this is the solution to `IsOptimalCost`.
+ - `wₛₑₜ` is the optimal strategy function of the solution with domain in ℝ.
+   - `wₘᵢₙ` is the minimal optimal strategy.
+   - `wₘₐₓ` is the maximal optimal strategy.
+   - `wₗᵢ` is the principal strategy.
+   - `W_IsOptimalStrat` verifies this is the solution to `IsOptimalStrat`.
+ - `Eℤ` restricts `E` to `ℤ`.
+   - `Eℤ_IsOptimalCost` verifies this is the solution to `IsOptimalCostℤ`.
+ - `wℤ` restricts `wₛₑₜ` to `ℤ`
+   - `Wℤ_IsOptimalStrat` verifies this is the solution to `IsOptimalStratℤ`.
 
 -/
 
@@ -35,23 +62,9 @@ E(n) = min (1 ≤ w ≤ n - 1) {F(w) + F(n - w) + w * t + (n - w) * s}
 
 /- some random util theorems -/
 theorem sum_to_zero (a b : ℝ) (ha : a ≥ 0) (hb : b ≥ 0) (h : a + b ≤ 0) : a = 0 ∧ b = 0 := by
-  constructor
-  · -- Prove `a = 0`
-    apply le_antisymm
-    · -- Show `a ≤ 0`
-      calc
-        a ≤ a + b := by exact le_add_of_nonneg_right hb
-        _ ≤ 0 := h
-    · -- Show `0 ≤ a`
-      exact ha
-  · -- Prove `b = 0`
-    apply le_antisymm
-    · -- Show `b ≤ 0`
-      calc
-        b ≤ a + b := by exact le_add_of_nonneg_left ha
-        _ ≤ 0 := h
-    · -- Show `0 ≤ b`
-      exact hb
+  refine (add_eq_zero_iff_of_nonneg ha hb).mp ?_
+  refine le_antisymm h ?_
+  exact add_nonneg ha hb
 
 theorem finset_max_eq [LinearOrder α] (s: Finset α) {m : α} (mem: m ∈ s) (other: ∀n ∈ s, n ≤ m)
   : s.max = WithBot.some m :=

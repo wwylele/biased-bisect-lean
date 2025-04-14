@@ -1,0 +1,16 @@
+name = "BiasedBisect"
+defaultTargets = ["BiasedBisect"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
+
+[[require]]
+scope = "leanprover"
+name = "doc-gen4"
+
+[[lean_lib]]
+name = "BiasedBisect"

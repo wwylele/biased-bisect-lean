@@ -5,11 +5,13 @@ import Mathlib.Analysis.Complex.Polynomial.Basic
 import Mathlib.Data.PNat.Prime
 import Mathlib.LinearAlgebra.Lagrange
 import Mathlib.RingTheory.Int.Basic
-/-
 
-This file discusses when s and t are positive integers.
+/-!
+# Integer $s, t$
 
-Most statements here can be generalized to when s/t are rationals,
+We explore s and t are positive integers.
+
+Most statements here can be generalized to when $s/t$ are rationals,
 but the generalization will be deferred to homogeneity.
 
 -/

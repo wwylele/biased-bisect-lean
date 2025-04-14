@@ -1,20 +1,28 @@
 import BiasedBisect.Basic
 import Mathlib.Data.PNat.Prime
 
-/-
-In this file, we prove a family of "inert" theorems.
+/-!
+# Inert behavior when changing $s,t$
+
+We prove a family of "inert" theorems.
 The w function, along with many underlying structures, demonstrate a behavior
-where for a fixed n, the function value doesn't change along s/t line within a small interval
+where for a fixed $n$, the function value doesn't change along $s/t$ line within a small interval
 Such interval is always between a pair of Farey neighbours.
 
-To be specific, for positive integers a, b, c, and d such that ad - bc = 1,
-and for all s and t usch that c/d < s/t < a/b,
-the w function is a constant as long as n isn't too large (we will find the bound for n soon)
+To be specific, for positive integers $a$, $b$, $c$, and $d$ such that $ad - bc = 1$,
+and for all $s$ and $t$ usch that $c/d < s/t < a/b$,
+the $w$ function is a constant as long as $n$ isn't too large (we will find the bound for $n$ soon)
 
-We will use such tuple (a, b, c, d) a lot in the following theorems, which we call an inert interval.
+We will use such tuple $(a, b, c, d)$ a lot in the following theorems, which we call an inert tuple.
 
-Intuitively, changing s/t slightly is to rotate the scanning line over Λ a little bit.
+Intuitively, changing $s/t$ slightly is to rotate `Λline` little bit.
 When such rotation doesn't hit any lattice points, a lot of functions we have constructed stay constant.
+
+## Main statements
+ - `wₘᵢₙ_inert`, `wₘₐₓ_inert`, and `wₗᵢ_inert` state that $w$ doesnt't change along with small change to $s,t$
+   as long as $n$ isn't too large.
+ - `wₘᵢₙ_inert_edge`, `wₘₐₓ_inert_edge` and `wₗᵢ_inert_edge` explicitly calculates $w$ when $t$ is very large.
+ - `wₘᵢₙ_inert_edge'`, `wₘₐₓ_inert_edge'` and `wₗᵢ_inert_edge'` explicitly calculates $w$ when $s$ is very large.
 -/
 
 /-
