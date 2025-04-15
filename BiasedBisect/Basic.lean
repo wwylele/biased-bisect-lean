@@ -73,7 +73,10 @@ by
   · simpa using other
   · exact Finset.le_max mem
 
-
+/-!
+A lot of statements requires positive numbers, so we define a convenient class
+to pass them around.
+-/
 
 class PosReal (x : ℝ) : Prop where
   pos : x > 0
@@ -97,26 +100,25 @@ instance (s: ℕ+): PosReal s where
     have nat: (s: ℕ) > 0 := by exact PNat.pos s
     exact Nat.cast_pos'.mpr nat
 
-/-
-Throughout the file, we will use a pair of real positive parameters s and t.
+/-!
+Throughout the file, we will use a pair of real positive parameters $s$ and $t$.
 
-We start with the lattic Λ = ℕ × ℕ and assign each lattice point (p, q) a value
-δ = ps + qt. Visually, this is drawing a line passing the point with a
+We start with the lattic `Λ = ℕ × ℕ` and assign each lattice point $(p, q)$ a value
+$δ = ps + qt$. Visually, this is drawing a line passing the point with a
 fixed slope (namely -s/t) and measures how far away it is from the origin.
 
-All possible δ makes up the set Δ. One can notice that the "shape" of this set
-is different depending on whether s/t is rational or not:
- - For irrational s/t, each lattice point will get a assigned a unique δ, and
-   Δ get more dense when we are futher away from the origin
- - For rational s/t, a line of slope -s/t can pass multiple lattice points,
-   and eventually the gap between δ is stabilized at a fixed value gcd(s, t)
+All possible $δ$ makes up the set `Δ`. One can notice that the "shape" of this set
+is different depending on whether $s/t$ is rational or not:
+ - For irrational $s/t$, each lattice point will get a assigned a unique $δ$, and
+   `Δ` get more dense when we are futher away from the origin.
+ - For rational $s/t$, a line of slope $-s/t$ can pass multiple lattice points,
+   and eventually the gap between $δ$ is stabilized at a fixed value $\gcd(s, t)$.
 -/
-
 def Δ(s t: ℝ) :=
   {δ | ∃ p q: ℕ, p * s + q * t = δ}
 
-/-
-The set Δ is symmetric for s and t. We will explore this symmetry a lot later on.
+/-!
+The set `Δ` is symmetric for $s$ and $t$. We will explore this symmetry a lot later on.
 -/
 theorem Δ_symm(s t: ℝ): Δ s t = Δ t s := by
   ext
@@ -128,10 +130,10 @@ theorem Δ_symm(s t: ℝ): Δ s t = Δ t s := by
   constructor
   all_goals apply oneway
 
-/-
+/-!
 Another property we will explore is homogeneity:
-parameters (l * s, l * t) is closely related to (s, t),
-and the associated objects is either the same, or scaled by l
+parameters $(l s, l t)$ is closely related to $(s, t)$,
+and the associated objects is either the same, or scaled by $l$.
 -/
 theorem Δ_homo(s t l: ℝ) [lpos: PosReal l]: ∀δ, δ ∈ Δ s t ↔ l * δ ∈ Δ (l * s) (l * t) := by
   intro d
@@ -148,16 +150,16 @@ theorem Δ_homo(s t l: ℝ) [lpos: PosReal l]: ∀δ, δ ∈ Δ s t ↔ l * δ �
     rw [mul_add, ← mul_assoc, ← mul_assoc, mul_comm l, mul_comm l, mul_assoc, mul_assoc]
     exact mem
 
-/-
-For each lattice point, we can assign a δ. As previously mentioned,
-this is injective only when s/t is irrational
+/-!
+For each lattice point, we can assign a $δ$. As previously mentioned,
+this is injective only when $s/t$ is irrational.
 -/
 def δₚ(s t: ℝ) (pq: ℕ × ℕ): ℝ :=
   match pq with
   | (p, q) => p * s + q * t
 
-/-
-Similarly, δₚ is also symmetric, but one needs to swap the coordinates of the input
+/-!
+Similarly, `δₚ` is also symmetric, but one needs to swap the coordinates of the input.
 -/
 lemma δₚ_symm (s t: ℝ) (p q: ℕ): δₚ s t (p, q) = δₚ t s (q, p) := by
   unfold δₚ
@@ -168,10 +170,10 @@ example : 27 ∈ Δ 10 7 := by
   use 2, 1
   norm_num
 
-/-
-We can draw a line with slope -s/t and only consider lattice points enveloped by the line,
+/-!
+We can draw a line with slope $-s/t$ and only consider lattice points enveloped by the line,
 including those on the line. Equalently, this is considering only points whose assigned
-δ is less or equal to a given value. We call these subsets as "ceiled"
+$δ$ is less or equal to a given value. We call these subsets as "ceiled".
 -/
 
 def Δceiled(s t ceil: ℝ) :=
@@ -197,8 +199,8 @@ lemma Λceiled_homo (s t δ l: ℝ) [PosReal l]:
   rw [mul_assoc, mul_assoc, ← mul_add]
   rw [mul_le_mul_left PosReal.pos]
 
-/-
-As an important example, the subset ceiled by 0 only includes the point (0, 0)
+/-!
+As an important example, the subset ceiled by $0$ only includes the point $(0, 0)$
 -/
 lemma Λceiled₀ (s t: ℝ) [PosReal s] [PosReal t]: Λceiled s t 0 = {(0, 0)} := by
   unfold Λceiled
@@ -222,8 +224,8 @@ lemma Λceiled₀ (s t: ℝ) [PosReal s] [PosReal t]: Λceiled s t 0 = {(0, 0)} 
     simp only [Prod.mk_zero_zero, Set.mem_setOf_eq, Prod.fst_zero, CharP.cast_eq_zero, zero_mul,
       Prod.snd_zero, add_zero, le_refl]
 
-/-
-And if the ceiling is negative, Λceiled is the empty set.
+/-!
+If the ceiling is negative, `Λceiled` is the empty set.
 -/
 lemma Λceiled_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
 Λceiled s t δ = ∅ := by
@@ -234,8 +236,8 @@ lemma Λceiled_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
   apply add_nonneg
   all_goals exact mul_nonneg (Nat.cast_nonneg _) (le_of_lt PosReal.pos)
 
-/-
-Obviously, the δₚ maps all ceiled lattice points to all ceiled δ
+/-!
+`δₚ` maps all ceiled lattice points to all ceiled $δ$
 -/
 lemma Λ_map_ceiled (s t ceil: ℝ): δₚ s t '' (Λceiled s t ceil) = Δceiled s t ceil := by
   ext y; constructor
@@ -254,11 +256,12 @@ lemma Λ_map_ceiled (s t ceil: ℝ): δₚ s t '' (Λceiled s t ceil) = Δceiled
       exact bounded
     · exact deltaEFromDot
 
-/-
-We would like to prove that Δceiled is finite.
+/-!
+We would like to prove that `Δceiled` is finite.
 We first introduce bounded natural numbers, and their products
 and show their finiteness.
 -/
+
 def ℕceiled (ceil: ℝ) := {p: ℕ | p ≤ ceil}
 
 instance ℕceiled_finite (ceil: ℝ): Finite (ℕceiled ceil) := by
@@ -285,8 +288,8 @@ instance ΛRec_finite (pbound qbound: ℝ): Finite (ΛRec pbound qbound) := by
   constructor
   all_goals left; apply ℕceiled_finite
 
-/-
-We can show Λceiled is always inside a rectangle region, hence finite
+/-!
+`Λceiled` is always inside a rectangle region, hence finite
 -/
 lemma Λceiled_in_rec (s t ceil: ℝ) [PosReal s] [PosReal t]:
   Λceiled s t ceil ⊆ ΛRec (ceil / s) (ceil / t) := by
@@ -309,21 +312,24 @@ instance Λceiled_finite(s t ceil: ℝ) [PosReal s] [PosReal t]: Finite (Λceile
 noncomputable instance (s t ceil: ℝ) [PosReal s] [PosReal t]:
 Fintype (Λceiled s t ceil) := by apply Fintype.ofFinite
 
-/-
-As the image of δₚ, Δ is therefore also finite, and consequently well-ordered
+/-!
+As the image of `δₚ`, `Δceiled` is therefore also finite.
 -/
 instance Δceiled_finite(s t ceil: ℝ) [PosReal s] [PosReal t]: Finite (Δceiled s t ceil) := by
   rw [← Λ_map_ceiled]
   apply Set.Finite.image (δₚ s t) (Λceiled_finite s t ceil)
 
+/-!
+Consequently `Δceiled` well-ordered.
+-/
 lemma Δceiled_WF (s t ceil: ℝ) [PosReal s] [PosReal t]: (Δceiled s t ceil).IsWF := by
   apply Set.Finite.isWF
   apply Δceiled_finite s t ceil
 
-/-
+/-!
 We now can show the whole set Δ is also well-ordered.
 Although Δ is an infinite set and can become arbitrarily dense for larger elements,
-its base, as indicated by the ceiled variation, behaves friendly for the order
+its base, as indicated by the ceiled variation, behaves friendly for the order.
 -/
 lemma Δ_WF (s t: ℝ) [PosReal s] [PosReal t]: Set.IsWF (Δ s t) := by
   have Δceiled_has_no_chain (ceil: ℝ):
@@ -346,9 +352,10 @@ lemma Δ_WF (s t: ℝ) [PosReal s] [PosReal t]: Set.IsWF (Δ s t) := by
         simp only [zero_le]
   exact Δceiled_has_no_chain (f (OrderDual.toDual 0)) f fStrictAnti Δ_chain_is_in_Δceiled
 
-/-
+/-!
 Δ always has the smallest element 0
 -/
+
 lemma δ0 (s t: ℝ): 0 ∈ Δ s t := by
   use 0, 0
   norm_num
@@ -369,14 +376,14 @@ lemma Δ_min (s t: ℝ) [PosReal s] [PosReal t]:
   intro δ δin δNotFirst
   apply lt_of_le_of_ne (Δ_min_element s t δin) (Ne.symm δNotFirst)
 
-/-
+/-!
 We also introduce "floored" subsets, the complement of ceiled ones.
-These subsets contain elements where δ is larger than a certain threshold.
+These subsets contain elements where $δ$ is larger than a certain threshold.
 -/
 def Δfloored (s t floor: ℝ) :=
   Δ s t ∩ {δ: ℝ | δ > floor}
 
-/-
+/-!
 Obviously, floored sets are also symmetric.
 -/
 lemma Δfloored_symm (s t floor: ℝ):
@@ -385,8 +392,8 @@ lemma Δfloored_symm (s t floor: ℝ):
   congr
   apply Δ_symm
 
-/-
-... and homogeneous
+/-!
+... and homogeneous.
 -/
 lemma Δfloored_homo (s t floor l: ℝ) [PosReal l]:
 ∀δ, δ ∈ Δfloored s t floor ↔ l * δ ∈ Δfloored (l * s) (l * t) (l * floor) := by
@@ -404,8 +411,8 @@ lemma Δfloored_homo (s t floor l: ℝ) [PosReal l]:
     · exact (mul_lt_mul_left PosReal.pos).mp dfloor
 
 
-/-
-Floored sets are still infinite, but are well-ordered as subsets
+/-!
+Floored sets are still infinite, but are well-ordered as subsets.
 -/
 lemma Δfloored_WF (s t floor: ℝ) [PosReal s] [PosReal t]:
   Set.IsWF (Δfloored s t floor) := by
@@ -413,8 +420,8 @@ lemma Δfloored_WF (s t floor: ℝ) [PosReal s] [PosReal t]:
   rintro _ ⟨δin, _⟩
   exact δin
 
-/-
-Floored sets are always non-empty due to the unboundness of Δ
+/-!
+Floored sets are always non-empty due to the unboundness of Δ.
 -/
 lemma Δfloored_nonempty (s t floor: ℝ) [PosReal s] [PosReal t]:
 (Δfloored s t floor).Nonempty := by
@@ -431,20 +438,21 @@ lemma Δfloored_nonempty (s t floor: ℝ) [PosReal s] [PosReal t]:
         _ < Nat.ceil (floor / s) + 1 := by apply lt_add_one
     · exact PosReal.pos
 
-/-
+/-!
 Since Δ is well-ordered, it is possible to sort all elements
 and enumerate them starting from the smallest one (0).
 
-We first define the find the next δ' given an element δ using floored subsets.
-Note that this function also accepts input outside of Δ. It simply finds the
-smallest δ that's larger than the input
+We first define the find the next $δ'$ given an element $δ$ using floored subsets.
+Note that this function also accepts input outside of `Δ`. It simply finds the
+smallest $δ$ that's larger than the input.
 -/
+
 noncomputable
 def δnext (s t floor: ℝ) [PosReal s] [PosReal t]: ℝ :=
   Set.IsWF.min (Δfloored_WF s t floor) (Δfloored_nonempty s t floor)
 
-/-
-Again the symmetry is passed on to δnext
+/-!
+Again the symmetry is passed on to `δnext`.
 -/
 lemma δnext_symm (s t floor: ℝ) [PosReal s] [PosReal t]:
 δnext s t floor = δnext t s floor := by
@@ -452,8 +460,8 @@ lemma δnext_symm (s t floor: ℝ) [PosReal s] [PosReal t]:
   congr
   apply Δfloored_symm
 
-/-
-δnext is homogeneous
+/-!
+`δnext` is homogeneous.
 -/
 lemma δnext_homo (s t floor l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
 l * δnext s t floor = δnext (l * s) (l * t) (l * floor) := by
@@ -469,16 +477,16 @@ l * δnext s t floor = δnext (l * s) (l * t) (l * floor) := by
     rw [drw]
     exact mul_le_mul_of_nonneg_left (Set.IsWF.min_le _ _ mem) (le_of_lt PosReal.pos)
 
-/-
-δnext will always output an element in Δ
+/-!
+`δnext` will always output an element in `Δ`.
 -/
 lemma δnext_in_Δ (s t floor: ℝ) [PosReal s] [PosReal t]: δnext s t floor ∈ Δ s t := by
   have: δnext s t floor ∈ Δfloored s t floor := by
     apply Set.IsWF.min_mem
   exact Set.mem_of_mem_inter_left this
 
-/-
-δnext will always output an element larger than the input
+/-!
+`δnext` will always output an element larger than the input.
 -/
 lemma δnext_larger (s t floor: ℝ) [PosReal s] [PosReal t]: δnext s t floor > floor := by
   unfold δnext
@@ -489,10 +497,10 @@ lemma δnext_larger (s t floor: ℝ) [PosReal s] [PosReal t]: δnext s t floor >
     exact mem
   apply h (δnext s t floor) (Set.IsWF.min_mem _ _)
 
-/-
-δnext also effectively gives the "gap" between the input δ and the next δ'.
+/-!
+`δnext` also effectively gives the "gap" between the input δ and the next δ'.
 There is no additional lattice point between this gap,
-which means Λceiled is inert for any bound given between the gap
+which means `Λceiled` is inert for any bound given between the gap.
 -/
 lemma Λceiled_gap (s t δ β: ℝ) [PosReal s] [PosReal t] (leftBound: δ ≤ β) (rightBound: β < δnext s t δ):
 Λceiled s t δ = Λceiled s t β := by
@@ -516,17 +524,18 @@ lemma Λceiled_gap (s t δ β: ℝ) [PosReal s] [PosReal t] (leftBound: δ ≤ �
     simp only [not_lt] at inFloored
     exact lt_of_lt_of_le rightBound inFloored
 
-/-
-We can define the sequence δₖ by sorting all elements in Δ.
-The index k will also be used a lot for other related sequences.
+/-!
+We can define the sequence `δₖ` by sorting all elements in `Δ`.
+The index $k$ will also be used a lot for other related sequences.
 -/
+
 noncomputable
 def δₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℝ
 | 0 => 0
 | Nat.succ n => δnext s t (δₖ s t n)
 
-/-
-δₖ is obviously strictly increasing
+/-!
+`δₖ` is obviously strictly increasing.
 -/
 lemma δₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (δₖ s t) := by
   have mono (s t: ℝ) (k a: ℕ) [PosReal s] [PosReal t]: δₖ s t k < δₖ s t (k + a + 1) := by
@@ -547,8 +556,8 @@ lemma δₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (δₖ s t) := b
   rw [a_is_diff]
   apply mono
 
-/-
-δₖ covers all elements in Δ
+/-!
+`δₖ` covers all elements in `Δ`.
 -/
 lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: ∃k, δₖ s t k = δ := by
   -- do induction on Δ
@@ -654,8 +663,8 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
 
 
 
-/-
-δₖ is also symmetric
+/-!
+`δₖ` is also symmetric.
 -/
 lemma δₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: δₖ s t k = δₖ t s k := by
   induction k with
@@ -665,14 +674,14 @@ lemma δₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: δₖ s t k = δ�
     rw [prev]
     apply δnext_symm
 
-/-
-δₖ always starts with 0
+/-!
+`δₖ` always starts with 0.
 -/
 lemma δ₀ (s t: ℝ) [PosReal s] [PosReal t]: δₖ s t 0 = 0 := by
   rfl
 
-/-
-δₖ is homogeneous
+/-!
+`δₖ` is homogeneous.
 -/
 lemma δₖ_homo (s t l: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal l]: l * δₖ s t k = δₖ (l * s) (l * t) k := by
   induction k with
@@ -682,27 +691,28 @@ lemma δₖ_homo (s t l: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal l]: l * 
     rw [← prev]
     rw [← δnext_homo]
 
-/-
-All δₖ are obviously elements in Δ.
-Together with δₖ_surjΔ, this shows δₖ is a bijection between Δ and ℕ.
+/-!
+All `δₖ` are obviously elements in `Δ`.
+Together with `δₖ_surjΔ`, this shows `δₖ` is a bijection between `Δ` and `ℕ`.
 -/
 lemma δₖ_in_Δ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: δₖ s t k ∈ Δ s t := by
   cases k with
   | zero => apply δ0
   | succ n => apply δnext_in_Δ
 
-/-
+/-!
 We introduce a new kind of subset of the lattice:
-lattice points whose assigned δ is exactly a given constant.
-It can be empty if the given constant is not in Δ
+lattice points whose assigned $δ$ is exactly a given constant.
+It can be empty if the given constant is not in `Δ`.
 
-As one can notice, this subset is a sub-singleton when s/t is irrational,
-but we won't expand on it here
+As one can notice, this subset is a sub-singleton when $s/t$ is irrational,
+but we won't expand on it here.
 -/
+
 def Λline (s t δ: ℝ): Set (ℕ × ℕ) :=
   ((δₚ s t) ⁻¹' Set.singleton δ)
 
-/-
+/-!
 This subset is again symmetric with lattice coordinates swapped.
 -/
 lemma Λline_symm (s t δ: ℝ) (p q: ℕ) (h: (p, q) ∈ Λline s t δ):
@@ -714,8 +724,8 @@ lemma Λline_symm (s t δ: ℝ) (p q: ℕ) (h: (p, q) ∈ Λline s t δ):
   rw [δₚ_symm t s q p]
   exact h
 
-/-
-If the line is negative, it won't cover any lattice points
+/-!
+If the line is negative, it won't cover any lattice points.
 -/
 lemma Λline_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
 Λline s t δ = ∅ := by
@@ -728,12 +738,12 @@ lemma Λline_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
   apply add_nonneg
   all_goals exact mul_nonneg (Nat.cast_nonneg _) (le_of_lt PosReal.pos)
 
-/-
-Elements in Λline is allowed to shift in coordinates and change their δ by s.
+/-!
+Elements in `Λline` is allowed to shift in coordinates and change their $δ$ by $s$.
 
-Note that this is not saying Λline of δ and of δ + s are one-to-one.
-When shifting δ by s, it can potentially introduce a new element with p' = 0. This element
-is ruled out by the p' = p + 1 ≥ 1 in the statement
+Note that this is not saying `Λline` of $δ$ and of $δ + s$ are one-to-one.
+When shifting $δ$ by $s$, it can potentially introduce a new element with $p' = 0$. This element
+is ruled out by the $p' = p + 1 ≥ 1$ in the statement.
 -/
 lemma Λline_s (s t δ: ℝ) [PosReal s] [PosReal t]:
 ∀(p q: ℕ), (p, q) ∈ Λline s t δ ↔ (p + 1, q) ∈ (Λline s t (δ + s)) := by
@@ -761,8 +771,8 @@ lemma Λline_s (s t δ: ℝ) [PosReal s] [PosReal t]:
     simp only [Nat.cast_add, Nat.cast_one] at onLine
     linarith
 
-/-
-By symmetry, we can state similarly for t and q
+/-!
+By symmetry, we can state similarly for $t$ and $q$.
 -/
 lemma Λline_t (s t δ: ℝ) [PosReal s] [PosReal t]:
 ∀(p q: ℕ), (p, q) ∈ Λline s t δ ↔ (p, q + 1) ∈ (Λline s t (δ + t)) := by
@@ -779,8 +789,8 @@ lemma Λline_t (s t δ: ℝ) [PosReal s] [PosReal t]:
     apply (Λline_s t s δ q p).mpr
     exact h
 
-/-
-The line subset at δ = 0 gives the singleton (0, 0)
+/-!
+The line subset at $δ = 0$ gives the singleton $(0, 0)$.
 -/
 lemma Λline₀ (s t: ℝ) [PosReal s] [PosReal t]: Λline s t 0 = {(0, 0)} := by
   unfold Λline
@@ -811,16 +821,16 @@ lemma Λline₀ (s t: ℝ) [PosReal s] [PosReal t]: Λline s t 0 = {(0, 0)} := b
     unfold δₚ
     simp only [CharP.cast_eq_zero, zero_mul, add_zero]
 
-/-
-Λline is not empty when the input is from Δ
+/-!
+`Λline` is not empty when the input is from `Δ`.
 -/
 lemma Λline_nonempty (s t δ: ℝ) (δinΩ: δ ∈ Δ s t): (Λline s t δ).Nonempty := by
   rcases δinΩ with ⟨p, q, pqOnLine⟩
   use (p, q)
   exact pqOnLine
 
-/-
-Λline is a subset of the corresponding Λceiled, and therefore is also finite.
+/-!
+`Λline` is a subset of the corresponding `Λceiled`, and therefore is also finite.
 -/
 lemma Λline_in_Λceiled (s t δ: ℝ): Λline s t δ ⊆ Λceiled s t δ := by
   rintro ⟨p, q⟩ pqOnLine
@@ -836,18 +846,19 @@ Finite (Λline s t δ) := by
 noncomputable instance (s t δ: ℝ) [PosReal s] [PosReal t]:
 Fintype (Λline s t δ) := by apply Fintype.ofFinite
 
-/-
-Now we assign each lattice point with another value J,
-which is the Pascal triangle where p- and q-axies are the sides of the triangle
+/-!
+Now we assign each lattice point with another value $J$,
+which is the Pascal triangle where $p$- and $q$-axies are the sides of the triangle.
 -/
+
 def Jₚ: ℕ × ℕ → ℕ
 | (p, q) => Nat.choose (p + q) (p)
 
-/-
-Just like the Pascal triangle, Jₚ follows the recurrence relation.
+/-!
+Just like the Pascal triangle, `Jₚ` follows the recurrence relation.
 
-It should be noted that if we embed Λ in ℤ × ℤ and assign J = 0 to the rest of the points,
-all points still follow this recurrence relation *except* at (0, 0).
+It should be noted that if we embed $Λ$ in ℤ × ℤ and assign $J = 0$ to the rest of the points,
+all points still follow this recurrence relation *except* at $(0, 0)$.
 This defect will show up again later.
 -/
 lemma Jₚ_rec (p q: ℕ):
@@ -860,8 +871,8 @@ Jₚ ((p + 1), (q + 1)) = Jₚ ((p + 1), q) + Jₚ (p, (q + 1)) := by
   congr 2
   linarith
 
-/-
-A gross bound for Jₚ to decompose it to a product of f(p) and g(q)
+/-!
+A gross bound for `Jₚ` to decompose it to a product of $f(p)$ and $g(q)$.
 -/
 lemma Jₚ_bound: ∀p, ∀q, Jₚ (p, q) ≤ 2^p * 2^q := by
   intro p
@@ -885,16 +896,16 @@ lemma Jₚ_bound: ∀p, ∀q, Jₚ (p, q) ≤ 2^p * 2^q := by
       rw [right]
       exact add_le_add prev' (prev (q + 1))
 
-/-
-On Λ, J are all nonzero
+/-!
+On Λ, $J$ are all nonzero.
 -/
 lemma Jₚ_nonzero (pq: ℕ × ℕ): Jₚ pq > 0 := by
   unfold Jₚ
   apply Nat.choose_pos
   apply Nat.le_add_right
 
-/-
-J itself is symmatrical for swapped coordinates.
+/-!
+$J$ itself is symmatrical for swapped coordinates.
 -/
 lemma Jₚ_symm (p q: ℕ): Jₚ (p, q) = Jₚ (q, p) := by
   unfold Jₚ
@@ -913,15 +924,15 @@ lemma Jₚ_symm (p q: ℕ): Jₚ (p, q) = Jₚ (q, p) := by
         exact Eq.symm (Nat.eq_sub_of_add_eq rfl)
       · exact Nat.le_add_right p q
 
-/-
-We can evaluate J for a given δ, by summing up J of all points passed by the line
+/-!
+We can evaluate $J$ for a given $δ$, by summing up $J$ of all points passed by the line.
 -/
 noncomputable
 def Jline (s t δ: ℝ) [PosReal s] [PosReal t]: ℕ :=
   ∑pq ∈ (Λline s t δ).toFinset, Jₚ pq
 
-/-
-The evaluation on the line is symmetric for s and t
+/-!
+The evaluation on the line is symmetric for $s$ and $t$.
 -/
 lemma Jline_symm (s t δ: ℝ) [PosReal s] [PosReal t]: Jline s t δ = Jline t s δ := by
   apply Finset.sum_of_injOn (fun pq ↦ (pq.2, pq.1))
@@ -946,14 +957,14 @@ lemma Jline_symm (s t δ: ℝ) [PosReal s] [PosReal t]: Jline s t δ = Jline t s
     intro a b mem
     exact Jₚ_symm a b
 
--- A helper function to zero the value if the input is zero
+/-! A helper function to zero the value if the input is zero. -/
 def shut(p: ℕ) (value: ℕ) := match p with
 | Nat.zero => 0
 | Nat.succ _ => value
 
-/-
-Jline can be shifted by s. The sum will however be affected by the potential point
-on the p = 0 boundary, hence the equality needs to remove such point
+/-!
+`Jline` can be shifted by $s$. The sum will however be affected by the potential point
+on the $p = 0$ boundary, hence the equality needs to remove such point.
 -/
 lemma Jline_s (s t δ: ℝ) [PosReal s] [PosReal t]:
 Jline s t (δ - s) = ∑⟨p, q⟩ ∈ (Λline s t δ).toFinset, shut p (Jₚ (p - 1, q)) := by
@@ -1011,8 +1022,8 @@ Jline s t (δ - s) = ∑⟨p, q⟩ ∈ (Λline s t δ).toFinset, shut p (Jₚ (p
     unfold shut
     simp only [add_tsub_cancel_right, Prod.mk.eta]
 
-/-
-A similar statement can be said for t
+/-!
+A similar statement can be said for $t$
 -/
 lemma Jline_t (s t δ: ℝ) [PosReal s] [PosReal t]:
 Jline s t (δ - t) = ∑⟨p, q⟩ ∈ (Λline s t δ).toFinset, shut q (Jₚ (p, q - 1)) := by
@@ -1037,9 +1048,9 @@ Jline s t (δ - t) = ∑⟨p, q⟩ ∈ (Λline s t δ).toFinset, shut q (Jₚ (p
     rw [Jₚ_symm]
 
 
-/-
+/-!
 Derived from the recurrence of binomial coefficents,
-Jline is also recurrent, except for at δ = 0
+`Jline` is also recurrent, except for at $δ = 0$.
 -/
 lemma Jline_rec (s t δ: ℝ) (δ0: δ ≠ 0) [PosReal s] [PosReal t]:
 Jline s t δ = Jline s t (δ - s) + Jline s t (δ - t) := by
@@ -1086,8 +1097,8 @@ Jline s t δ = Jline s t (δ - s) + Jline s t (δ - t) := by
       rw [Jₚ_rec]
       apply add_comm
 
-/-
-At δ = 0, Jline gives the "seed" 1 that induces all other values
+/-!
+At $δ = 0$, Jline gives the "seed" 1 that induces all other values.
 -/
 lemma Jline₀ (s t: ℝ) [PosReal s] [PosReal t]: Jline s t 0 = 1 := by
   unfold Jline
@@ -1100,8 +1111,8 @@ lemma Jline₀ (s t: ℝ) [PosReal s] [PosReal t]: Jline s t 0 = 1 := by
   intro x h
   rfl
 
-/-
-For all elements of Δ, Jline is nonzero
+/-!
+For all elements of `Δ`, `Jline` is nonzero.
 -/
 lemma Jline_nonzero (s t δ: ℝ) [PosReal s] [PosReal t] (δinΔ: δ ∈ Δ s t):
 Jline s t δ > 0 := by
@@ -1114,16 +1125,17 @@ Jline s t δ > 0 := by
     1 ≤ Jₚ pq := Nat.succ_le_of_lt (Jₚ_nonzero _)
     _ ≤ Jline s t δ := Finset.single_le_sum nonneg (Set.mem_toFinset.mpr pqOnLine)
 
-/-
-Since we have defined the sequence δₖ for all elements in Δ,
-we can map them to a sequence Jₖ by Jline
+/-!
+Since we have defined the sequence `δₖ` for all elements in `Δ`,
+we can map them to a sequence `Jₖ` by `Jline`
 -/
+
 noncomputable
 def Jₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
   fun k ↦ Jline s t (δₖ s t k)
 
-/-
-The sequence Jₖ is also symmetric and non-zero
+/-!
+The sequence `Jₖ` is symmetric.
 -/
 lemma Jₖ_symm (s t: ℝ) [PosReal s] [PosReal t]: Jₖ s t = Jₖ t s := by
   ext
@@ -1131,6 +1143,9 @@ lemma Jₖ_symm (s t: ℝ) [PosReal s] [PosReal t]: Jₖ s t = Jₖ t s := by
   rw [δₖ_symm]
   rw [Jline_symm]
 
+/-!
+The sequence `Jₖ` is non-zero.
+-/
 lemma Jₖ_nonzero (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: Jₖ s t k > 0 := by
   apply Jline_nonzero
   apply δₖ_in_Δ
@@ -1140,12 +1155,13 @@ example (s t: ℝ) [PosReal s] [PosReal t]: Jₖ s t 0 = 1 := by
   unfold δₖ
   apply Jline₀
 
-/-
-We also define a pair of sequence Jsₖ and Jtₖ similar to Jₖ,
-but the line is shifted by s or t.
+/-!
+We also define a pair of sequence `Jsₖ` and `Jtₖ` similar to `Jₖ`,
+but the line is shifted by $s$ or $t$.
 The shifting can make some line no longer pass any lattice points,
-so some Jsₖ and Jtₖ are zero
+so some `Jsₖ` and `Jtₖ` are zero.
 -/
+
 noncomputable
 def Jsₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
   fun k ↦ Jline s t ((δₖ s t k) - s)
@@ -1154,8 +1170,8 @@ noncomputable
 def Jtₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
   fun k ↦ Jline s t ((δₖ s t k) - t)
 
-/-
-Jsₖ and Jtₖ are symmetric to each other
+/-!
+`Jsₖ` and `Jtₖ` are symmetric to each other.
 -/
 def Jstₖ_symm (s t: ℝ) (k: ℕ)[PosReal s] [PosReal t]:
 Jsₖ s t k = Jtₖ t s k := by
@@ -1165,8 +1181,8 @@ Jsₖ s t k = Jtₖ t s k := by
   congr 2
   exact δₖ_symm s t k
 
-/-
-Derived from Jline recurrence formula, Jₖ can be decomposed into Jsₖ and Jtₖ
+/-!
+Derived from `Jline` recurrence formula, `Jₖ` can be decomposed into `Jsₖ` and `Jtₖ`
 -/
 lemma Jstₖ_rec (s t: ℝ) (k: ℕ) (k0: k ≥ 1) [PosReal s] [PosReal t]:
 Jₖ s t k = Jsₖ s t k + Jtₖ s t k := by
@@ -1179,16 +1195,17 @@ Jₖ s t k = Jsₖ s t k + Jtₖ s t k := by
   apply δₖ_mono
   exact k0
 
-/-
-Just like Jline for Λline, we can define Jceiled for Λceiled
-which sums over all lattices bounded by δ.
+/-!
+Just like `Jline` for `Λline`, we can define `Jceiled` for `Λceiled`
+which sums over all lattices bounded by $δ$.
 -/
+
 noncomputable
 def Jceiled (s t: ℝ) [PosReal s] [PosReal t] (δ: ℝ): ℕ :=
   ∑pq ∈ (Λceiled s t δ).toFinset, Jₚ pq
 
-/-
-Jceiled is symmetric
+/-!
+`Jceiled` is symmetric.
 -/
 lemma Jceiled_symm (s t δ: ℝ) [PosReal s] [PosReal t]:
 Jceiled s t δ = Jceiled t s δ := by
@@ -1213,8 +1230,8 @@ Jceiled s t δ = Jceiled t s δ := by
     intro a b mem
     exact Jₚ_symm a b
 
-/-
-... and homogeneous
+/-!
+... and homogeneous.
 -/
 lemma Jceiled_homo (s t δ l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
 Jceiled s t δ = Jceiled (l * s) (l * t) (l * δ) := by
@@ -1223,9 +1240,9 @@ Jceiled s t δ = Jceiled (l * s) (l * t) (l * δ) := by
   simp only [Set.toFinset_inj]
   rw [← Λceiled_homo]
 
-/-
-Jceiled is weakly increasing with regard to δ.
-As δ grows, Λceiled can either remain unchanged for include new points.
+/-!
+`Jceiled` is weakly increasing with regard to $δ$.
+As $δ$ grows, Λceiled can either remain unchanged for include new points.
 -/
 lemma Jceiled_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (Jceiled s t) := by
   unfold Monotone
@@ -1240,9 +1257,9 @@ lemma Jceiled_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (Jceiled s t) :=
   · intro _ _ _
     apply Nat.zero_le
 
-/-
-The growth of Jceiled is precisely described by Jline.
-Another way to view this is to say Jceiled = ΣJline for all lines in the bound
+/-!
+The growth of `Jceiled` is precisely described by `Jline`.
+Another way to view this is to say `Jceiled = ΣJline` for all lines in the bound.
 -/
 lemma Jceiled_accum (s t δ: ℝ) [PosReal s] [PosReal t]:
 Jceiled s t δ + Jline s t (δnext s t δ) = Jceiled s t (δnext s t δ) := by
@@ -1305,12 +1322,13 @@ Jceiled s t δ + Jline s t (δnext s t δ) = Jceiled s t (δnext s t δ) := by
   rw [← union]
   rw [Finset.sum_disjUnion]
 
-/-
-Since there are gaps between δ, Jceiled stops growing when inside these gaps
+/-!
+Since there are gaps between $δ$, `Jceiled` stops growing when inside these gaps.
 We can also derive a few variants of this lemma:
- - As long as β is less than δnext(δ), Jceiled(β) is no larger than Jceiled(δ)
- - or the contrapose: if Jceiled(β) is larger than Jceiled(δ), β must have passed δnext(δ)
+ - As long as $β$ is less than `δnext`$(δ)$, `Jceiled`$(β)$ is no larger than `Jceiled`$(δ)$.
+ - or the contrapose: if `Jceiled`$(β)$ is larger than `Jceiled`$(δ)$, $β$ must have passed `δnext`$(δ)$.
 -/
+
 lemma Jceiled_gap (s t δ β: ℝ) [PosReal s] [PosReal t] (leftBound: δ ≤ β) (rightBound: β < δnext s t δ):
 Jceiled s t δ = Jceiled s t β := by
   unfold Jceiled
@@ -1352,21 +1370,22 @@ lemma Jceiled_pos (s t δ: ℝ) (neg: 0 ≤ δ) [PosReal s] [PosReal t]:
     unfold Λceiled
     simp [neg]
 
-/-
-Now we can define the sequence nₖ as partial sums of Jₖ.
+/-!
+Now we can define the sequence `nₖ` as partial sums of `Jₖ`.
 
-The first element n₀ starts at 1 for reasons we will see later.
-This essentially comes from the defect of binomial coefficient at (0, 0).
+The first element `n₀` starts at $1$ for reasons we will see later.
+This essentially comes from the defect of binomial coefficient at $(0, 0)$.
 
-nₖ will be the n-coordinate of the vertices of several piecewise functions we will introduce
+`nₖ` will be the n-coordinate of the vertices of several piecewise functions we will introduce.
 -/
+
 noncomputable
 def nₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ
 | 0 => 1
 | Nat.succ k => (nₖ s t k) + (Jₖ s t k)
 
-/-
-Since nₖ is the partial sum, we can alternatively express it using Jceiled
+/-!
+Since `nₖ` is the partial sum, we can alternatively express it using `Jceiled`.
 -/
 lemma nₖ_accum (s t: ℝ) (k: ℕ)  [PosReal s] [PosReal t]:
 nₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1)) := by
@@ -1403,8 +1422,8 @@ nₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1)) := by
       apply add_left_cancel_iff.mpr
       apply Jceiled_accum
 
-/-
-nₖ is also symmetric
+/-!
+`nₖ` is also symmetric.
 -/
 lemma nₖ_symm (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t = nₖ t s := by
   ext n
@@ -1416,17 +1435,18 @@ lemma nₖ_symm (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t = nₖ t s := by
     simp only [add_right_inj]
     rw [Jₖ_symm]
 
-/-
-... and homogeneous
+/-!
+... and homogeneous.
 -/
 lemma nₖ_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: nₖ s t = nₖ (l * s) (l * t) := by
   ext k
   rw [nₖ_accum, nₖ_accum]
   rw [← δₖ_homo, ← Jceiled_homo]
 
-/-
-The first two elements of nₖ are always 1 and 2
+/-!
+The first two elements of `nₖ` are always 1 and 2.
 -/
+
 lemma n₀ (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t 0 = 1 := by
   unfold nₖ
   rfl
@@ -1438,8 +1458,8 @@ lemma n₁ (s t: ℝ) [PosReal s] [PosReal t]: nₖ s t 1 = 2 := by
   rw [δₖ]
   rw [Jline₀]
 
-/-
-nₖ grows faster than k it self
+/-!
+`nₖ` grows faster than $k$ it self.
 -/
 lemma nₖ_grow (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: nₖ s t k > k := by
   induction k with
@@ -1452,8 +1472,8 @@ lemma nₖ_grow (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: nₖ s t k > k := b
     · exact prev
     · exact Jₖ_nonzero s t n
 
-/-
-And obviously, nₖ is strictly increasing
+/-!
+And obviously, `nₖ` is strictly increasing.
 -/
 lemma nₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (nₖ s t) := by
   have v1 (k a: ℕ): nₖ s t k < nₖ s t (a + 1 + k) := by
@@ -1482,8 +1502,8 @@ lemma nₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (nₖ s t) := by
   intro k l kl
   exact v2 k l kl
 
-/-
-As a quick corollary, nₖ are all positive
+/-!
+As a quick corollary, `nₖ` are all positive.
 -/
 lemma nₖ_pos (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: nₖ s t k ≠ 0 := by
   have k1: 1 ≤ nₖ s t k := by
@@ -1492,15 +1512,16 @@ lemma nₖ_pos (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: nₖ s t k ≠ 0 := 
     exact Nat.zero_le k
   exact Nat.ne_zero_of_lt k1
 
-/-
-Just as we used Jₖ to define nₖ, we also use Jsₖ and Jtₖ to define
-partial sum sequences wₖ' and wₖ, respectively.
-(The reason wₖ corresponds to t is mostly historical)
+/-!
+Just as we used `Jₖ` to define `nₖ`, we also use `Jsₖ` and `Jtₖ` to define
+partial sum sequences `wₖ'` and `wₖ`, respectively.
+(The reason `wₖ` corresponds to $t$ is mostly historical)
 
-The starting point w₀ = 1 is an artifact, as we will see it doesn't follow
+The starting point `w₀` = 1 is an artifact, as we will see it doesn't follow
 nice properties we will soon see.
-The real starting point of this sequence is w₁ = 1.
+The real starting point of this sequence is `w₁` = 1.
 -/
+
 noncomputable
 def wₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ
 | 0 => 1
@@ -1511,8 +1532,8 @@ def wₖ' (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ
 | 0 => 1
 | Nat.succ k => (wₖ' s t k) + (Jsₖ s t k)
 
-/-
-wₖ and wₖ' are symmetric to each other
+/-!
+`wₖ` and `wₖ'` are symmetric to each other.
 -/
 lemma wₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 wₖ s t k = wₖ' t s k := by
@@ -1529,9 +1550,9 @@ wₖ s t k = wₖ' t s k := by
     apply Jstₖ_symm
 
 /-
-Similarly, wₖ and wₖ' can be alternatively expressed using Jceiled.
-However, this proof is much less trivial than the one for nₖ,
-because some Jsₖ and Jtₖ can be 0 as they don't pass any lattice points.
+Similarly, `wₖ` and `wₖ'` can be alternatively expressed using `Jceiled`.
+However, this proof is much less trivial than the one for `nₖ`,
+because some `Jsₖ` and `Jtₖ` can be 0 as they don't pass any lattice points.
 -/
 lemma wₖ_accum (s t: ℝ) (k: ℕ)  [PosReal s] [PosReal t]:
 wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
@@ -1635,8 +1656,8 @@ wₖ' s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - s) := by
   rw [δₖ_symm]
   exact wₖ_accum t s k
 
-/-
-Similar to nₖ, wₖ/wₖ' are homogeneous
+/-!
+Similar to `nₖ`, `wₖ` and `wₖ'` are homogeneous
 -/
 lemma wₖ_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: wₖ s t = wₖ (l * s) (l * t) := by
   ext k
@@ -1648,8 +1669,8 @@ lemma wₖ'_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: wₖ' s t = w
   rw [wₖ'_accum, wₖ'_accum]
   rw [← δₖ_homo, ← mul_sub, ← Jceiled_homo]
 
-/-
-w₁ = w₁' = 1 is the real starting point of this sequence
+/-!
+`w₁` = `w₁'` = 1 is the real starting point of this sequence.
 -/
 lemma w₁ (s t: ℝ) [PosReal s] [PosReal t]: wₖ s t 1 = 1 := by
   unfold wₖ
@@ -1664,16 +1685,16 @@ lemma w₁' (s t: ℝ) [PosReal s] [PosReal t]: wₖ' s t 1 = 1 := by
   rw [← wₖ_symm]
   exact w₁ t s
 
-/-
-Recurrence formula of wₖ: by swapping s and t, w becomes n - w
-This is the first property that shows w₀ doesn't follow the pattern.
-A more sensible definition of w₀ that follows the Symmetry can be
- - w₀ = 1/2 when s = t
- - w₀ = c if s > t else 1 - c
+/-!
+Recurrence formula of `wₖ`: by swapping $s$ and $t$, $w$ becomes $n - w$
+This is the first property that shows `w₀` doesn't follow the pattern.
+A more sensible definition of `w₀` that follows the Symmetry can be
+ - `w₀ = 1/2` when $s = t$
+ - `w₀ = c` if $s > t$ else `1 - c`
 But these definitions doesn't add much value to our further arguments,
-so we will just leave w₀ semantically undefined.
+so we will just leave `w₀` semantically undefined.
 
-(The equivalent formula "wₖ s t k + wₖ' s t k = nₖ s t k" might be more
+(The equivalent formula `wₖ s t k + wₖ' s t k = nₖ s t k` might be more
 suitable to be *the* recurrence formula. This is stated this way for
 historical reasons)
 -/
@@ -1708,8 +1729,8 @@ wₖ s t k + wₖ t s k = nₖ s t k := by
   rw [← lm] at s
   exact s
 
-/-
-wₖ is always bounded between [1, nₖ - 1]. Because w₀ is undefined, we require k ≥ 1
+/-!
+`wₖ` is always bounded between $[1,$`nₖ`$ - 1]$. Because `w₀` is undefined, we require $k ≥ 1$.
 -/
 lemma wₖ_min' (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: wₖ s t k ≥ 1 := by
   induction k with
@@ -1728,9 +1749,9 @@ lemma wₖ_max (s t: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]: wₖ s
   apply lt_of_le_of_lt' (wₖ_min t s k kh)
   norm_num
 
-/-
-wₖ is also increasing but only weakly.
-(The same is true for wₖ' but we omit the proof)
+/-!
+`wₖ` is also increasing but only weakly.
+(The same is true for `wₖ'` but we omit the proof)
 -/
 lemma wₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (wₖ s t) := by
   have version1 (k a: ℕ): wₖ s t k ≤ wₖ s t (a + k) := by
@@ -1751,12 +1772,12 @@ lemma wₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (wₖ s t) := by
   intro k l
   apply version2
 
-/-
-Here is a pretty important property of wₖ and wₖ':
-Elements of wₖ and wₖ' sequence all come from nₖ.
-This means wₖ and wₖ' effectively sets up mapping from nₖ to itself.
+/-!
+Here is a pretty important property of `wₖ` and `wₖ'`:
+Elements of `wₖ` and `wₖ'` sequence all come from `nₖ`.
+This means `wₖ` and `wₖ'` effectively sets up mapping from `nₖ` to itself.
 It can be showed that this mapping is weakly monotone and contracting,
-and we will prove a weaker version of this later
+and we will prove a weaker version of this later.
 -/
 lemma wₖ_is_nₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: ∃k', wₖ s t k = nₖ s t k' := by
   by_cases k0 : k = 0
@@ -1821,88 +1842,94 @@ lemma wₖ'_is_nₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: ∃k', wₖ' s 
   rw [nₖ_symm]
   exact wₖ_is_nₖ t s k
 
-/-
+/-!
 With sequence δₖ, nₖ, and wₖ introduced, we will construct the following functions:
 
-First, the "cost differential" function dE(n): [1, ∞) → ℝ
+First, the "cost differential" function $dE(n): [1, ∞) → ℝ$
 
-    ↑ dE(n)
-    |
-    |     |-J₀-|-J₁--|---J₂---|-------J₃------|
-    |
-    |                                         |
-δ₃--|--                       *===============∘
-    |                         |
-δ₂--|--              *========∘
-    |                |
-    |                |
-δ₁--|--        *=====∘
-    |          |
-    |          |
-δ₀--+-----*====∘-----|--------|---------------|--------→ n
-    0     n₀   n₁    n₂       n₃              n₄
-          (=1)
+```
+     ↑ dE(n)
+     |
+     |     |-J₀-|-J₁--|---J₂---|-------J₃------|
+     |
+     |                                         |
+δ₃ --|--                       *===============∘
+     |                         |
+δ₂ --|--              *========∘
+     |                |
+     |                |
+δ₁ --|--        *=====∘
+     |          |
+     |          |
+δ₀ --+-----*====∘-----|--------|---------------|--------→ n
+     0     n₀   n₁    n₂       n₃              n₄
+           (=1)
+```
 
 The function is defined like a stair case.
 By convension, each interval is defined with left point closed:
-dE( [nₖ, nₖ₊₁) ) = δₖ
+$$
+dE( [n_k, n_{k+1}) ) = δ_k
+$$
 
-Second, the "strategy" function w(n): [2, ∞) → P(ℝ).
+Second, the "strategy" function $w(n): [2, ∞) → P(ℝ)$.
 
-    ↑ w(n)
-    |
-    |     |-J₀-|-J₁--|---J₂---|-------J₃------|
-    |                                          /
-w₄--|--                            *----------*-  --|--
-    |                             /##########/      |
-    |                            /##########/       |
-    |                           /##########/        | Jt₃
-    |                          /##########/         |
-w₃--|--                *------*----------*        --|--
-    |                 /######/                      | Jt₂
-w₂--|--          *---*------*                     --|--
-    |           /###/                               | Jt₁
-w₁--|--        *---*                              --|--
-    +----------|-----|--------|---------------|--------→ n
-    0     n₀   n₁    n₂       n₃              n₄
-          (=1) (=2)
+```
+     ↑ w(n)
+     |
+     |     |-J₀-|-J₁--|---J₂---|-------J₃------|
+     |                                          /
+w₄ --|--                            *----------*-  --|--
+     |                             /##########/      |
+     |                            /##########/       |
+     |                           /##########/        | Jt₃
+     |                          /##########/         |
+w₃ --|--                *------*----------*        --|--
+     |                 /######/                      | Jt₂
+w₂ --|--          *---*------*                     --|--
+     |           /###/                               | Jt₁
+w₁ --|--        *---*                              --|--
+     +----------|-----|--------|---------------|--------→ n
+     0     n₀   n₁    n₂       n₃              n₄
+           (=1) (=2)
+```
 
-We first anchor all points (n₁, w₁), (n₂, w₂), ...
+We first anchor all points $(n₁, w₁)$, $(n₂, w₂)$, ...
 and then connect them with parallelogram with an angle of 45°
-The parallelogram can be degenerated if Jt = 0 or Jt = J.
+The parallelogram can be degenerated if `Jt`$ = 0$ or `Jt`$ = J$.
 Then all points enveloped, including the boundary, are in w(n)
 
-Again, because w₀ is semantically undefined,
-w(n) is only defined starting from n₁ = 2.
+Again, because `w₀` is semantically undefined,
+$w(n)$ is only defined starting from `n₁`$ = 2$.
 
-We also write w(n) = [wₘᵢₙ(n), wₘₐₓ(n)]
+We also write `w(n) = [wₘᵢₙ(n), wₘₐₓ(n)]`
 
 But before we can define these functions, we need to define
-how to find k for a given real input n.
+how to find $k$ for a given real input $n$.
 
-We define kceiled as the set of natural numbers k for which nₖ ≤ n.
+We define `kceiled` as the set of natural numbers $k$ for which `nₖ`$ ≤ n$.
 -/
 
 noncomputable
 def kceiled (s t n: ℝ) [PosReal s] [PosReal t] :=
   {k: ℕ | nₖ s t k ≤ n}
 
-/-
-kceiled is also obviously symmetric and finite
+/-!
+`kceiled` is also obviously symmetric and finite.
 -/
 lemma kceiled_symm (s t n: ℝ) [PosReal s] [PosReal t]: kceiled s t n = kceiled t s n := by
   unfold kceiled
   rw [nₖ_symm]
 
-/-
-... and homogeneous
+/-!
+... and homogeneous.
 -/
 lemma kceiled_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: kceiled s t n = kceiled (l * s) (l * t) n := by
   unfold kceiled
   rw [← nₖ_homo]
 
-/-
-kceiled is finite, which allows us to take maximum value later
+/-!
+`kceiled` is finite, which allows us to take maximum value later.
 -/
 instance kceiled_finite (s t n: ℝ) [PosReal s] [PosReal t]: Finite (kceiled s t n) := by
   by_cases npos: n ≥ 0
@@ -1935,15 +1962,15 @@ instance kceiled_finite (s t n: ℝ) [PosReal s] [PosReal t]: Finite (kceiled s 
 noncomputable instance (s t n: ℝ) [PosReal s] [PosReal t]:
 Fintype (kceiled s t n) := by apply Fintype.ofFinite
 
-/-
-We can now find kₙ, the closest k for which nₖ ≤ n.
-We can always find such k for n ≥ 1.
+/-!
+We can now find `kₙ`, the closest $k$ for which `nₖ`$ ≤ n$.
+We can always find such $k$ for $n ≥ 1$.
 -/
 noncomputable
 def kₙ (s t n: ℝ) [PosReal s] [PosReal t] := (kceiled s t n).toFinset.max
 
-/-
-And obviously, it is also symmetrical
+/-!
+And obviously, it is also symmetrical.
 -/
 lemma kₙ_symm (s t n: ℝ) [PosReal s] [PosReal t]: kₙ s t n = kₙ t s n := by
   unfold kₙ
@@ -1951,8 +1978,8 @@ lemma kₙ_symm (s t n: ℝ) [PosReal s] [PosReal t]: kₙ s t n = kₙ t s n :=
   simp only [Set.toFinset_inj]
   rw [kceiled_symm]
 
-/-
-... and homogeneous
+/-!
+... and homogeneous.
 -/
 lemma kₙ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: kₙ s t n = kₙ (l * s) (l * t) n := by
   unfold kₙ
@@ -1960,10 +1987,11 @@ lemma kₙ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: kₙ s t n =
   simp only [Set.toFinset_inj]
   rw [← kceiled_homo]
 
-/-
-kₙ and nₖ are basically inverse functions to each other.
-One can recover the k by composing kₙ and nₖ .
+/-!
+`kₙ` and `nₖ` are basically inverse functions to each other.
+One can recover the $k$ by composing `kₙ` and `nₖ`.
 -/
+
 lemma kₙ_inv (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 kₙ s t (nₖ s t k) = some k := by
   unfold kₙ kceiled
@@ -2004,8 +2032,8 @@ nₖ s t k ≤ n ∧ n < nₖ s t (k + 1) := by
     have what: k + 1 ≤ k := by apply Finset.le_max_of_eq mem keq
     simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
 
-/-
-k₁ = 0 is the first non-empty kₙ. This corresponds to the fact n₀ = 1
+/-!
+`k₁`$ = 0$ is the first non-empty `kₙ`. This corresponds to the fact `n₀`$ = 1$.
 -/
 lemma k₁ (s t: ℝ) [PosReal s] [PosReal t]:
 kₙ s t 1 = some 0 := by
@@ -2015,8 +2043,8 @@ kₙ s t 1 = some 0 := by
   rw [← k1]
   simp only [Nat.cast_one]
 
-/-
-Any n ≥ 1 should give a valid k
+/-!
+Any $n ≥ 1$ should give a valid $k$.
 -/
 lemma kₙ_exist (s t n: ℝ) (np: n ≥ 1) [PosReal s] [PosReal t]:
 ∃k, kₙ s t n = some k := by
@@ -2030,8 +2058,8 @@ lemma kₙ_exist (s t n: ℝ) (np: n ≥ 1) [PosReal s] [PosReal t]:
   rify
   exact np
 
-/-
-Mean while, n < 1 never gives a valid k
+/-!
+Mean while, $n < 1$ never gives a valid $k$.
 -/
 lemma kₙ_not_exist (s t n: ℝ) (np: n < 1) [PosReal s] [PosReal t]: kₙ s t n = none := by
   unfold kₙ
@@ -2049,8 +2077,8 @@ lemma kₙ_not_exist (s t n: ℝ) (np: n < 1) [PosReal s] [PosReal t]: kₙ s t 
   rw [empty]
   rfl
 
-/-
-Now the cost differential function is defined by clamping to the nearest k and find δₖ
+/-!
+Now the cost differential function is defined by clamping to the nearest $k$ and find `δₖ`.
 -/
 noncomputable
 def dE (s t: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun n ↦
@@ -2058,8 +2086,8 @@ def dE (s t: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun n ↦
   | some k => δₖ s t k
   | none => 0
 
-/-
-... which is symmetric
+/-!
+... which is symmetric.
 -/
 lemma dE_symm (s t n: ℝ) [PosReal s] [PosReal t]: dE s t n = dE t s n := by
   unfold dE
@@ -2068,8 +2096,8 @@ lemma dE_symm (s t n: ℝ) [PosReal s] [PosReal t]: dE s t n = dE t s n := by
   ext
   rw [δₖ_symm]
 
-/-
-... homogeneous
+/-!
+... homogeneous.
 -/
 lemma dE_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
 l * dE s t n = dE (l * s) (l * t) n := by
@@ -2081,8 +2109,8 @@ l * dE s t n = dE (l * s) (l * t) n := by
     simp only
     exact δₖ_homo s t l k
 
-/-
-... and weakly increasing
+/-!
+... and weakly increasing.
 -/
 lemma dE_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (dE s t) := by
   unfold Monotone
@@ -2135,20 +2163,23 @@ lemma dE₁ (s t: ℝ) [PosReal s] [PosReal t]: dE s t 1 = 0 := by
   simp only
   rw [δ₀ s t]
 
-/-
-The following three lemma show the nice property of wₖ when applied to dE:
-The domain n ∈ [1, ∞) is divided by (wₖ k) and (wₖ (k + 1)) into three regions:
- - dE( [1,          wₖ k      ) ) < δₖ - t
- - dE( [wₖ k,       wₖ (k + 1)) ) = δₖ - t
- - dE( [wₖ (k + 1), ∞         ) ) > δₖ - t
+/-!
+The following three lemma show the nice property of wₖ when applied to `dE`:
+The domain $n ∈ [1, ∞)$ is divided by `wₖ k` and `wₖ (k + 1)` into three regions:
+```
+dE( [1,          wₖ k      ) ) < δₖ - t
+dE( [wₖ k,       wₖ (k + 1)) ) = δₖ - t
+dE( [wₖ (k + 1), ∞         ) ) > δₖ - t
+```
 
-In other words, wₖ captures exactly where dE = δₖ - t (while nₖ captures where dE = δₖ)
+In other words, `wₖ` captures exactly where `dE = δₖ - t` (while `nₖ` captures where `dE = δₖ`)
 
-Note that because 1 ≤ wₖ k ≤ wₖ (k + 1) are week inequalities,
-the intervals listed above can degenerate
+Note that because `1 ≤ wₖ k ≤ wₖ (k + 1)` are week inequalities,
+the intervals listed above can degenerate.
 
-There are similar properties with wₖ' and δₖ - s, but the proof is omitted
+There are similar properties with `wₖ'` and `δₖ - s`, but the proof is omitted.
 -/
+
 lemma w_eq (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
 (low: w ≥ wₖ s t k) (r: w < wₖ s t (k + 1)):
 dE s t w = δₖ s t k - t := by
@@ -2370,9 +2401,9 @@ dE s t w > δₖ s t k - t := by
     add_tsub_cancel_right, gt_iff_lt, add_lt_add_iff_left] at tr
   exact Monotone.reflect_lt (Jceiled_mono s t) tr
 
-/-
-As a corollary, we show that wₖ is not only a monotone mapping from nₖ to itself,
-but also under the mapping, wₖ(k) and wₖ(k + 1) are either same, or two nₖ(k') next to each other.
+/-!
+As a corollary, we show that `wₖ` is not only a monotone mapping from `nₖ` to itself,
+but also under the mapping, `wₖ (k)` and `wₖ (k + 1)` are either same, or two `nₖ (k')` next to each other.
 -/
 lemma wₖ_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
 (keq: wₖ s t k = nₖ s t k') (wne: wₖ s t k ≠ wₖ s t (k + 1)): wₖ s t (k + 1) = nₖ s t (k' + 1) := by
@@ -2424,8 +2455,8 @@ lemma wₖ_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
       simp only [lt_self_iff_false] at deLeft
     exact Nat.eq_of_le_of_lt_succ k_mono k'notp2
 
-/-
-By symmetry, the same holds for wₖ'
+/-!
+By symmetry, the same holds for `wₖ'`.
 -/
 lemma wₖ'_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
 (keq: wₖ' s t k = nₖ s t k') (wne: wₖ' s t k ≠ wₖ' s t (k + 1)): wₖ' s t (k + 1) = nₖ s t (k' + 1) := by
@@ -2435,10 +2466,11 @@ lemma wₖ'_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
   exact wₖ_is_nₖ_p1 t s k k' keq wne
 
 
-/-
-The strategy function w is defined by finding wₖ after clamping to the nearest k
-The parallelogram is formed by taking certain min and max
+/-!
+The strategy function $w$ is defined by finding `wₖ` after clamping to the nearest $k$
+The parallelogram is formed by taking certain min and max.
 -/
+
 noncomputable
 def wₘᵢₙ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
   match kₙ s t n with
@@ -2451,9 +2483,10 @@ def wₘₐₓ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
   | some k => min (wₖ s t (k + 1)) ((wₖ s t k) + n - (nₖ s t k))
   | none => 0
 
-/-
-wₘᵢₙ and wₘₐₓ agree with wₖ at n = nₖ
+/-!
+`wₘᵢₙ` and `wₘₐₓ` agree with `wₖ` at `n = nₖ`.
 -/
+
 def wₘᵢₙnₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 wₘᵢₙ s t (nₖ s t k) = wₖ s t k := by
   unfold wₘᵢₙ
@@ -2478,8 +2511,8 @@ wₘₐₓ s t (nₖ s t k) = wₖ s t k := by
   simp only [add_sub_cancel_right, inf_eq_right, Nat.cast_le]
   exact wₖ_mono s t (Nat.le_add_right k 1)
 
-/-
-Derived from wₖ_rec, we have "recurrence formula" between wₘᵢₙ and wₘₐₓ.
+/-!
+Derived from `wₖ_rec`, we have "recurrence formula" between `wₘᵢₙ` and `wₘₐₓ`.
 -/
 lemma wₘₘ_rec (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 wₘᵢₙ s t n + wₘₐₓ t s n = n := by
@@ -2511,9 +2544,10 @@ wₘᵢₙ s t n + wₘₐₓ t s n = n := by
   rw [← min_add, min_neg_neg, max_comm]
   simp only [add_neg_cancel_left]
 
-/-
-Just like wₖ, w(n) is bounded within [1, n - 1]
+/-!
+Just like `wₖ`, $w(n)$ is bounded within $[1, n - 1]$.
 -/
+
 lemma wₘᵢₙ_min (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘᵢₙ s t n ≥ 1 := by
   unfold wₘᵢₙ
   have h1: n ≥ 1 := by linarith
@@ -2563,9 +2597,9 @@ lemma wₘₐₓ_max (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘₐ�
     rw [lift]
     exact Nat.cast_le.mpr h2
 
-/-
-We also define a third kind of w function wₗᵢ,
-which is the diagonals of parallelograms formed by wₘᵢₙ and wₘₐₓ
+/-!
+We also define a third kind of $w$ function `wₗᵢ`,
+which is the diagonals of parallelograms formed by `wₘᵢₙ` and `wₘₐₓ`.
 -/
 noncomputable
 def wₗᵢ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
@@ -2575,10 +2609,10 @@ def wₗᵢ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
     (1 - a) * (wₖ s t k) + a * (wₖ s t (k + 1))
   | none => 0
 
-/-
-We also define the dual version wₗᵢ'
-We could have done the same for wₘᵢₙ and wₘₐₓ,
-but we omitted them as they don't add much value
+/-!
+We also define the dual version `wₗᵢ'`
+We could have done the same for `wₘᵢₙ` and `wₘₐₓ`,
+but we omitted them as they don't add much value.
 -/
 noncomputable
 def wₗᵢ' (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
@@ -2588,10 +2622,10 @@ def wₗᵢ' (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
     (1 - a) * (wₖ' s t k) + a * (wₖ' s t (k + 1))
   | none => 0
 
-/-
-wₗᵢ as the diagnonal, is always between wₘᵢₙ and wₘₐₓ.
+/-!
+`wₗᵢ` as the diagnonal, is always between `wₘᵢₙ` and `wₘₐₓ`.
 With this, we have the complete ordering:
-1 ≤ wₘᵢₙ ≤ wₗᵢ ≤ wₘₐₓ ≤ n - 1
+`1 ≤ wₘᵢₙ ≤ wₗᵢ ≤ wₘₐₓ ≤ n - 1`
 -/
 def wₗᵢ_range (s t n: ℝ) [PosReal s] [PosReal t]:
 wₘᵢₙ s t n ≤ wₗᵢ s t n ∧ wₗᵢ s t n ≤ wₘₐₓ s t n := by
@@ -2656,8 +2690,8 @@ wₘᵢₙ s t n ≤ wₘₐₓ s t n := by
   rcases wₗᵢ_range s t n with ⟨left, right⟩
   exact le_trans left right
 
-/-
-As usual, wₗᵢ is symmetric
+/-!
+As usual, `wₗᵢ` is symmetric
 -/
 lemma wₗᵢ_symm (s t n: ℝ) [PosReal s] [PosReal t]:
 wₗᵢ s t n = wₗᵢ' t s n := by
@@ -2670,8 +2704,8 @@ wₗᵢ s t n = wₗᵢ' t s n := by
   · exact wₖ_symm s t k
   · exact wₖ_symm s t (k + 1)
 
-/-
-... and has recurrence formula
+/-!
+... and has recurrence formula.
 -/
 lemma wₗᵢ_rec (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 wₗᵢ s t n + wₗᵢ t s n = n := by
@@ -2725,8 +2759,8 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
   field_simp [deno0]
   ring
 
-/-
-wₘᵢₙ, wₘₐₓ, and wₗᵢ are all homogeneous
+/-!
+`wₘᵢₙ`, `wₘₐₓ`, and `wₗᵢ` are all homogeneous
 -/
 lemma wₘᵢₙ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]:
 wₘᵢₙ s t n = wₘᵢₙ (l * s) (l * t) n := by
@@ -2743,8 +2777,8 @@ wₗᵢ s t n = wₗᵢ (l * s) (l * t) n := by
   unfold wₗᵢ
   rw [kₙ_homo s t n l, wₖ_homo s t l, nₖ_homo s t l]
 
-/-
-wₘᵢₙ, wₘₐₓ, and wₗᵢ are all weakly monotone
+/-!
+`wₘᵢₙ`, `wₘₐₓ`, and `wₗᵢ` are all weakly monotone
 -/
 lemma wₘᵢₙ_mono (s t: ℝ) [PosReal s] [PosReal t]:
 Monotone (wₘᵢₙ s t) := by
@@ -2911,8 +2945,8 @@ Monotone (wₗᵢ s t) := by
         simp only [sub_nonneg, Nat.cast_le]
         exact wₖ_mono s t (Nat.le_add_right kn 1)
 
-/-
-wₘᵢₙ, wₘₐₓ, and wₗᵢ never grow faster than n
+/-!
+`wₘᵢₙ`, `wₘₐₓ`, and `wₗᵢ` never grow faster than $n$
 -/
 lemma wₘᵢₙ_growth (s t m n: ℝ) (hm: 2 ≤ m) (hn: m ≤ n) [PosReal s] [PosReal t]:
 wₘᵢₙ s t n - wₘᵢₙ s t m ≤ n - m := by
@@ -2935,14 +2969,14 @@ wₗᵢ s t n - wₗᵢ s t m ≤ n - m := by
   obtain li_mono := wₗᵢ_mono t s hn
   linarith
 
-/-
+/-!
 We define the "strategy evaluation differential function"
-dD(n, w) = dE(w) - dE(n - w) + t - s
+`dD (n, w) = dE (w) - dE (n - w) + t - s`
 -/
 noncomputable
 def dD (s t n: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun w ↦ dE s t w - dE s t (n - w) + t - s
 
-/-
+/-!
 It is symmetric
 -/
 lemma dD_symm (s t n w: ℝ) [PosReal s] [PosReal t]:
@@ -2952,8 +2986,8 @@ dD s t n w = -dD t s n (n - w) := by
   rw [dE_symm s t]
   ring_nf
 
-/-
-... and weakly increasing w.r.t w
+/-!
+... and weakly increasing w.r.t $w$
 -/
 lemma dD_mono (s t n: ℝ) [PosReal s] [PosReal t]: Monotone (dD s t n) := by
   unfold Monotone
@@ -2967,11 +3001,11 @@ lemma dD_mono (s t n: ℝ) [PosReal s] [PosReal t]: Monotone (dD s t n) := by
   refine add_le_add  ?_ (le_refl t)
   exact tsub_le_tsub h1 h2
 
-/-
-We show that wₘᵢₙ and wₘₐₓ indicates where dD is negative, zero, or positive.
+/-!
+We show that `wₘᵢₙ` and `wₘₐₓ` indicates where `dD` is negative, zero, or positive.
 
-In these theorems, we conviniently ignored boundary points at w = wₘᵢₙ or w = wₘₐₓ.
-dD value at those points can be found, but it doesn't add much value for our further arguments.
+In these theorems, we conviniently ignored boundary points at `w = wₘᵢₙ` or `w = wₘₐₓ`.
+`dD` value at those points can be found, but it doesn't add much value for our further arguments.
 -/
 lemma dD_zero (s t n w: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w > wₘᵢₙ s t n) (rightBound: w < wₘₐₓ s t n):
@@ -3122,15 +3156,15 @@ dD s t n w > 0 := by
     exact sub_lt_comm.mp leftBound
 
 
-/-
-Let's also show that dE and dD are integrable, which will be soon used
+/-!
+Let's also show that `dE` and `dD` are integrable, which will be soon used
 -/
 lemma dE_integrable (s t m n: ℝ) [PosReal s] [PosReal t]:
 IntervalIntegrable (dE s t) MeasureTheory.volume m n := by
   apply Monotone.intervalIntegrable (dE_mono s t)
 
-/-
-Here is a more useful version with the correction term s + t
+/-!
+Here is a more useful version with the correction term $s + t$
 -/
 lemma dE_integrable' (s t m n: ℝ) [PosReal s] [PosReal t]:
 IntervalIntegrable (fun x ↦ (dE s t x) + s + t) MeasureTheory.volume m n := by
@@ -3147,50 +3181,50 @@ lemma dD_integrable (s t n w1 w2: ℝ) [PosReal s] [PosReal t]:
 IntervalIntegrable (dD s t n) MeasureTheory.volume w1 w2 := by
   apply Monotone.intervalIntegrable (dD_mono s t n)
 
-/-
+/-!
 
-Now we can construct our main function, the cost function E(n)
+Now we can construct our main function, the cost function `E (n)`
 
-    ↑ E(n)
-    |
-    |     |-J₀-|-J₁--|---J₂---|-------J₃------|
-    |
-    |                                        ·*   --|--
-    |                                      ··       |
-    |                                     ·         |
-    |                                    ·          |
-    |                                  ··           |
-    |                                 ·             |
-    |                                ·              | (δ₃+s+t)*J₃
-    |                              ··               |
-    |     |    |     |        |   ·                 |
-    |     |    |     |        |  ·                  |
-    |     |    |     |        | ·                   |
-E₃--|--   |    |     |      ··*·---               --|--
-    |     |    |     |     ·                        |
-    |     |    |     |   ··                         | (δ₂+s+t)*J₂
-    |     |    |     | ··                           |
-E₂--|--   |    |    ·*·------------               --|--
-    |     |    |   ·                                |
-    |     |    | ··                                 | (δ₁+s+t)*J₁
-E₁--|--   |   ·*·------------------               --|--
-    |     | ··                                      | (δ₀+s+t)*J₀
-E₀--+-----*·---|-----|--------|---------------|-----|--→ n
-    0     n₀   n₁    n₂       n₃              n₄
-          (=1)
+```
+     ↑ E (n)
+     |
+     |     |-J₀-|-J₁--|---J₂---|-------J₃------|
+     |
+     |                                        ·*   --|--
+     |                                      ··       |
+     |                                     ·         |
+     |                                    ·          |
+     |                                  ··           |
+     |                                 ·             |
+     |                                ·              | (δ₃+s+t)*J₃
+     |                              ··               |
+     |     |    |     |        |   ·                 |
+     |     |    |     |        |  ·                  |
+     |     |    |     |        | ·                   |
+E₃ --|--   |    |     |      ··*·---               --|--
+     |     |    |     |     ·                        |
+     |     |    |     |   ··                         | (δ₂+s+t)*J₂
+     |     |    |     | ··                           |
+E₂ --|--   |    |    ·*·------------               --|--
+     |     |    |   ·                                |
+     |     |    | ··                                 | (δ₁+s+t)*J₁
+E₁ --|--   |   ·*·------------------               --|--
+     |     | ··                                      | (δ₀+s+t)*J₀
+E₀ --+-----*·---|-----|--------|---------------|-----|--→ n
+     0     n₀   n₁    n₂       n₃              n₄
+           (=1)
+```
 
+We first pin the vertices `Eₖ` on this function.
 -/
 
-/-
-We first pin the vertices Eₖ on this function
--/
 noncomputable
 def Eₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℝ
 | 0 => 0
 | Nat.succ k => (Eₖ s t k) + (Jₖ s t k) * (δₖ s t k + s + t)
 
-/-
-... which is symmetric
+/-!
+... which is symmetric.
 -/
 lemma Eₖ_symm (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 Eₖ s t k = Eₖ t s k := by
@@ -3203,8 +3237,8 @@ Eₖ s t k = Eₖ t s k := by
     rw [δₖ_symm]
     rw [add_right_comm]
 
-/-
-Eₖ can be alternatively expressed as integrating dE between vertices
+/-!
+`Eₖ` can be alternatively expressed as integrating `dE` between vertices.
 -/
 lemma Eₖ_integral (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 Eₖ s t k = ∫ x in (1: ℝ)..(nₖ s t k), dE s t x + s + t := by
@@ -3245,8 +3279,8 @@ Eₖ s t k = ∫ x in (1: ℝ)..(nₖ s t k), dE s t x + s + t := by
       MeasureTheory.ae_restrict_iff' measurableSet_Ico]
     exact .of_forall ico
 
-/-
-We then define E(n) as linear interpolation between Eₖ
+/-!
+We then define `E (n)` as linear interpolation between `Eₖ`.
 -/
 noncomputable
 def E (s t: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun n ↦
@@ -3254,8 +3288,8 @@ def E (s t: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun n ↦
   | some k => Eₖ s t k + (n - nₖ s t k) * (δₖ s t k + s + t)
   | none => 0
 
-/-
-... which is symmetric
+/-!
+... which is symmetric.
 -/
 lemma E_symm (s t n: ℝ) [PosReal s] [PosReal t]: E s t n = E t s n := by
   unfold E
@@ -3267,8 +3301,8 @@ lemma E_symm (s t n: ℝ) [PosReal s] [PosReal t]: E s t n = E t s n := by
   rw [δₖ_symm]
   rw [add_right_comm]
 
-/-
-... and can be expressed as an integral
+/-!
+... and can be expressed as an integral.
 -/
 lemma E_integral (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
 E s t n = ∫ x in (1: ℝ)..n, dE s t x + s + t := by
@@ -3313,9 +3347,9 @@ E s t n = ∫ x in (1: ℝ)..n, dE s t x + s + t := by
     rw [right]
     exact left
 
-/-
-While E(n) itself is defined as partial sum of Jₖ * (δₖ + s + t),
-we can also show the composed mapping E(w(n)) is the partial sum of Jtₖ * (δₖ + s)
+/-!
+While `E (n)` itself is defined as partial sum of `Jₖ * (δₖ + s + t)`,
+we can also show the composed mapping `E (w(n))` is the partial sum of `Jtₖ * (δₖ + s)`.
 -/
 lemma Ew_accum (s t: ℝ) (k: ℕ) (k1: k ≥ 1) [PosReal s] [PosReal t]:
 E s t (wₖ s t k) + (Jtₖ s t k) * (δₖ s t k + s) = E s t (wₖ s t (k + 1)) := by
@@ -3353,8 +3387,8 @@ E s t (wₖ s t k) + (Jtₖ s t k) * (δₖ s t k + s) = E s t (wₖ s t (k + 1)
     · rw [dEeq]
       ring
 
-/-
-Symmetrically E(w'(n)) is the partial sum of Jsₖ * (δₖ + t)
+/-!
+Symmetrically `E (w'(n))` is the partial sum of `Jsₖ * (δₖ + t)`.
 -/
 lemma Ew'_accum (s t: ℝ) (k: ℕ) (k1: k ≥ 1) [PosReal s] [PosReal t]:
 E s t (wₖ' s t k) + (Jsₖ s t k) * (δₖ s t k + t) = E s t (wₖ' s t (k + 1)) := by
@@ -3366,14 +3400,14 @@ E s t (wₖ' s t k) + (Jsₖ s t k) * (δₖ s t k + t) = E s t (wₖ' s t (k + 
   rw [← wₖ_symm]
   exact Ew_accum t s k k1
 
-/-
-And here is the strategy evaluation function
+/-!
+And here is the strategy evaluation function.
 -/
 noncomputable
 def D (s t n w: ℝ) [PosReal s] [PosReal t] := E s t w + E s t (n - w) + t * w + s * (n - w)
 
-/-
-... which is symmetric
+/-!
+... which is symmetric.
 -/
 lemma D_symm (s t n w: ℝ) [PosReal s] [PosReal t]:
 D s t n w = D t s n (n - w) := by
@@ -3382,8 +3416,8 @@ D s t n w = D t s n (n - w) := by
   rw [E_symm s t]
   ring_nf
 
-/-
-... and is the integral of the strategy evaluation differential function
+/-!
+... and is the integral of the strategy evaluation differential function.
 -/
 lemma D_integral (s t n w1 w2: ℝ) (w1low: w1 ≥ 1) (w1high: w1 ≤ n - 1) (w2low: w2 ≥ 1) (w2high: w2 ≤ n - 1)
 [PosReal s] [PosReal t]:
@@ -3422,8 +3456,8 @@ D s t n w2 - D s t n w1 = ∫ w in w1..w2, dD s t n w := by
   simp only [smul_eq_mul]
   ring
 
-/-
-We will now prove several version of the recurrence formula on E
+/-!
+We will now prove several version of the recurrence formula on `E`.
 -/
 lemma Eₖ_rec (s t: ℝ) [PosReal s] [PosReal t]:
 ∀k: ℕ, 1 ≤ k →
@@ -3523,9 +3557,9 @@ t *   ((1 - a) * (wₖ s t k) + a * (wₖ s t (k + 1))) + s *   ((1 - a) * (wₖ
   ring
   exact Nat.le_add_right_of_le k1
 
-/-
+/-!
 Eventually, we reached the major conclusion:
-The cost equals the strategy evaluation at the optimal strategy wₗᵢ
+The cost equals the strategy evaluation at the optimal strategy `wₗᵢ`
 -/
 lemma E_wₗᵢ (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 E s t n = D s t n (wₗᵢ s t n) := by
@@ -3582,9 +3616,9 @@ E s t n = D s t n (wₗᵢ s t n) := by
     have k1lmax : k + 1 ≤ k := by exact Finset.le_max_of_eq k1 keq
     simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at k1lmax
 
-/-
-But because D has flat derivative dD between wₘᵢₙ and wₘₐₓ
-all w in between gives cost = strategy evaluation
+/-!
+But because `D` has zero derivative `dD` between `wₘᵢₙ` and `wₘₐₓ`
+all $w$ in between gives cost = strategy evaluation
 -/
 lemma E_w (s t n w: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w ≥ wₘᵢₙ s t n) (rightBound: w ≤ wₘₐₓ s t n):
@@ -3618,8 +3652,8 @@ E s t n = D s t n w := by
   · simp only [measurableSet_Ioo]
   · simp only [measurableSet_Ioc]
 
-/-
-And using the fact that the derivative dD is negative/positive outside the range,
+/-!
+And using the fact that the derivative `dD` is negative/positive outside the range,
 we conclude that the strategy evaluation is larger than the cost everywhere else.
 -/
 lemma E_wₘᵢₙ (s t n w: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]
@@ -3663,21 +3697,21 @@ E s t n < D s t n w := by
     exact sub_lt_comm.mp leftBound
   exact E_wₘᵢₙ t s n (n - w) n2 leftBound' rightBound'
 
-/-
-Therefore, the interval bounded by wₘᵢₙ and wₘₐₓ idicates where E = D.
+/-!
+Therefore, the interval bounded by `wₘᵢₙ` and `wₘₐₓ` idicates where `E = D`.
 Let's make it its own function
 -/
 def wₛₑₜ (s t: ℝ) [PosReal s] [PosReal t]: ℝ → Set ℝ :=
   fun n ↦ Set.Icc (wₘᵢₙ s t n) (wₘₐₓ s t n)
 
-/-
+/-!
 Let's summarize our result in a high level
 
-For any possible cost function E(n): [1, ∞) → ℝ
-We can define a strategy evaluation function StratEval{E}(n, w)
+For any possible cost function $E(n): [1, ∞) → ℝ$
+We can define a strategy evaluation function `StratEval`$\{E\}(n, w)$
 
-A cost function E is called optimal if the min value of StratEval is E itself,
-and a strategy function w is called optimal if it is the set for StratEval to reach E.
+A cost function $E$ is called optimal if the min value of `StratEval` is $E$ itself,
+and a strategy function $w$ is called optimal if it is the set for `StratEval` to reach $E$.
 -/
 
 def StratEval (Efun: ℝ → ℝ) (s t n w: ℝ) :=
@@ -3689,8 +3723,8 @@ def IsOptimalCost (Efun: ℝ → ℝ) (s t: ℝ): Prop :=
 def IsOptimalStrat (Efun: ℝ → ℝ) (wfun: ℝ → Set ℝ) (s t: ℝ): Prop :=
   ∀ n ≥ 2, ∀ w ∈ (Set.Icc 1 (n - 1)), StratEval Efun s t n w = Efun n ↔ w ∈ wfun n
 
-/-
-Then obviously the E and w function we have constructed are optimal
+/-!
+Then obviously the `E `and `wₛₑₜ` function we have constructed are optimal.
 -/
 theorem E_IsOptimalCost (s t: ℝ) [PosReal s] [PosReal t]:
 IsOptimalCost (E s t) s t := by
@@ -3745,8 +3779,8 @@ IsOptimalStrat (E s t) (wₛₑₜ s t) s t := by
   · rintro ⟨low, high⟩
     exact Eq.symm (E_w s t n w n2 low high)
 
-/-
-Finally, we want to lift our E and w to integers,
+/-!
+Finally, we want to lift our `E` and `wₛₑₜ` to integers,
 which is the domain of the original question.
 -/
 
@@ -3766,9 +3800,9 @@ fun n ↦ match kₙ s t n with
   | some k => min (wₖ s t (k + 1)) ((wₖ s t k) + n - (nₖ s t k))
   | none => 0
 
-/-
-While Eℤ is easy to understand, we need to show that
-wₘᵢₙℤ and wₘₐₓℤ remains the same value when lifted
+/-!
+While `Eℤ` is easy to understand, we need to show that
+`wₘᵢₙℤ` and `wₘₐₓℤ` remains the same value when lifted.
 -/
 lemma wₘᵢₙℤeq (s t: ℝ) (n: ℤ) [PosReal s] [PosReal t]:
 wₘᵢₙℤ s t n = wₘᵢₙ s t n := by
@@ -3796,9 +3830,9 @@ noncomputable
 def wℤ (s t: ℝ) [PosReal s] [PosReal t]: ℤ → Set ℤ :=
 fun n ↦ Set.Icc (wₘᵢₙℤ s t n) (wₘₐₓℤ s t n)
 
-/-
+/-!
 We can then define the integer version of the optimal criteria,
-and proof the optimality of Eℤ and Wℤ
+and proof the optimality of `Eℤ` and `Wℤ`.
 -/
 def StratEvalℤ (Efun: ℤ → ℝ) (s t: ℝ) (n w: ℤ) :=
   Efun w + Efun (n - w) + t * w + s * (n - w)
@@ -3888,8 +3922,8 @@ IsOptimalStratℤ (Eℤ s t) (wℤ s t) s t := by
     rw [wₘₐₓℤeq] at high
     exact Eq.symm (E_w s t n w n2 low high)
 
-/-
-And finally, Eℤ is the unique optimal function with starting point of Eℤ(1) = 0
+/-!
+And finally, `Eℤ` is the unique optimal function with starting point of `Eℤ (1) = 0`
 -/
 theorem Eℤ₁ (s t: ℝ) [PosReal s] [PosReal t]: Eℤ s t 1 = 0 := by
   unfold Eℤ

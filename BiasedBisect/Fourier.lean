@@ -1,6 +1,7 @@
 import BiasedBisect.Inv
 import BiasedBisect.Multigeometric
 import Mathlib.Analysis.Fourier.FourierTransform
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Analysis.SpecialFunctions.Integrals
 import Mathlib.MeasureTheory.Integral.ExpDecay
 
@@ -328,24 +329,6 @@ IntegrableOn (fun (x: ℝ) ↦ Complex.exp (c * x)) (Set.Ioi a) := by
     unfold b
     exact Left.neg_pos_iff.mpr hc
 
-
-lemma integral_exp_mul_complex_Ioi (a: ℝ) (c : ℂ) (hc : c.re < 0):
-∫ x : ℝ in Set.Ioi a, Complex.exp (c * x) = - Complex.exp (c * a) / c := by
-  refine tendsto_nhds_unique (
-    intervalIntegral_tendsto_integral_Ioi a (integrable_exp_mul_complex_Ioi hc) Filter.tendsto_id
-  ) ?_
-  have funrw : (fun (i:ℝ) ↦ ∫ (x : ℝ) in a..id i, cexp (c * x)) = (fun (i:ℝ) ↦ (cexp (c * i) - cexp (c * a)) / c) := by
-    ext i
-    rw [integral_exp_mul_complex (ne_zero_of_re_neg hc)]
-    simp only [id_eq]
-  rw [funrw]
-  rw [(by simp only [zero_sub]: - Complex.exp (c * a) / c = (0 - Complex.exp (c * a)) / c)]
-  apply Filter.Tendsto.div_const
-  apply Filter.Tendsto.sub_const
-  apply tendsto_exp_nhds_zero_iff.mpr
-  simp only [mul_re, ofReal_re, ofReal_im, mul_zero, sub_zero]
-  exact Filter.Tendsto.neg_mul_atTop hc tendsto_const_nhds Filter.tendsto_id
-
 lemma rexp_mul_n (x: ℝ) (n: ℕ): rexp (x * n) = (rexp x) ^ n := by
   rw [Real.exp_mul]
   simp only [rpow_natCast]
@@ -388,7 +371,7 @@ lemma φReg_Fourier2 (s t μ σ f: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) [
   unfold φRegFourierIntegrantLeft
   rw [MeasureTheory.integral_indicator measurableSet_Ici]
   rw [MeasureTheory.integral_Ici_eq_integral_Ioi]
-  rw [integral_exp_mul_complex_Ioi _ _ ?_]
+  rw [integral_exp_mul_complex_Ioi ?_ _]
   · simp only [neg_add_rev, ofReal_zero, mul_zero, Complex.exp_zero]
     rw [neg_div, ← div_neg]
     rw [one_div]
@@ -480,7 +463,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
         · have rightrw: rexp (-σ * (pq.1 * s + pq.2 * t)) / σ = ∫ (x : ℝ) in Set.Ioi (pq.1 * s + pq.2 * t), Real.exp (-σ * x) := by
             symm
             apply Complex.ofReal_inj.mp
-            convert integral_exp_mul_complex_Ioi (pq.1 * s + pq.2 * t) (-σ) (?_)
+            convert integral_exp_mul_complex_Ioi (a := -σ) ?_ (pq.1 * s + pq.2 * t)
             · norm_cast
               exact Eq.symm integral_complex_ofReal
             · norm_cast
@@ -642,7 +625,7 @@ lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [
   have rightIntegral: ∫ (x : ℝ) in Set.Ioi (δ + μ), cexp (l * x) * smStep μ (x - δ) =
       -cexp (l * (δ + μ)) / l := by
     rw [MeasureTheory.integral_congr_ae Rightfcongr]
-    rw [integral_exp_mul_complex_Ioi _ _ hl]
+    rw [integral_exp_mul_complex_Ioi hl _]
     norm_cast
 
   rw [(by field_simp [l0, l2μ0]; ring:
