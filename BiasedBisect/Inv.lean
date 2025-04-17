@@ -103,55 +103,70 @@ lemma φδₖ(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 /-
 Analog to w_eq/w_lt/w_gt lemmas, φ maps (δₖ - t) back to wₖ (again with shifted k)
 -/
-lemma φδₖt(s t: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]:
+lemma φδₖt(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 φ s t (δₖ s t k - t) = wₖ s t (k + 1) := by
-  have wleft (w: ℝ) (w1: w ≥ 1) (h: w < wₖ s t (k + 1)): dE s t w ≤ δₖ s t k - t := by
-    obtain lt|ge := lt_or_ge w (wₖ s t k)
-    · apply le_of_lt
-      exact w_lt _ _ _ _ kh w1 lt
-    · apply le_of_eq
-      exact w_eq _ _ _ _ kh ge h
-  have wright (w: ℝ) (h: w ≥ wₖ s t (k + 1)): dE s t w > δₖ s t k - t := by
-    exact w_gt _ _ _ _ h
-  have equiv (w: ℝ) (h: w ≥ 1): δₖ s t k - t < dE s t w ↔ wₖ s t (k + 1) ≤ w := by
-    constructor
-    · contrapose
-      simp only [not_le, not_lt]
-      apply wleft w h
-    · apply wright
+  by_cases k0: k = 0
+  · rw [k0, zero_add, w₁, δ₀, zero_sub]
+    unfold φ
+    simp only [Nat.add_eq_left]
+    unfold Jceiled
+    convert Finset.sum_empty
+    unfold Λceiled
+    simp only [Set.toFinset_eq_empty]
+    refine Set.eq_empty_of_forall_not_mem ?_
+    intro pq
+    simp only [Set.mem_setOf_eq, not_le]
+    apply lt_of_lt_of_le (neg_neg_of_pos PosReal.pos)
+    apply add_nonneg
+    all_goals exact mul_nonneg (by simp) (le_of_lt PosReal.pos)
+  · have kh: k ≥ 1 := Nat.one_le_iff_ne_zero.mpr k0
+    have wleft (w: ℝ) (w1: w ≥ 1) (h: w < wₖ s t (k + 1)): dE s t w ≤ δₖ s t k - t := by
+      obtain lt|ge := lt_or_ge w (wₖ s t k)
+      · apply le_of_lt
+        exact w_lt _ _ _ _ kh w1 lt
+      · apply le_of_eq
+        exact w_eq _ _ _ _ kh ge h
+    have wright (w: ℝ) (h: w ≥ wₖ s t (k + 1)): dE s t w > δₖ s t k - t := by
+      exact w_gt _ _ _ _ h
+    have equiv (w: ℝ) (h: w ≥ 1): δₖ s t k - t < dE s t w ↔ wₖ s t (k + 1) ≤ w := by
+      constructor
+      · contrapose
+        simp only [not_le, not_lt]
+        apply wleft w h
+      · apply wright
 
-  have equiv2 (w: ℝ) (h: w ≥ 1): δₖ s t k - t < dE s t w ↔ δₖ s t k - t ∈ δceiledByφ s t w := by
-    rw [φ_inv s t w h]
-    simp only [Set.mem_Iio]
+    have equiv2 (w: ℝ) (h: w ≥ 1): δₖ s t k - t < dE s t w ↔ δₖ s t k - t ∈ δceiledByφ s t w := by
+      rw [φ_inv s t w h]
+      simp only [Set.mem_Iio]
 
-  have equiv3 (w: ℝ): δₖ s t k - t ∈ δceiledByφ s t w ↔ φ s t (δₖ s t k - t) ≤ w := by
-    unfold δceiledByφ
-    simp only [Set.mem_setOf_eq]
+    have equiv3 (w: ℝ): δₖ s t k - t ∈ δceiledByφ s t w ↔ φ s t (δₖ s t k - t) ≤ w := by
+      unfold δceiledByφ
+      simp only [Set.mem_setOf_eq]
 
-  have equiv4 (w: ℝ) (h: w ≥ 1): wₖ s t (k + 1) ≤ w ↔ φ s t (δₖ s t k - t) ≤ w := by
-    rw [← equiv w h, equiv2 w h, equiv3]
+    have equiv4 (w: ℝ) (h: w ≥ 1): wₖ s t (k + 1) ≤ w ↔ φ s t (δₖ s t k - t) ≤ w := by
+      rw [← equiv w h, equiv2 w h, equiv3]
 
-  have equiv5 (w: ℝ): wₖ s t (k + 1) ≤ w ↔ φ s t (δₖ s t k - t) ≤ w := by
-    constructor
-    · intro h
-      have w1: 1 ≤ w := by
-        refine le_trans ?_ h
-        norm_cast
-        exact wₖ_min' s t (k + 1)
-      apply (equiv4 w w1).mp h
-    · intro h
-      have w1: 1 ≤ w := by
-        refine le_trans ?_ h
-        norm_cast
-        unfold φ
-        simp only [le_add_iff_nonneg_right, zero_le]
-      apply (equiv4 w w1).mpr h
+    have equiv5 (w: ℝ): wₖ s t (k + 1) ≤ w ↔ φ s t (δₖ s t k - t) ≤ w := by
+      constructor
+      · intro h
+        have w1: 1 ≤ w := by
+          refine le_trans ?_ h
+          norm_cast
+          exact wₖ_min' s t (k + 1)
+        apply (equiv4 w w1).mp h
+      · intro h
+        have w1: 1 ≤ w := by
+          refine le_trans ?_ h
+          norm_cast
+          unfold φ
+          simp only [le_add_iff_nonneg_right, zero_le]
+        apply (equiv4 w w1).mpr h
 
-  obtain equiv6 := equiv5 (wₖ s t (k + 1))
-  simp only [le_refl, Nat.cast_le, true_iff] at equiv6
-  obtain equiv7 := (equiv5 (φ s t (δₖ s t k - t)))
-  simp only [Nat.cast_le, le_refl, iff_true] at equiv7
-  exact Nat.le_antisymm equiv6 equiv7
+    obtain equiv6 := equiv5 (wₖ s t (k + 1))
+    simp only [le_refl, Nat.cast_le, true_iff] at equiv6
+    obtain equiv7 := (equiv5 (φ s t (δₖ s t k - t)))
+    simp only [Nat.cast_le, le_refl, iff_true] at equiv7
+    exact Nat.le_antisymm equiv6 equiv7
 
 /-
 Two lemmas similar to Jline_s and Jline_t

@@ -342,12 +342,12 @@ lemma Φδₖ (s t: ℕ+) (k: ℕ):
   rw [δₖ_int_agree]
   apply φδₖ
 
-lemma Φδₖt (s t: ℕ+) (k: ℕ) (kh: k ≥ 1):
+lemma Φδₖt (s t: ℕ+) (k: ℕ):
 Φ s t (δₖ_int s t k - t) = wₖ s t (k + 1) := by
   rw [Φ_agree]
   push_cast
   rw [δₖ_int_agree]
-  exact φδₖt _ _ _ kh
+  exact φδₖt _ _ _
 
 lemma Φjump (s t: ℕ+) (δ: ℤ) (k: ℕ) (h: Φ s t δ = nₖ s t k) (hlt: Φ s t δ < Φ s t (δ + 1)):
 Φ s t (δ + 1) = nₖ s t (k + 1) := by
@@ -1656,7 +1656,7 @@ Filter.Tendsto (fun k ↦ (wₖ s t k: ℝ) / nₖ s t k) Filter.atTop (nhds (ξ
     simp only [PNat.mul_coe, Nat.cast_mul]
     rw [← nₖ_homo, ← wₖ_homo]
     rw [(by rfl: k - 2 + 2 = k - 2 + 1 + 1)]
-    rw [← Φδₖ, ← Φδₖt _ _ _ (by exact Nat.le_add_left 1 (k - 2))]
+    rw [← Φδₖ, ← Φδₖt _ _ _ ]
     rw [← mul_div_mul_right _ _ (factor0 k)]
     conv in ((Φ S T (δₖ_int S T (k - 2 + 1) - T):ℝ) * _) =>
       conv in ξ₀ S T ^ δₖ_int S T (k - 2 + 1) * Res₀ S T  =>

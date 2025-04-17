@@ -256,8 +256,10 @@ structure nwOutput (s t: ℕ+) where
   k : ℕ
   δₖ_val : ℕ
   nₖ₁_val : ℕ
+  wₖ₁_val : ℕ
   δₖ_eq : δₖ_val = δₖ_int s t k
   nₖ_eq : nₖ₁_val = nₖ s t (k + 1)
+  wₖ_eq : wₖ₁_val = wₖ s t (k + 1)
 
 def nwComputer.next {s t: ℕ+} (input: nwComputer s t): (nwComputer s t) × nwOutput s t :=
   let Φcomp'output := input.Φcomp.next_after input.prev_δ input.prev_nₖ input.next_k
@@ -266,7 +268,13 @@ def nwComputer.next {s t: ℕ+} (input: nwComputer s t): (nwComputer s t) × nwO
   let output := Φcomp'output.Φout
   let δₖ_val := output.δ
   let nₖ₁_val := output.Φδ
+  let wₖ₁_val := output.Φt
   let k := input.next_k
+  have wₖ_eq: wₖ₁_val = wₖ s t (k + 1) := by
+    unfold wₖ₁_val
+    rw [← output.Φteq]
+    rw [Φcomp'output.hδₖ]
+    rw [Φδₖt]
   ⟨{
     Φcomp := Φcomp'
     next_k := k + 1
@@ -282,6 +290,8 @@ def nwComputer.next {s t: ℕ+} (input: nwComputer s t): (nwComputer s t) × nwO
     k
     δₖ_val
     nₖ₁_val
+    wₖ₁_val
     δₖ_eq := Φcomp'output.hδₖ
     nₖ_eq := Φcomp'output.hk
+    wₖ_eq
   }⟩
