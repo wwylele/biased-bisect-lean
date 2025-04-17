@@ -13,7 +13,15 @@ which is the "inverse function" of `dE`.
 `φ` is simply defined as `Jceiled` shifted by 1.
 -/
 noncomputable
-def φ (s t δ: ℝ) [PosReal s] [PosReal t] := 1 + Jceiled s t δ
+def φ (s t: ℝ) [PosReal s] [PosReal t] (δ: ℝ) := 1 + Jceiled s t δ
+
+lemma φ_mono (s t: ℝ) [PosReal s] [PosReal t]:
+Monotone (φ s t) := Monotone.const_add (Jceiled_mono s t) _
+
+lemma φ_pos (s t: ℝ) [PosReal s] [PosReal t] (δ: ℝ):
+0 < φ s t δ := by
+  unfold φ
+  simp
 
 /-
 φ is also a stair-case like function. It doesn't really have a inverse function

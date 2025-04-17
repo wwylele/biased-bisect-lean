@@ -202,6 +202,15 @@ lemma Φ_agree (s t: ℕ+) (δ: ℤ): Φ s t δ = φ s t δ := by
   unfold φ
   rfl
 
+lemma Φ_mono (s t: ℕ+): Monotone (Φ s t) := by
+  intro x y h
+  rw [Φ_agree, Φ_agree]
+  exact φ_mono s t (Int.cast_le.mpr h)
+
+lemma Φ_pos (s t: ℕ+) (δ: ℤ): 0 < Φ s t δ := by
+  rw [Φ_agree]
+  exact φ_pos s t δ
+
 /-
 Φ(δ) is the unique sequence that satisfies the following conditions:
  - Φ(< 0) = 1
@@ -339,6 +348,58 @@ lemma Φδₖt (s t: ℕ+) (k: ℕ) (kh: k ≥ 1):
   push_cast
   rw [δₖ_int_agree]
   exact φδₖt _ _ _ kh
+
+lemma Φjump (s t: ℕ+) (δ: ℤ) (k: ℕ) (h: Φ s t δ = nₖ s t k) (hlt: Φ s t δ < Φ s t (δ + 1)):
+Φ s t (δ + 1) = nₖ s t (k + 1) := by
+  unfold Φ Jceiled_int at h hlt ⊢
+  rw [nₖ_accum] at h ⊢
+  simp only [Int.cast_add, Int.cast_one, add_lt_add_iff_left] at hlt
+  obtain gap := Jceiled_gap'' s t _ _ hlt
+  obtain next := δnext_int_larger s t δ
+  obtain eq := le_antisymm gap next
+  by_cases k0: k = 0
+  · rw [k0] at h ⊢
+    simp only [↓reduceIte, Nat.add_eq_left, Int.cast_add, Int.cast_one, zero_add, one_ne_zero,
+      tsub_self, Nat.add_right_inj] at h ⊢
+    have δneg: δ < 0 := by
+      contrapose! h
+      rify at h
+      exact Nat.ne_zero_iff_zero_lt.mpr <| Jceiled_pos s t δ h
+    have δ1: (δ + 1: ℝ) = 0 := by
+      rw [← eq]
+      unfold δnext
+      apply Set.IsWF.min_eq_of_le
+      · unfold Δfloored Δ
+        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, Int.cast_lt_zero]
+        refine ⟨?_, δneg⟩
+        use 0, 0
+        simp
+      · unfold Δfloored Δ
+        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, and_imp, forall_exists_index]
+        intro d p q pqeq _
+        rw [← pqeq]
+        norm_cast
+        simp
+    rw [δ1, δ₀]
+  · let k' := k - 1
+    have krw: k = k' + 1 := (Nat.succ_pred_eq_of_ne_zero k0).symm
+    rw [krw] at h ⊢
+    simp only [Nat.add_eq_zero, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right,
+      Nat.add_right_inj, Int.cast_add, Int.cast_one, and_self] at h ⊢
+    obtain hmono' := Jceiled_mono' _ _ _ _ h
+    congr 1
+    apply le_antisymm
+    · by_contra! lt
+      rw [← eq] at lt
+      obtain lt' := Jceiled_gap' _ _ _ _ lt
+      rw [h] at lt'
+      have what: nₖ s t k ≥ nₖ s t (k + 1) := by
+        rw [nₖ_accum, nₖ_accum, krw]
+        simpa using lt'
+      obtain what' := (nₖ_mono s t).le_iff_le.mp what
+      simp at what'
+    · rw [← eq]
+      exact δnext_mono _ _ hmono'
 
 
 /-

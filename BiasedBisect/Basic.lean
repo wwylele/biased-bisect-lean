@@ -448,7 +448,7 @@ smallest $δ$ that's larger than the input.
 -/
 
 noncomputable
-def δnext (s t floor: ℝ) [PosReal s] [PosReal t]: ℝ :=
+def δnext (s t: ℝ) [PosReal s] [PosReal t] (floor: ℝ): ℝ :=
   Set.IsWF.min (Δfloored_WF s t floor) (Δfloored_nonempty s t floor)
 
 /-!
@@ -476,6 +476,18 @@ l * δnext s t floor = δnext (l * s) (l * t) (l * floor) := by
     rw [drw, ← Δfloored_homo] at mem
     rw [drw]
     exact mul_le_mul_of_nonneg_left (Set.IsWF.min_le _ _ mem) (le_of_lt PosReal.pos)
+
+/-!
+`δnext` is weakly increasing w.r.t floor
+-/
+lemma δnext_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (δnext s t) := by
+  intro a b le
+  apply Set.IsWF.min_le_min_of_subset
+  unfold Δfloored
+  apply Set.inter_subset_inter_right
+  simp only [gt_iff_lt, Set.setOf_subset_setOf]
+  intro c bc
+  exact lt_of_le_of_lt le bc
 
 /-!
 `δnext` will always output an element in `Δ`.
@@ -1256,6 +1268,35 @@ lemma Jceiled_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (Jceiled s t) :=
     exact le_trans pq ab
   · intro _ _ _
     apply Nat.zero_le
+
+/-!
+While `Jceiled` is only weakly increasing, and one can't deduce the relation of two $δ$ from their `Jceiled`,
+it is possible give a relation between $δ$ if one of them is `δₖ`
+-/
+lemma Jceiled_mono' (s t δ: ℝ) (k: ℕ) [PosReal s] [PosReal t] (h: Jceiled s t δ = Jceiled s t (δₖ s t k)):
+δₖ s t k ≤ δ := by
+  contrapose! h with below
+  apply ne_of_lt
+  unfold Jceiled
+  obtain ⟨extra, extramem⟩ := Λline_nonempty s t (δₖ s t k) (δₖ_in_Δ _ _ _)
+  obtain extramem' := Set.mem_of_subset_of_mem (Λline_in_Λceiled _ _ _) extramem
+  have extramem'': extra ∈ (Λceiled s t (δₖ s t k)).toFinset :=
+    Set.mem_toFinset.mpr extramem'
+  refine Finset.sum_lt_sum_of_subset ?_ extramem'' ?_ ?_ ?_
+  · unfold Λceiled
+    simp only [Set.subset_toFinset, Set.coe_toFinset, Set.setOf_subset_setOf, Prod.forall]
+    intro a b le
+    exact le_of_lt (lt_of_le_of_lt le below)
+  · unfold Λceiled
+    simp only [Set.mem_toFinset, Set.mem_setOf_eq, not_le]
+    unfold Λline δₚ at extramem
+    simp only [Set.mem_preimage] at extramem
+    obtain extraeq := Set.eq_of_mem_singleton extramem
+    rw [extraeq]
+    exact below
+  · exact Jₚ_nonzero extra
+  · intro pq _ _
+    exact Nat.zero_le (Jₚ pq)
 
 /-!
 The growth of `Jceiled` is precisely described by `Jline`.
