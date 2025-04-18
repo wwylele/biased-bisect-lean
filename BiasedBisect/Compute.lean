@@ -35,6 +35,10 @@ def ΦComputer.init (s t: ℕ+) (hst: s < t): ΦComputer s t := {
     rw [Vector.get_replicate]
 }
 
+theorem Fin.coe_sub_one' {n : ℕ+} {a : ℕ+}:
+    Fin.ofNat' n a - 1 = Fin.ofNat' n (a - 1) := by
+  simp
+
 structure ΦOutput (s t: ℕ+) where
   δ : ℕ
   Φδ : ℕ
@@ -45,7 +49,6 @@ structure ΦOutput (s t: ℕ+) where
   Φteq: Φ s t (δ - t) = Φt
 
 def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦOutput s t :=
-  have t_ndvd_s: ¬ (t:ℕ) ∣ ↑s := Nat.not_dvd_of_pos_of_lt s.prop input.hst
   have onet: ((1: Fin t):ℕ) = (1:ℕ) := by
     simp only [Fin.val_one']
     apply Nat.mod_eq_of_lt
@@ -58,17 +61,9 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
     convert input.eqΦ (Fin.ofNat' t s - 1) using 2
     · unfold pos_s
       simp
-    · simp only [Fin.ofNat'_eq_cast]
-      rw [sub_sub]
-      rw [Fin.val_sub_one_of_ne_zero (by simpa using t_ndvd_s)]
-      rw [Nat.cast_sub (by
-        simp only [Fin.val_natCast]
-        refine Nat.one_le_iff_ne_zero.mpr ?_
-        contrapose! t_ndvd_s with mod0
-        exact Nat.dvd_of_mod_eq_zero mod0
-      )]
-      simp only [Fin.val_natCast, Int.ofNat_emod, Nat.cast_one, add_sub_cancel, sub_right_inj]
-      refine (Int.emod_eq_of_lt (by simp) (by simpa using input.hst)).symm
+    · rw [Fin.coe_sub_one', Fin.ofNat'_eq_cast, Fin.val_natCast]
+      rw [Nat.mod_eq_of_lt (Nat.sub_one_lt_of_le (by simp) (by norm_cast; exact le_of_lt input.hst))]
+      simp
 
   let Φt := input.buffer.get input.next_pos
   have Φteq: Φt = Φ s t (input.next_δ - t) := by
@@ -295,3 +290,216 @@ def nwComputer.next {s t: ℕ+} (input: nwComputer s t): (nwComputer s t) × nwO
     nₖ_eq := Φcomp'output.hk
     wₖ_eq
   }⟩
+
+lemma nwComputer.next_succ {s t: ℕ+} (input: nwComputer s t):
+input.next.1.next.2.k = input.next.2.k + 1 := by rfl
+
+lemma nwComputer.next_init {s t: ℕ+} (hst: s < t):
+(nwComputer.init s t hst).next.2.k = 0 := by rfl
+
+structure bbComputer (s t: ℕ+) where
+  nwComp: nwComputer s t
+  next_n : ℕ
+  next_En : ℕ
+  k : ℕ
+  left_nₖ : ℕ
+  right_nₖ : ℕ
+  left_wₖ : ℕ
+  right_wₖ : ℕ
+  curr_δₖ : ℕ
+  En_eq : next_En = E s t next_n
+  next_k : nwComp.next.2.k = k + 1
+  n_left : left_nₖ ≤ next_n
+  n_right : next_n < right_nₖ
+  left_nₖ_eq : left_nₖ = nₖ s t k
+  right_nₖ_eq : right_nₖ = nₖ s t (k + 1)
+  left_wₖ_eq : left_wₖ = wₖ s t k
+  right_wₖ_eq : right_wₖ = wₖ s t (k + 1)
+  δₖ_eq : curr_δₖ = δₖ_int s t k
+
+def bbComputer.init (s t: ℕ+) (hst: s < t): bbComputer s t :=
+  let nwCompInit := nwComputer.init s t hst
+  let nwNext := nwCompInit.next
+  {
+    nwComp := nwNext.1
+    next_n := 1
+    next_En := 0
+    k := 0
+    left_nₖ := 1
+    right_nₖ := nwNext.2.nₖ₁_val
+    left_wₖ := 1
+    right_wₖ := nwNext.2.wₖ₁_val
+    curr_δₖ := nwNext.2.δₖ_val
+    En_eq := by
+      obtain E1 := Eℤ₁ s t
+      unfold Eℤ at E1
+      norm_cast at ⊢ E1
+      exact E1.symm
+    next_k := by rw [nwComputer.next_succ, nwComputer.next_init]
+    n_left := by simp
+    n_right := by
+      rw [nwNext.2.nₖ_eq, nwComputer.next_init]
+      norm_num
+      rw [n₁]
+      simp
+    left_nₖ_eq := by rw [n₀]
+    right_nₖ_eq := by rw [nwNext.2.nₖ_eq, nwComputer.next_init]
+    left_wₖ_eq := by unfold wₖ; rfl
+    right_wₖ_eq := by rw [nwNext.2.wₖ_eq, nwComputer.next_init]
+    δₖ_eq := by rw [nwNext.2.δₖ_eq, nwComputer.next_init]
+  }
+
+structure bbOutput (s t: ℕ+) where
+  n : ℕ
+  En : ℕ
+  wₘᵢₙn : ℤ
+  wₘₐₓn : ℤ
+  wₗᵢn : ℚ
+  En_eq : En = Eℤ s t n
+  wₘᵢₙn_eq : wₘᵢₙn = wₘᵢₙℤ s t n
+  wₘₐₓn_eq : wₘₐₓn = wₘₐₓℤ s t n
+  wₗᵢn_eq : wₗᵢn = wₗᵢ s t n
+
+def bbComputer.next {s t: ℕ+} (input: bbComputer s t): (bbComputer s t) × (bbOutput s t) :=
+  let next_n' := input.next_n + 1
+  let next_En' := input.next_En + (input.curr_δₖ + s + t)
+  have keq: kₙ s t input.next_n = some input.k := by
+    apply kₙ_inv'
+    · norm_cast
+      rw [← input.left_nₖ_eq]
+      exact input.n_left
+    · norm_cast
+      rw [← input.right_nₖ_eq]
+      exact input.n_right
+
+  let wₘᵢₙn: ℤ := max input.left_wₖ (input.right_wₖ + input.next_n - input.right_nₖ)
+  have wₘᵢₙn_eq : wₘᵢₙn = wₘᵢₙℤ s t input.next_n := by
+    unfold wₘᵢₙn wₘᵢₙℤ
+    rw [input.left_wₖ_eq, input.right_wₖ_eq, input.right_nₖ_eq]
+    rw [(by norm_cast: ((input.next_n: ℤ): ℝ) = input.next_n)]
+    rw [keq]
+
+  let wₘₐₓn: ℤ := min input.right_wₖ (input.left_wₖ + input.next_n - input.left_nₖ)
+  have wₘₐₓn_eq : wₘₐₓn = wₘₐₓℤ s t input.next_n := by
+    unfold wₘₐₓn wₘₐₓℤ
+    rw [input.left_wₖ_eq, input.right_wₖ_eq, input.left_nₖ_eq]
+    rw [(by norm_cast: ((input.next_n: ℤ): ℝ) = input.next_n)]
+    rw [keq]
+
+  let a: ℚ := (input.next_n - input.left_nₖ) / (input.right_nₖ - input.left_nₖ)
+  let wₗᵢn :=  (1 - a) * input.left_wₖ + a * input.right_wₖ
+  have wₗᵢn_eq : wₗᵢn = wₗᵢ s t input.next_n := by
+    unfold wₗᵢn a wₗᵢ
+    rw [input.left_wₖ_eq, input.right_wₖ_eq, input.left_nₖ_eq, input.right_nₖ_eq]
+    rw [keq]
+    simp
+
+  if h: next_n' = input.right_nₖ then
+    let nwComp' := input.nwComp.next
+    have right_nₖ_eq: nwComp'.2.nₖ₁_val = nₖ s t (input.k + 1 + 1) := by rw [nwComp'.2.nₖ_eq, input.next_k]
+    have n_right: next_n' < nwComp'.2.nₖ₁_val := by
+        rw [h, input.right_nₖ_eq, nwComp'.2.nₖ_eq, input.next_k]
+        exact nₖ_mono s t (by simp)
+    have keq': kₙ s t (input.next_n + 1) = some (input.k + 1) := by
+      apply kₙ_inv'
+      · norm_cast
+        rw [← input.right_nₖ_eq]
+        exact le_of_eq h.symm
+      · norm_cast
+        rw [← right_nₖ_eq]
+        exact n_right
+    have δeq: nwComp'.2.δₖ_val = δₖ_int s t (input.k + 1) := by rw [nwComp'.2.δₖ_eq, input.next_k]
+    ⟨{
+      nwComp := nwComp'.1
+      next_n := next_n'
+      next_En := next_En'
+      k := input.k + 1
+      left_nₖ := input.right_nₖ
+      right_nₖ := nwComp'.2.nₖ₁_val
+      left_wₖ := input.right_wₖ
+      right_wₖ := nwComp'.2.wₖ₁_val
+      curr_δₖ := nwComp'.2.δₖ_val
+      En_eq := by
+        unfold next_n' next_En'
+        push_cast
+        rw [input.En_eq]
+        unfold E
+        obtain δeq := input.δₖ_eq
+        rify at δeq h
+        unfold next_n' at h
+        push_cast at h
+        obtain h' := eq_sub_of_add_eq h
+        rw [keq, keq', δeq, δₖ_int_agree, h, h', input.right_nₖ_eq]
+        simp only [sub_self, zero_mul, add_zero]
+        rw [Eₖ, nₖ]
+        push_cast
+        ring
+      next_k := by rw [nwComputer.next_succ, input.next_k]
+      n_left := le_of_eq h.symm
+      n_right := n_right
+      left_nₖ_eq := input.right_nₖ_eq
+      right_nₖ_eq := right_nₖ_eq
+      left_wₖ_eq := input.right_wₖ_eq
+      right_wₖ_eq := by rw [nwComp'.2.wₖ_eq, input.next_k]
+      δₖ_eq := δeq
+    }, {
+      n := input.next_n
+      En := input.next_En
+      wₘᵢₙn
+      wₘₐₓn
+      wₗᵢn
+      En_eq := input.En_eq
+      wₘᵢₙn_eq
+      wₘₐₓn_eq
+      wₗᵢn_eq
+    }⟩
+  else
+    have n_left: input.left_nₖ ≤ next_n' := le_trans input.n_left (by unfold next_n'; simp)
+    have n_right: next_n' < input.right_nₖ := lt_of_le_of_ne (Nat.add_one_le_of_lt input.n_right) h
+    have keq': kₙ s t (input.next_n + 1) = some input.k := by
+      apply kₙ_inv'
+      · norm_cast
+        rw [← input.left_nₖ_eq]
+        exact n_left
+      · norm_cast
+        rw [← input.right_nₖ_eq]
+        exact n_right
+    ⟨{
+      nwComp := input.nwComp
+      next_n := next_n'
+      next_En := next_En'
+      k := input.k
+      left_nₖ := input.left_nₖ
+      right_nₖ := input.right_nₖ
+      left_wₖ := input.left_wₖ
+      right_wₖ := input.right_wₖ
+      curr_δₖ := input.curr_δₖ
+      En_eq := by
+        unfold next_n' next_En'
+        push_cast
+        rw [input.En_eq]
+        unfold E
+        obtain δeq := input.δₖ_eq
+        rify at δeq
+        rw [keq, keq', δeq, δₖ_int_agree]
+        simp only
+        ring
+      next_k := input.next_k
+      n_left := n_left
+      n_right := n_right
+      left_nₖ_eq := input.left_nₖ_eq
+      right_nₖ_eq := input.right_nₖ_eq
+      left_wₖ_eq := input.left_wₖ_eq
+      right_wₖ_eq := input.right_wₖ_eq
+      δₖ_eq := input.δₖ_eq
+    }, {
+      n := input.next_n
+      En := input.next_En
+      wₘᵢₙn
+      wₘₐₓn
+      wₗᵢn
+      En_eq := input.En_eq
+      wₘᵢₙn_eq
+      wₘₐₓn_eq
+      wₗᵢn_eq
+    }⟩
