@@ -211,6 +211,10 @@ lemma Φ_pos (s t: ℕ+) (δ: ℤ): 0 < Φ s t δ := by
   rw [Φ_agree]
   exact φ_pos s t δ
 
+lemma Φ_symm (s t: ℕ+) (δ: ℤ): Φ s t δ = Φ t s δ := by
+  unfold Φ Jceiled_int
+  rw [Jceiled_symm]
+
 /-
 Φ(δ) is the unique sequence that satisfies the following conditions:
  - Φ(< 0) = 1

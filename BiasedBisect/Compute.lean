@@ -11,13 +11,13 @@ instance (s t: ℕ+): NeZero (max s t: ℕ) := {
 }
 
 structure ΦComputer (s t: ℕ+) where
-  hst: s < t
+  hst: s ≤ t
   buffer : Vector ℕ t
   next_δ : ℕ
   next_pos : Fin t
   eqΦ : ∀ i: Fin t, buffer.get (next_pos - (Fin.ofNat' t 1) - i) = Φ s t (next_δ - 1 - i)
 
-def ΦComputer.init (s t: ℕ+) (hst: s < t): ΦComputer s t := {
+def ΦComputer.init (s t: ℕ+) (hst: s ≤ t): ΦComputer s t := {
   hst
   buffer := Vector.replicate _ 1
   next_δ := 0
@@ -39,21 +39,26 @@ theorem Fin.coe_sub_one' {n : ℕ+} {a : ℕ+}:
     Fin.ofNat' n a - 1 = Fin.ofNat' n (a - 1) := by
   simp
 
+theorem Fin.coe_neg_one' {n : ℕ+}:
+    ((-1 : Fin n): ℕ) = n - 1 := by
+  obtain n1|n1 := eq_or_lt_of_le (PNat.one_le n)
+  · rw [← n1]
+    simp
+  · rw [Fin.coe_neg, val_one']
+    nth_rw 2 [Nat.mod_eq_of_lt (by simpa using n1)]
+    rw [Nat.mod_eq_of_lt (by simp)]
+
+
 structure ΦOutput (s t: ℕ+) where
   δ : ℕ
   Φδ : ℕ
   Φs : ℕ
   Φt : ℕ
-  Φeq: Φ s t δ = Φδ
-  Φseq: Φ s t (δ - s) = Φs
-  Φteq: Φ s t (δ - t) = Φt
+  Φeq : Φ s t δ = Φδ
+  Φseq : Φ s t (δ - s) = Φs
+  Φteq : Φ s t (δ - t) = Φt
 
 def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦOutput s t :=
-  have onet: ((1: Fin t):ℕ) = (1:ℕ) := by
-    simp only [Fin.val_one']
-    apply Nat.mod_eq_of_lt
-    exact lt_of_le_of_lt s.prop input.hst
-
   let pos_s := input.next_pos - Fin.ofNat' t s
 
   let Φs := input.buffer.get pos_s
@@ -62,7 +67,7 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
     · unfold pos_s
       simp
     · rw [Fin.coe_sub_one', Fin.ofNat'_eq_cast, Fin.val_natCast]
-      rw [Nat.mod_eq_of_lt (Nat.sub_one_lt_of_le (by simp) (by norm_cast; exact le_of_lt input.hst))]
+      rw [Nat.mod_eq_of_lt (Nat.sub_one_lt_of_le (by simp) (by norm_cast; exact input.hst))]
       simp
 
   let Φt := input.buffer.get input.next_pos
@@ -70,12 +75,8 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
     convert input.eqΦ (Fin.ofNat' t 0 - 1) using 2
     · simp
     · simp only [Fin.ofNat'_eq_cast, Nat.cast_zero, zero_sub]
-      rw [sub_sub]
-      simp only [sub_right_inj]
-      rw [Fin.coe_neg, Nat.mod_eq_of_lt ?_]
-      all_goals
-      · rw [onet]
-        simp
+      rw [Fin.coe_neg_one']
+      simp
 
   let Φst := Φs + Φt
   have Φsteq: Φst = Φ s t input.next_δ := by
@@ -101,7 +102,19 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
           contrapose! new with i0
           rw [i0]
           simp
+        have t1: 1 < t := by
+          contrapose! i0 with t1
+          simp only [PNat.le_one_iff] at t1
+          apply subsingleton_iff.mp
+          convert Fin.subsingleton_one
+          simpa using t1
+        have onet: ((1: Fin t):ℕ) = (1:ℕ) := by
+          simp only [Fin.val_one']
+          apply Nat.mod_eq_of_lt
+          simpa using t1
+
         simp only [Nat.cast_add, Nat.cast_one, add_sub_cancel_right]
+
         rw [Fin.coe_sub_iff_le.mpr (Fin.one_le_of_ne_zero i0)]
         rw [onet]
         rw [Nat.cast_sub (by
@@ -116,17 +129,59 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
 lemma ΦComputer.next_succδ {s t: ℕ+} (input: ΦComputer s t):
 input.next.1.next.2.δ = input.next.2.δ + 1 := by rfl
 
-lemma ΦComputer.next_init {s t: ℕ+} (hst: s < t):
+lemma ΦComputer.next_init {s t: ℕ+} (hst: s ≤ t):
 (ΦComputer.init s t hst).next.2.δ = 0 := by rfl
 
+inductive ΦComputer' (s t: ℕ+) where
+| st: ΦComputer s t -> ΦComputer' s t
+| ts: ΦComputer t s -> ΦComputer' s t
+
+def ΦComputer'.init (s t: ℕ+): ΦComputer' s t :=
+  if hst: s ≤ t then
+    ΦComputer'.st (ΦComputer.init s t hst)
+  else
+    ΦComputer'.ts (ΦComputer.init t s (le_of_lt (lt_of_not_ge hst)))
+
+def ΦComputer'.next {s t: ℕ+} (input: ΦComputer' s t): (ΦComputer' s t) × ΦOutput s t :=
+  match input with
+  | ΦComputer'.st cst =>
+    let next := cst.next
+    ⟨ΦComputer'.st next.1, next.2⟩
+  | ΦComputer'.ts cts =>
+    let next := cts.next
+    ⟨ΦComputer'.ts next.1, {
+      δ := next.2.δ
+      Φδ := next.2.Φδ
+      Φs := next.2.Φt
+      Φt := next.2.Φs
+      Φeq := Φ_symm t s _ ▸ next.2.Φeq
+      Φseq := Φ_symm t s _ ▸ next.2.Φteq
+      Φteq := Φ_symm t s _ ▸ next.2.Φseq
+    }⟩
+
+lemma ΦComputer'.next_succδ {s t: ℕ+} (input: ΦComputer' s t):
+input.next.1.next.2.δ = input.next.2.δ + 1 := by
+  unfold ΦComputer'.next
+  match input with
+  | ΦComputer'.st cst => rw [ΦComputer.next_succδ]
+  | ΦComputer'.ts cts => rw [ΦComputer.next_succδ]
+
+lemma ΦComputer'.next_init (s t: ℕ+):
+(ΦComputer'.init s t).next.2.δ = 0 := by
+  unfold ΦComputer'.init
+  unfold ΦComputer'.next
+  split_ifs with hst
+  · rw [ΦComputer.next_init hst]
+  · rw [ΦComputer.next_init (le_of_lt (lt_of_not_ge hst))]
+
 structure ΦOutputK (s t: ℕ+) (k: ℕ) where
-  Φcomp: ΦComputer s t
+  Φcomp: ΦComputer' s t
   Φout : ΦOutput s t
   hk: Φout.Φδ = nₖ s t (k + 1)
   hδ: Φcomp.next.2.δ = Φout.δ + 1
   hδₖ: Φout.δ = δₖ_int s t k
 
-def ΦComputer.next_after {s t: ℕ+} (input: ΦComputer s t) (δ: ℤ) (Φδ: ℕ) (k: ℕ)
+def ΦComputer'.next_after {s t: ℕ+} (input: ΦComputer' s t) (δ: ℤ) (Φδ: ℕ) (k: ℕ)
 (hΦ: Φδ = Φ s t δ) (hnext: input.next.2.δ = δ + 1) (hnₖ: Φδ = nₖ s t k)
 : ΦOutputK s t k :=
   let next := input.next
@@ -138,7 +193,7 @@ def ΦComputer.next_after {s t: ℕ+} (input: ΦComputer s t) (δ: ℤ) (Φδ: �
       rw [hΦ, hnext]
       exact Φ_mono _ _ (by simp)
     next.1.next_after (δ + 1) Φδ k hΦ' (by
-      rw [ΦComputer.next_succδ]
+      rw [ΦComputer'.next_succδ]
       push_cast
       rw [hnext]
     ) hnₖ
@@ -175,7 +230,7 @@ def ΦComputer.next_after {s t: ℕ+} (input: ΦComputer s t) (δ: ℤ) (Φδ: �
       Φcomp := next.1
       Φout := next.2
       hk := hk
-      hδ := by apply ΦComputer.next_succδ
+      hδ := by apply ΦComputer'.next_succδ
       hδₖ := hδₖ
     }
 termination_by t * Φδ + 1 - ∑ i ∈ Finset.range t, Φ s t (input.next.2.δ - i)
@@ -191,7 +246,7 @@ decreasing_by
       simp
     · rw [input.next.2.Φeq]
       exact h
-  · rw [ΦComputer.next_succδ]
+  · rw [ΦComputer'.next_succδ]
     let t': ℕ := t - 1
     have: t = t' + 1 := by
       unfold t'
@@ -229,7 +284,7 @@ decreasing_by
     exact (lt_add_iff_pos_left _).mpr (Φ_pos _ _ _)
 
 structure nwComputer (s t: ℕ+) where
-  Φcomp : ΦComputer s t
+  Φcomp : ΦComputer' s t
   next_k : ℕ
   prev_nₖ : ℕ
   prev_δ : ℤ
@@ -237,12 +292,12 @@ structure nwComputer (s t: ℕ+) where
   nₖ_δ_agree: prev_nₖ = Φ s t prev_δ
   nₖ_eq : prev_nₖ = nₖ s t next_k
 
-def nwComputer.init (s t: ℕ+) (hst: s < t): nwComputer s t := {
-  Φcomp := ΦComputer.init s t hst
+def nwComputer.init (s t: ℕ+): nwComputer s t := {
+  Φcomp := ΦComputer'.init s t
   next_k := 0
   prev_nₖ := 1
   prev_δ := -1
-  δ_agree := by rw [ΦComputer.next_init hst]; simp
+  δ_agree := by rw [ΦComputer'.next_init]; simp
   nₖ_δ_agree := by rw [Φ_neg s t (-1) (by simp)]
   nₖ_eq := by rw [n₀]
 }
@@ -294,8 +349,8 @@ def nwComputer.next {s t: ℕ+} (input: nwComputer s t): (nwComputer s t) × nwO
 lemma nwComputer.next_succ {s t: ℕ+} (input: nwComputer s t):
 input.next.1.next.2.k = input.next.2.k + 1 := by rfl
 
-lemma nwComputer.next_init {s t: ℕ+} (hst: s < t):
-(nwComputer.init s t hst).next.2.k = 0 := by rfl
+lemma nwComputer.next_init (s t: ℕ+):
+(nwComputer.init s t).next.2.k = 0 := by rfl
 
 structure bbComputer (s t: ℕ+) where
   nwComp: nwComputer s t
@@ -317,8 +372,8 @@ structure bbComputer (s t: ℕ+) where
   right_wₖ_eq : right_wₖ = wₖ s t (k + 1)
   δₖ_eq : curr_δₖ = δₖ_int s t k
 
-def bbComputer.init (s t: ℕ+) (hst: s < t): bbComputer s t :=
-  let nwCompInit := nwComputer.init s t hst
+def bbComputer.init (s t: ℕ+): bbComputer s t :=
+  let nwCompInit := nwComputer.init s t
   let nwNext := nwCompInit.next
   {
     nwComp := nwNext.1
@@ -359,6 +414,7 @@ structure bbOutput (s t: ℕ+) where
   wₘᵢₙn_eq : wₘᵢₙn = wₘᵢₙℤ s t n
   wₘₐₓn_eq : wₘₐₓn = wₘₐₓℤ s t n
   wₗᵢn_eq : wₗᵢn = wₗᵢ s t n
+deriving Repr
 
 def bbComputer.next {s t: ℕ+} (input: bbComputer s t): (bbComputer s t) × (bbOutput s t) :=
   let next_n' := input.next_n + 1
@@ -503,3 +559,30 @@ def bbComputer.next {s t: ℕ+} (input: bbComputer s t): (bbComputer s t) × (bb
       wₘₐₓn_eq
       wₗᵢn_eq
     }⟩
+
+
+lemma bbComputer.next_succ {s t: ℕ+} (input: bbComputer s t):
+input.next.1.next.2.n = input.next.2.n + 1 := by
+  rw [bbComputer.next]
+  split
+  all_goals
+  · simp
+    rw [bbComputer.next]
+    split
+    all_goals rfl
+
+lemma bbComputer.next_init (s t: ℕ+):
+(bbComputer.init s t).next.2.n = 1 := by
+  rw [bbComputer.next]
+  split
+  all_goals rfl
+
+def calculateBbList' (s t: ℕ+) (n: ℕ) (prev: Array (bbOutput s t)) (comp: bbComputer s t) :=
+  if n = 0 then
+    prev
+  else
+    let next := comp.next
+    calculateBbList' s t (n - 1) (prev ++ [next.2]) next.1
+
+def calculateBbList (s t: ℕ+) (n: ℕ) :=
+  calculateBbList' s t n (Array.emptyWithCapacity n) (bbComputer.init s t)

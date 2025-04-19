@@ -1,4 +1,5 @@
 import BiasedBisect.Basic
+import BiasedBisect.Compute
 import BiasedBisect.Continuous
 import BiasedBisect.CrossSection
 import BiasedBisect.Inert
@@ -9,6 +10,3 @@ import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
 import BiasedBisect.MathlibTopologyOrderIsLUB
 import BiasedBisect.Multigeometric
 import BiasedBisect.Split
-
-
-#print "Hello world"
