@@ -1,4 +1,4 @@
-import Mathlib.MeasureTheory.Integral.SetIntegral
+import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Order.CompletePartialOrder
 
@@ -259,12 +259,12 @@ theorem Asymptotics.IsEquivalent.integral {f g : ℝ → ℝ}
     simp only [Pi.sub_apply]
     have hf_integrable': IntegrableOn f (Set.Ioc a x) := by
       obtain lt|ge := lt_or_ge x a
-      · rw [Set.Ioc_eq_empty (by simp; exact lt.le)]
+      · rw [Set.Ioc_eq_empty (by simpa using lt.le)]
         simp
       · exact hf_integrable x ge
     have hg_integrable': IntegrableOn g (Set.Ioc a x) := by
       obtain lt|ge := lt_or_ge x a
-      · rw [Set.Ioc_eq_empty (by simp; exact lt.le)]
+      · rw [Set.Ioc_eq_empty (by simpa using lt.le)]
         simp
       · exact hg_integrable x ge
     rw [← integral_sub hf_integrable' hg_integrable']

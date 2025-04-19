@@ -62,8 +62,7 @@ lemma StrictMono_coe {f: ℕ → ℚ} (h: StrictMono (((↑) : ℚ → ℝ) ∘ 
   refine strictMono_nat_of_lt_succ ?_
   intro n
   obtain h' := h (lt_add_one n: n < n + 1)
-  simp at h'
-  exact h'
+  simpa using h'
 
 theorem Rat.exists_seq_strictMono_tendsto_real (x : ℝ):
 ∃ (u : ℕ → ℚ), StrictMono u ∧ (∀ (n : ℕ), u n < x) ∧

@@ -222,7 +222,8 @@ def ΦComputer'.next_after {s t: ℕ+} (input: ΦComputer' s t) (δ: ℤ) (Φδ:
         simp at what'
       · unfold Φ Jceiled_int at Φk1
         rw [nₖ_accum] at Φk1
-        simp at Φk1
+        simp only [Int.cast_add, Int.cast_one, Nat.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+          add_tsub_cancel_right, Nat.add_right_inj] at Φk1
         rify
         rw [δₖ_int_agree]
         exact Jceiled_mono' _ _ _ _ Φk1
@@ -566,7 +567,7 @@ input.next.1.next.2.n = input.next.2.n + 1 := by
   rw [bbComputer.next]
   split
   all_goals
-  · simp
+  · simp only
     rw [bbComputer.next]
     split
     all_goals rfl

@@ -472,7 +472,10 @@ l * δnext s t floor = δnext (l * s) (l * t) (l * floor) := by
     exact Set.IsWF.min_mem _ _
   · intro d mem
     let d' := d / l
-    have drw: d = l * d' := by unfold d'; rw [mul_comm, div_mul_cancel₀]; apply ne_of_gt (PosReal.pos)
+    have drw: d = l * d' := by
+      unfold d'
+      rw [mul_comm, div_mul_cancel₀]
+      apply ne_of_gt (PosReal.pos)
     rw [drw, ← Δfloored_homo] at mem
     rw [drw]
     exact mul_le_mul_of_nonneg_left (Set.IsWF.min_le _ _ mem) (le_of_lt PosReal.pos)
@@ -3594,9 +3597,8 @@ t *   ((1 - a) * (wₖ s t k) + a * (wₖ s t (k + 1))) + s *   ((1 - a) * (wₖ
   rw [Ewₖ_lerp s t k a low high]
   rw [Ewₖ'_lerp s t k a low high]
   rw [Eₖ_rec s t k k1]
-  rw [Eₖ_rec]
+  rw [Eₖ_rec _ _ _ (Nat.le_add_right_of_le k1)]
   ring
-  exact Nat.le_add_right_of_le k1
 
 /-!
 Eventually, we reached the major conclusion:

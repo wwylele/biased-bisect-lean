@@ -830,10 +830,10 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
         constructor
         · simp only [Finset.mem_range]
           apply (Nat.sub_lt_iff_lt_add xleft).mpr
-          rw [Nat.succ_add]
+          rw [Nat.add_succ]
           apply Nat.lt_succ_iff.mpr
           convert xright
-          exact Nat.add_sub_of_le (Nat.le_of_succ_le k'left)
+          exact Nat.sub_add_cancel (Nat.le_of_succ_le k'left)
         · exact Nat.add_sub_of_le xleft
       · rintro ⟨a, ⟨amem, aeq⟩⟩
         simp only [Finset.mem_range] at amem
@@ -923,10 +923,10 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
         constructor
         · simp only [Finset.mem_range]
           apply (Nat.sub_lt_iff_lt_add xleft).mpr
-          rw [Nat.succ_add]
+          rw [Nat.add_succ]
           apply Nat.lt_succ_iff.mpr
           convert xright
-          exact Nat.add_sub_of_le (Nat.le_of_succ_le k'right)
+          exact Nat.sub_add_cancel (Nat.le_of_succ_le k'right)
         · exact Nat.add_sub_of_le xleft
       · rintro ⟨a, ⟨amem, aeq⟩⟩
         simp only [Finset.mem_range] at amem

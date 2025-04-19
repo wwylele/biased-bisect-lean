@@ -401,7 +401,7 @@ lemma wₗᵢAntiOnInterval (N: ℕ+) (n: ℝ) (hn: n ≤ N) (n2: 2 ≤ n):
   have: PosReal y := {pos := ypos}
   unfold wₗᵢex
   simp only [xpos, ypos, gt_iff_lt, zero_lt_one, ↓reduceDIte]
-  simp at intervalmem
+  simp only [List.mem_map] at intervalmem
   obtain ⟨seg, ⟨segmem, segis⟩⟩ := intervalmem
   obtain det := List.forall_iff_forall_mem.mp (segListDet N) _ segmem
   obtain inert := List.forall_iff_forall_mem.mp (segListInert N) _ segmem
@@ -665,7 +665,7 @@ SetsCover ((genSeg n list).map segToInterval) a b := by match list with
   unfold List.Forall at hdet
   obtain ⟨headdet, taildet⟩ := hdet
   unfold SetsCover at hcover
-  simp at hcover
+  simp only [List.map_cons] at hcover
   obtain ⟨c, headIsIcc, alec, tailcover⟩ := hcover
   obtain tailcover' := genSegPreserveCovers n (head2::tail) _ _ taildet tailcover
   unfold genSeg

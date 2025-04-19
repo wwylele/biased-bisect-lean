@@ -168,11 +168,9 @@ Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) atTop (nhds 1) := by
     simp
 
   have dEρnonneg (n: ℝ) (n1: 1 ≤ n): 0 ≤ (dE s t n) * (ρ s t) := by
-    apply mul_nonneg
-    · rw [← dE₁ s t]
-      apply (dE_mono s t)
-      exact n1
-    . exact le_of_lt (ρ_range s t)
+    refine mul_nonneg ?_ (le_of_lt (ρ_range s t))
+    rw [← dE₁ s t]
+    exact (dE_mono s t) n1
 
   have leftle (n: ℝ) (n1: 1 < n): left n ≤ (dE s t n) * (ρ s t) / Real.log n := by
     unfold left
