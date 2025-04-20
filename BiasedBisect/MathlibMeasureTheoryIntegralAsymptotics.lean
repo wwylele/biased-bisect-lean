@@ -273,3 +273,16 @@ theorem Asymptotics.IsEquivalent.integral {f g : ℝ → ℝ}
     intro x hx
     exact (hf_integrable x hx).sub (hg_integrable x hx)
   exact Asymptotics.IsLittleO.integral hfg hg_tendsto hfg_integrable hg_integrable
+
+
+/-
+theorem Asympotitics.IsBigOWith.integral
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace α] [PartialOrder α]
+    {c : ℝ} {l : Filter α} {f : α → E} {g : α → ℝ} {μ : Measure α}
+    (hfg: IsBigOWith c l f g)
+    (hf: ∃ᶠ a in l, IntegrableOn f (Set.Iic a) μ)
+    (hg: ∃ᶠ a in l, IntegrableOn g (Set.Iic a) μ)
+    (hg_tendsto: Tendsto (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) l atTop):
+    ∀ c' > c, IsBigOWith c' l
+      (fun a ↦ ∫ x in (Set.Iic a), f x ∂μ) (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) := by sorry
+-/

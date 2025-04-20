@@ -16,6 +16,11 @@ are asymptotically equivalent to `Eℝ` and `wℝ`, the solution to the continuo
 
 open Asymptotics Filter
 
+/-!
+We start with a few lemma concerning the asymptotic behavior of `δₖ` and `φ`.
+
+Although intuitively obvious, we need to show that `δₖ` grows unbounded.
+-/
 lemma δₖ_infinity (s t: ℝ) [PosReal s] [PosReal t]:
 Tendsto (δₖ s t) atTop atTop := by
   apply tendsto_atTop_atTop.mpr
@@ -34,6 +39,9 @@ Tendsto (δₖ s t) atTop atTop := by
   obtain what' := lt_of_le_of_lt (Nat.le_ceil _) ((lt_div_iff₀ PosReal.pos).mpr what)
   simp at what'
 
+/-!
+We restate `φ_bound` in terms of asymptotic behavior: `log φ` has linear growth.
+-/
 lemma φ_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
 Tendsto (fun x ↦ x * (ρ s t) / Real.log (φ s t x)) atTop (nhds 1) := by
   have logφpos (x: ℝ) (h: 0 ≤ x): 0 < Real.log (φ s t x) := by
@@ -81,11 +89,17 @@ Tendsto (fun x ↦ x * (ρ s t) / Real.log (φ s t x)) atTop (nhds 1) := by
     rw [div_self (ne_of_gt (lt_of_lt_of_le (by simp) x1))]
   · exact Tendsto.const_div_atTop (fun ⦃U⦄ a ↦ a) _
 
+/-!
+Composing two above, we show `δₖ` and `log nₖ` grow at the same rate.
+-/
 lemma δₖ_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
 Tendsto (fun k ↦ δₖ s t k * (ρ s t) / Real.log (nₖ s t (k + 1))) atTop (nhds 1) := by
   simp_rw [← φδₖ]
   exact Tendsto.comp (φ_Asymptotic s t) (δₖ_infinity s t)
 
+/-!
+We also show that `δₖ` grows sub-exponentially w.r.t `k`.
+-/
 lemma δₖ_slowGrow (s t: ℝ) [PosReal s] [PosReal t]:
 Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) atTop (nhds 1) := by
   have smallgap (k: ℕ): δₖ s t (k + 1) ≤ δₖ s t k + s := by
@@ -143,7 +157,9 @@ Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) atTop (nhds 1) := by
   · apply Tendsto.const_mul
     exact Tendsto.comp tendsto_inv_atTop_zero (δₖ_infinity s t)
 
-
+/-!
+With all lemmas above, we show `dE` grows like `log`.
+-/
 lemma dE_Asymptotic' (s t: ℝ) [PosReal s] [PosReal t]:
 Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) atTop (nhds 1) := by
   let kₙ'proof (n: ℝ): (max n 1) ≥ 1 := by simp
@@ -266,6 +282,9 @@ Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) atTop (nhds 1) := by
   · exact Tendsto.comp (δₖ_Asymptotic s t) ktends
   · exact Tendsto.comp righttends' ktends
 
+/-!
+Restating `dE_Asymptotic` in terms of asymptotic equivalence.
+-/
 lemma dE_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
 dE s t ~[atTop] (Real.log · / ρ s t) := by
   refine (isEquivalent_iff_tendsto_one ?_).mpr ?_
@@ -290,6 +309,9 @@ dE s t ~[atTop] (Real.log · / ρ s t) := by
     rw [← div_mul]
     rw [mul_div_right_comm]
 
+/-!
+Integrating boths sides of `dE_Asymptotic`, we show `E` is equivalent to `Eℝ`.
+-/
 theorem E_Asymptotic (s t: ℝ) [PosReal s] [PosReal t]:
 E s t ~[atTop] Eℝ s t := by
   have congr_left: E s t =ᶠ[atTop] fun n ↦ ∫ x in Set.Ioc 1 n, dE s t x + s + t := by
@@ -367,8 +389,12 @@ E s t ~[atTop] Eℝ s t := by
     refine ContinuousOn.div_const (ContinuousOn.add ?_ continuousOn_const) _
     exact Real.continuousOn_log.mono (by simp)
 
-/-
-g agrees with ξ₀ that we defined in Integer.lean
+/-!
+To study the asymptotic behavior of `w`, we extend the result `w_Asymtotic_int`
+to real $s$ and $t$.
+
+As the starter, `g` agrees with `ξ₀`, allowing us to translate the coefficient
+from the integer case to the real case.
 -/
 lemma g_eq (s t: ℕ+): (ξ₀ s t ^ (t: ℕ)) = g s t := by
   apply g_unique s t
@@ -387,8 +413,8 @@ lemma g_eq (s t: ℕ+): (ξ₀ s t ^ (t: ℕ)) = g s t := by
     rw [← pow_mul, ← pow_mul, mul_comm]
 
 
-/-
-A corollary of w_Asymtotic_int: the limit holds for rational s / t
+/-!
+A corollary of `w_Asymtotic_int`: the limit holds for rational $s / t$.
 -/
 lemma w_Asymtotic_rat (s t: ℝ) [PosReal s] [PosReal t] (rational: s / t ∈ Set.range Rat.cast):
 Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) atTop (nhds (g s t)) := by
@@ -432,20 +458,20 @@ Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) atTop (nhds (g s t)) := by
   rw [← g_homo, ← g_eq]
   apply w_Asymtotic_int
 
-/-
+/-!
 To generalize the limit to all real s and t, we will utilize the following facts:
- - g is antitone and continuous
- - w is monotone w.r.t s and t
+ - `g` is antitone and continuous.
+ - `w` is monotone w.r.t $s$ and $t$.
 -/
 
-/-
-To help with the proof, we define the inverse function of g w.r.t t, fixing s = 1
+/-!
+To help with the proof, we define the inverse function of `g` w.r.t $t$, fixing $s = 1$.
 -/
 noncomputable
 def ginv (g) := Real.log g / Real.log (1 - g)
 
-/-
-ginv is antitone
+/-!
+`ginv` is antitone.
 -/
 lemma ginv_anti: StrictAntiOn ginv (Set.Ioo 0 1) := by
   unfold ginv
@@ -472,8 +498,8 @@ lemma ginv_anti: StrictAntiOn ginv (Set.Ioo 0 1) := by
     · simp only [sub_lt_self_iff]
       exact g1mem.1
 
-/-
-And as expected, ginv inverts g
+/-!
+And as expected, `ginv` inverts `g`.
 -/
 lemma ginv_comp (r: ℝ) [PosReal r]: ginv (g 1 r) = r := by
   unfold ginv
@@ -493,8 +519,8 @@ lemma ginv_comp (r: ℝ) [PosReal r]: ginv (g 1 r) = r := by
     rw [← g_satisfies 1 r]
     simp
 
-/-
-We generalize w's asymtotic behavior to all positive s and t
+/-!
+We generalize `w`'s asymtotic behavior to all positive $s$ and $t$
 -/
 lemma w_Asymtotic' (s t: ℝ) [PosReal s] [PosReal t]:
 Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) atTop (nhds (g s t)) := by
@@ -668,6 +694,9 @@ Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) atTop (nhds (g s t)) := by
       simp only [add_lt_add_iff_right]
       exact belowDr.2
 
+/-!
+Lastly, we restate `w_Asymtotic` in terms of asymptotic equivalence.
+-/
 theorem w_Asymtotic (s t: ℝ) [PosReal s] [PosReal t]: wₗᵢ s t ~[atTop] wℝ s t := by
   unfold wℝ
   have g0: g s t ≠ 0 := ne_of_gt (g_range s t).1

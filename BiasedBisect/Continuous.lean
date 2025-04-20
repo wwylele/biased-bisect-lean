@@ -22,13 +22,13 @@ for all positive $n$. We will see that $E(n) = n \log n/ρ$, and the optimal str
    - `Eℝ_IsOptimalCostℝ` verifies this is the solution to `IsOptimalCostℝ`.
    - `ρ` is the coefficient in `Eℝ`.
  - `wℝ` is the optimal strategy function.
-   - `Wℝ_IsOptimalStratℝ` verifies this is the solution to `IsOptimalStratℝ`.
+   - `wℝ_IsOptimalStratℝ` verifies this is the solution to `IsOptimalStratℝ`.
    - `g` is the coefficient in `wℝ`.
 
 -/
 
-/-
-ρ is the unique solution to the equation ρf = 1
+/-!
+`ρ` is the unique real solution to the equation $ρf(ρ) = 1$, where $ρf(ρ) = e^{-s ρ} + e^{-t ρ}$.
 -/
 noncomputable
 def ρf (s t: ℝ) [PosReal s] [PosReal t] (ρ: ℝ) := Real.exp (-s * ρ) + Real.exp (-t * ρ)
@@ -97,6 +97,10 @@ lemma ρ_range (s t: ℝ) [PosReal s] [PosReal t]: 0 < ρ s t := by
   rw [← eq]
   unfold ρf
   simp
+
+/-!
+`g` is the unique real solution to the equation $g^s = (1-g)^t$.
+-/
 
 lemma g_exist (s t: ℝ) [PosReal s] [PosReal t]:
 ∃! g ∈ Set.Icc (0:ℝ) 1, g ^ s = (1 - g) ^ t := by
@@ -180,8 +184,8 @@ g' = g s t := by
   obtain ⟨_, unique⟩ := (g_exist s t).choose_spec
   exact unique g' ⟨grange, satisfies⟩
 
-/-
-g is homogeneous
+/-!
+g is homogeneous.
 -/
 lemma g_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: g s t = g (l * s) (l * t) := by
   obtain range := g_range s t
@@ -193,18 +197,43 @@ lemma g_homo (s t l: ℝ) [PosReal s] [PosReal t] [PosReal l]: g s t = g (l * s)
     rw [Real.rpow_mul (le_of_lt left), Real.rpow_mul (sub_nonneg_of_le (le_of_lt right))]
     rw [satisfies]
 
+/-!
+The two coefficients `ρ` and `g` are closely related
+-/
+lemma g_ρ_agree (s t: ℝ) [PosReal s] [PosReal t]: g s t = Real.exp (-t * ρ s t) := by
+  symm
+  apply g_unique s t
+  · constructor
+    · exact Real.exp_nonneg _
+    · apply Real.exp_le_one_iff.mpr
+      apply mul_nonpos_of_nonpos_of_nonneg (Left.neg_nonpos_iff.mpr <| le_of_lt PosReal.pos)
+      apply le_of_lt <| ρ_range s t
+  · rw [← eq_sub_of_add_eq (ρ_satisfies s t)]
+    rw [← Real.exp_mul, ← Real.exp_mul]
+    apply Real.exp_eq_exp.mpr
+    ring
+
+/-!
+We define the goal of the continuous version of the problem.
+-/
 def IsOptimalCostℝ (Efun: ℝ → ℝ) (s t: ℝ): Prop :=
   ∀ n > 0, IsLeast ((StratEval Efun s t n) '' (Set.Ioo 0 n)) (Efun n)
 
 def IsOptimalStratℝ (Efun: ℝ → ℝ) (wfun: ℝ → Set ℝ) (s t: ℝ): Prop :=
   ∀ n > 0, ∀ w ∈ (Set.Ioo 0 n), StratEval Efun s t n w = Efun n ↔ w ∈ wfun n
 
+/-!
+The proposed solution `Eℝ` and `wℝ` are simple functions with coefficients `ρ` and `g`.
+-/
 noncomputable
 def Eℝ (s t: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun n ↦ n * Real.log n / ρ s t
 
 noncomputable
 def wℝ (s t: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := (g s t * ·)
 
+/-!
+We also verify `wℝ` is always between 0 and `n`
+-/
 lemma wℝ_range (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ) (npos: 0 < n):
 wℝ s t n ∈ Set.Ioo 0 n := by
   unfold wℝ
@@ -212,7 +241,10 @@ wℝ s t n ∈ Set.Ioo 0 n := by
   · exact mul_pos (g_range s t).1 npos
   · exact mul_lt_of_lt_one_left npos (g_range s t).2
 
-
+/-!
+Similar to the discrete problem, we define the auxiliary `Dℝ` function and discuss its derivative.
+It turns out `Dℝ` is a convex function with a unique minimum.
+-/
 noncomputable
 def Dℝ (s t: ℝ) [PosReal s] [PosReal t] (n w: ℝ) := Eℝ s t w + Eℝ s t (n - w) + t * w + s * (n - w)
 
@@ -269,19 +301,6 @@ ContinuousOn (D'ℝ s t n) (Set.Ioo 0 n) := by
         exact sub_ne_zero_of_ne fun a ↦ xmem (id (Eq.symm a))
     · fun_prop
   · fun_prop
-
-lemma g_ρ_agree (s t: ℝ) [PosReal s] [PosReal t]: g s t = Real.exp (-t * ρ s t) := by
-  symm
-  apply g_unique s t
-  · constructor
-    · exact Real.exp_nonneg _
-    · apply Real.exp_le_one_iff.mpr
-      apply mul_nonpos_of_nonpos_of_nonneg (Left.neg_nonpos_iff.mpr <| le_of_lt PosReal.pos)
-      apply le_of_lt <| ρ_range s t
-  · rw [← eq_sub_of_add_eq (ρ_satisfies s t)]
-    rw [← Real.exp_mul, ← Real.exp_mul]
-    apply Real.exp_eq_exp.mpr
-    ring
 
 lemma D'ℝ_zero (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ) (npos: 0 < n):
 D'ℝ s t n (wℝ s t n) = 0 := by
@@ -405,6 +424,9 @@ Dℝ s t n (wℝ s t n) = Eℝ s t n := by
     mul_div_cancel_right₀ _ (ρ_range s t).ne.symm]
   simp
 
+/-!
+Finally, we verify `Eℝ` and `wℝ` are indeed the solution.
+-/
 theorem Eℝ_IsOptimalCostℝ (s t: ℝ) [PosReal s] [PosReal t]: IsOptimalCostℝ (Eℝ s t) s t := by
   intro n npos
   unfold StratEval
@@ -425,7 +447,7 @@ theorem Eℝ_IsOptimalCostℝ (s t: ℝ) [PosReal s] [PosReal t]: IsOptimalCost�
       simp
     · exact le_of_lt <| Dℝ_right s t n w gt wmem.2
 
-theorem Wℝ_IsOptimalStratℝ (s t: ℝ) [PosReal s] [PosReal t]:
+theorem wℝ_IsOptimalStratℝ (s t: ℝ) [PosReal s] [PosReal t]:
 IsOptimalStratℝ (Eℝ s t) (fun n ↦ {wℝ s t n}) s t := by
   intro n npos w wmem
   simp only [Set.mem_singleton_iff]

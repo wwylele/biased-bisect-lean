@@ -13,8 +13,8 @@ where each block is represented by inert tuples $(a, b, c, d)$.
  - `wₗᵢMono`: `wₗᵢ` is weakly monotone w.r.t. $s/t$.
 -/
 
-/-
-This encodes an inert tuple (a, b, c, d), though on its own it is not necessarily one
+/-!
+This encodes an inert tuple $(a, b, c, d)$, though on its own it is not necessarily one.
 -/
 @[ext]
 structure InertSeg where
@@ -24,13 +24,13 @@ structure InertSeg where
   d: ℕ+
 deriving Repr
 
-/-
-An inert tuple must satisfy ad - bc = 1
+/-!
+An inert tuple must satisfy $ad - bc = 1$
 -/
 def InertSeg.det1 (seg: InertSeg) := seg.a * seg.d = seg.b * seg.c + 1
 
-/-
-An inert tuple always creates a non-empty interval [b/a, d/c]
+/-!
+An inert tuple always creates a non-empty interval $[b/a, d/c]$.
 -/
 lemma InertSeg.det1.lt {seg: InertSeg} (h: seg.det1):
 (seg.b / seg.a: ℝ) < seg.d / seg.c := by
@@ -42,14 +42,14 @@ lemma InertSeg.det1.lt {seg: InertSeg} (h: seg.det1):
   rw [h]
   exact PNat.lt_add_right (seg.b * seg.c) 1
 
-/-
-An inert tuple is actually inert if n is below the branching point
+/-!
+An inert tuple is actually inert if n is below the branching point.
 -/
 def InertSeg.inert (n: ℕ+) (seg: InertSeg) := n ≤ nBranching seg.a seg.b seg.c seg.d
 
-/-
+/-!
 Given a list of potentially inert tuple list,
-this function divides those whose branching point is too small
+the function `genSeg` divides those whose branching point is too small
 to hopefully make the entire list actually inert.
 -/
 def genSeg (n: ℕ+) (input: List InertSeg): List InertSeg := match input with
@@ -61,8 +61,8 @@ def genSeg (n: ℕ+) (input: List InertSeg): List InertSeg := match input with
   else
     [head] ++ genSeg n tail
 
-/-
-genSeg preserves ad - bc = 1
+/-!
+`genSeg` preserves $ad - bc = 1$.
 -/
 lemma genSegDet (n: ℕ+) (input: List InertSeg) (h: input.Forall InertSeg.det1):
 (genSeg n input).Forall InertSeg.det1 := by
@@ -96,8 +96,8 @@ lemma genSegDet (n: ℕ+) (input: List InertSeg) (h: input.Forall InertSeg.det1)
       · apply genSegDet
         exact tailh
 
-/-
-If the input list is inert for n, then the output is inert for n + 1
+/-!
+If the input list is inert for $n$, then the output is inert for $n + 1$.
 -/
 lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.inert n)):
   (genSeg (n + 1) input).Forall (InertSeg.inert (n + 1)) := by
@@ -202,14 +202,14 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
       · apply genSegInert
         exact tailh
 
-/-
+/-!
 The explict inert tuple list is constructed as follows:
- - n < 3 is special cased and we will skip them here.
-   - n = 1 is undefined for w
-   - n = 2 gives a constant function w
- - n = 3 gives an empty list. This is also a special case but also serves as the base case
- - starting from n = 4, we append (n - 2, 1, n - 3, 1) and (1, n - 3, 1, n - 2) to the two ends of the list
-   and divide tuples to keep them inert
+ - $n < 3$ is special cased and we will skip them here.
+   - $n = 1$ is undefined for w.
+   - $n = 2$ gives a constant function w.
+ - $n = 3$ gives an empty list. This is also a special case but also serves as the base case.
+ - starting from $n = 4$, we append $(n - 2, 1, n - 3, 1)$ and $(1, n - 3, 1, n - 2)$ to the two ends of the list
+   and divide tuples to keep them inert.
 -/
 def segList (n: ℕ+): List InertSeg :=
 PNat.recOn n [] (fun prevn prev ↦
@@ -217,15 +217,15 @@ PNat.recOn n [] (fun prevn prev ↦
   genSeg (prevn + 1) ([⟨prevn - 1, 1, prevn - 2, 1⟩] ++ prev ++ [⟨1, prevn - 2, 1, prevn - 1⟩])
 )
 
-/-
-The first non-empty list is at n = 4
+/-!
+The first non-empty list is at $n = 4$
 -/
 lemma segList4: segList 4 =
 [{ a := 2, b := 1, c := 1, d := 1 }, { a := 1, b := 1, c := 1, d := 2 }] := by
   rfl
 
-/-
-Restating the recursive definition of segList as a themorem
+/-!
+Restating the recursive definition of `segList` as a themorem.
 -/
 lemma segListSucc (n: ℕ+) (h: ¬ n < 3):
 segList (n + 1) = genSeg (n + 1) ([⟨n - 1, 1, n - 2, 1⟩] ++ (segList n) ++ [⟨1, n - 2, 1, n - 1⟩]) := by
@@ -233,8 +233,8 @@ segList (n + 1) = genSeg (n + 1) ([⟨n - 1, 1, n - 2, 1⟩] ++ (segList n) ++ [
   simp only [PNat.recOn_succ, h, ↓reduceIte]
   rfl
 
-/-
-segList always has ad - bc = 1 for all elements
+/-!
+`segList` always has $ad - bc = 1$ for all elements.
 -/
 lemma segListDet (n: ℕ+): (segList n).Forall InertSeg.det1 := by
   induction n with
@@ -270,8 +270,8 @@ lemma segListDet (n: ℕ+): (segList n).Forall InertSeg.det1 := by
         simp only [h1, ↓reduceIte, PNat.val_ofNat, h2, Nat.pred_eq_succ_iff]
         exact (Nat.sub_eq_iff_eq_add h1).mp rfl
 
-/-
-segList's elements are all inert
+/-!
+`segList`'s elements are all inert.
 -/
 lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
   induction n with
@@ -345,17 +345,17 @@ lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
           simp only [Nat.ofNat_pos, mul_lt_mul_right]
           exact pmem
 
-/-
-We will specialize w function with s = 1 and varying t.
+/-!
+We will specialize $w$ function with $s = 1$ and varying $t$.
 
-Convert inert tuple to intervals of t.
+`segToInterval` converts inert tuple to intervals of $t$.
 -/
 def segToInterval (seg: InertSeg) := Set.Icc (seg.b / seg.a: ℝ) (seg.d / seg.c)
 
 def intervalList (n: ℕ+) := (segList n).map segToInterval
 
-/-
-All these intervals are positive numbers
+/-!
+All these intervals are positive numbers.
 -/
 lemma intervalPositive (n: ℕ+): (intervalList n).Forall (· ⊆ Set.Ioi 0) := by
   unfold intervalList
@@ -368,8 +368,8 @@ lemma intervalPositive (n: ℕ+): (intervalList n).Forall (· ⊆ Set.Ioi 0) := 
     exact le_of_lt det1.lt
   · simp only [Nat.cast_pos, PNat.pos, div_pos_iff_of_pos_left]
 
-/-
-Define a wₗᵢ function without PosReal to help formulating theorems later
+/-!
+Define a `wₗᵢ` function without PosReal to help formulating theorems later
 -/
 noncomputable
 def wₗᵢex (s t n: ℝ) :=
@@ -383,10 +383,10 @@ def wₗᵢex (s t n: ℝ) :=
   else
     0
 
-/-
-wₗᵢ is antitonic w.r.t t in each closed interval. This comes from the following two facts:
- - in the open interior, wₗᵢ is a constant, from Inert lemmas
- - The left and right boundary Splits into the interior, inducing inequialities
+/-!
+`wₗᵢ` is antitonic w.r.t $t$ in each closed interval. This comes from the following two facts:
+ - in the open interior, `wₗᵢ` is a constant, from Inert lemmas.
+ - The left and right boundary Splits into the interior, inducing inequialities.
 -/
 lemma wₗᵢAntiOnInterval (N: ℕ+) (n: ℝ) (hn: n ≤ N) (n2: 2 ≤ n):
 (intervalList N).Forall (AntitoneOn (fun t ↦ wₗᵢex 1 t n)) := by
@@ -502,26 +502,26 @@ lemma wₗᵢAntiOnInterval (N: ℕ+) (n: ℝ) (hn: n ≤ N) (n2: 2 ≤ n):
           det (yleft' (lt_of_lt_of_le xgtleft xley)) (yright' yltright)
           (xleft' xgtleft) (xright' xltright) n2 hBranching
 
-/-
-Now that we have AntitoneOn in each interval, we'd like to glue them together
+/-!
+Now that we have `AntitoneOn` in each interval, we'd like to glue them together.
 
-The core theorem we want to use is AntitoneOn.union_right,
+The core theorem we want to use is `AntitoneOn.union_right`,
 but we need to apply it repeatedly on the list.
-To do so, we will need to formalize some properties about the list
+To do so, we will need to formalize some properties about the list.
 -/
 
-/-
-A list of sets is called "SetsCover" if
- - all the sets are non-empty Icc intervals
- - they connect to each other at boundaries
+/-!
+A list of sets is called `SetsCover` iff
+ - all the sets are non-empty Icc intervals, and
+ - they connect to each other at boundaries.
 -/
 def SetsCover (list: List (Set ℝ)) (a b: ℝ): Prop := match list with
 | [] => False
 | [single] => single = Set.Icc a b ∧ a ≤ b
 | head::tail => ∃c, head = Set.Icc a c ∧ a ≤ c ∧ SetsCover tail c b
 
-/-
-A SetsCover list covers a large non-empty Icc interval
+/-!
+A `SetsCover` list covers a large non-empty `Set.Icc` interval.
 -/
 lemma LeOfSetsCover (list: List (Set ℝ)) (a b: ℝ) (cover: SetsCover list a b):
 a ≤ b := by match list with
@@ -538,8 +538,8 @@ a ≤ b := by match list with
   obtain cleb := LeOfSetsCover (head2::tail) c b tailcover
   exact le_trans alec cleb
 
-/-
-Two SetsCover lists can be glued together
+/-!
+Two `SetsCover` lists can be glued together.
 -/
 def SetsCoverAppend {l1 l2: List (Set ℝ)} {a b c: ℝ}
 (h1: SetsCover l1 a b) (h2: SetsCover l2 b c):
@@ -571,8 +571,8 @@ SetsCover (l1 ++ l2) a c := by
       · exact aleb
       · exact SetsCoverAppend tailcover h2
 
-/-
-The list version of AntitoneOn.union_right
+/-!
+The list version of `AntitoneOn.union_right`.
 -/
 lemma antitoneListUnion (f: ℝ → ℝ) (list: List (Set ℝ)) (a b: ℝ)
 (cover: SetsCover list a b) (antitone: list.Forall (AntitoneOn f)):
@@ -613,8 +613,8 @@ a = a' ∧ b = b' := by
   · exact IsLeast.unique least least'
   · exact IsGreatest.unique greatest greatest'
 
-/-
-genSeg preserves the SetsCover property
+/-!
+`genSeg` preserves the `SetsCover` property.
 -/
 lemma genSegPreserveCovers (n: ℕ+) (list: List InertSeg) (a b: ℝ)
 (hdet: list.Forall InertSeg.det1)
@@ -709,8 +709,8 @@ SetsCover ((genSeg n list).map segToInterval) a b := by match list with
     simp only [longtail]
     use c
 
-/-
-Our interval list is indeed SetsCover
+/-!
+Our interval list is indeed `SetsCover`.
 -/
 lemma intervalListCover (n: ℕ+):
 SetsCover (intervalList (n + 3)) (1 / (n + 1)) (n + 1) := by
@@ -770,9 +770,9 @@ SetsCover (intervalList (n + 3)) (1 / (n + 1)) (n + 1) := by
           norm_cast
         · norm_cast
 
-/-
-Combining everything above, we show that (wₗᵢ 1 t n) is antitone on [1 / (n - 2), n - 2] for integer n
-(for non integer n, we just need to take a larger interger)
+/-!
+Combining everything above, we show that `wₗᵢ 1 t n` is antitone on $[1 / (n - 2), n - 2]$ for integer $n$
+(for non integer $n$, we just need to take a larger interger).
 -/
 lemma wₗᵢAntiOnMiddle (N: ℕ+) (n: ℝ) (hn: n ≤ N + 3) (n2: 2 ≤ n):
 AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Icc (1 / (N + 1)) (N + 1)) := by
@@ -783,8 +783,8 @@ AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Icc (1 / (N + 1)) (N + 1)) := by
       exact hn
     · exact n2
 
-/-
-With Inert edge theories, we can show (wₗᵢ 1 t n) is antitone on (0, 1 / (n -  2)]
+/-!
+With Inert edge theories, we can show `wₗᵢ 1 t n` is antitone on $(0, 1 / (n -  2)]$ and on $[n - 2, ∞)$.
 -/
 lemma wₗᵢAntiOnLeft (N: ℕ+) (n: ℝ) (hn: n ≤ N + 3) (n2: 2 ≤ n):
 AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ioc 0 (1 / (N + 1))) := by
@@ -836,9 +836,6 @@ AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ioc 0 (1 / (N + 1))) := by
     · simp_rw [xeq, yeq]
       rfl
 
-/-
-... and on [n - 2, ∞)
--/
 lemma wₗᵢAntiOnRight (N: ℕ+) (n: ℝ) (hn: n ≤ N + 3) (n2: 2 ≤ n):
 AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ici (N + 1)) := by
   have nN: n ≤ (N + 1: ℕ+) + 2 := by
@@ -879,9 +876,9 @@ AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ici (N + 1)) := by
     · simp_rw [← xeq, ← yeq]
       rfl
 
-/-
-Gluing all them together, (wₗᵢ 1 t n) is antitone on all positive t.
-We also drops the bounding N here as it is no longer in the result.
+/-!
+Gluing all them together, `wₗᵢ 1 t n` is antitone on all positive $t$.
+We also drops the bounding `N` here as it is no longer in the result.
 -/
 lemma wₗᵢAnti (n: ℝ) (n2: 2 ≤ n):
 AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ioi 0) := by
@@ -930,8 +927,8 @@ AntitoneOn (fun t ↦ wₗᵢex 1 t n) (Set.Ioi 0) := by
   exact (left.union_right mid leftGreatest leftLeast).union_right
     right rightGreatest rightLeast
 
-/-
-Restating the previous theorem for general s and t
+/-!
+Restating the previous theorem for general $s$ and $t$.
 -/
 lemma wₗᵢMono (s1 t1 s2 t2 n: ℝ) (n2: 2 ≤ n)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]

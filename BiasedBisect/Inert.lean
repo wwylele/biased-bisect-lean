@@ -25,9 +25,9 @@ When such rotation doesn't hit any lattice points, a lot of functions we have co
  - `wₘᵢₙ_inert_edge'`, `wₘₐₓ_inert_edge'` and `wₗᵢ_inert_edge'` explicitly calculates $w$ when $s$ is very large.
 -/
 
-/-
-We start with a simple lemma: for rational s/t, the scanning line can pass multiple points,
-but this can only happen after the (s * t) threshold.
+/-!
+We start with a simple lemma: for rational $s/t$, the scanning line can pass multiple points,
+but this can only happen after the `s * t` threshold.
 -/
 lemma unique_pq (s t: ℕ+) (pq pq': ℕ × ℕ)
 (coprime: PNat.Coprime s t) (eq: δₚ s t pq = δₚ s t pq') (bound: δₚ s t pq < s * t): pq = pq' := by
@@ -84,7 +84,9 @@ lemma unique_pq (s t: ℕ+) (pq pq': ℕ × ℕ)
   have pp: p = p' := Int.eq_of_sub_eq_zero eq
   exact Prod.ext_iff.mpr ⟨Int.ofNat_inj.mp pp, Int.ofNat_inj.mp qeq⟩
 
-/- The property of Farey neighbors: a new fraction between a Farey neighbor must have a large denominator -/
+/-!
+The property of Farey neighbors: a new fraction between a Farey neighbor must have a large denominator.
+-/
 lemma slopeBound (a b c d s t: ℕ+) (det: a * d = b * c + 1) (left: c * t < d * s) (right: b * s < a * t):
 t ≥ b + d := by
   have left': c * t + 1 ≤ d * s := left
@@ -102,14 +104,14 @@ t ≥ b + d := by
   simp only [one_mul] at all
   exact all
 
-/-
-Some inert theorems on Λceiled:
+/-!
+Some inert theorems on `Λceiled`:
 below the threshold, one can slightly rotate the ceiling without changing the set members.
 
 We divide the proof into three parts:
- - Λceiled_inert_half: only look at one side of the delta area
- - Λceiled_inert: prove for the full set, but requires an ordering between two ceilings
- - Λceiled_inert': remove the requirement on the ordering
+ - `Λceiled_inert_half`: only look at one side of the delta area.
+ - `Λceiled_inert`: prove for the full set, but requires an ordering between two ceilings.
+ - `Λceiled_inert'`: remove the requirement on the ordering.
 -/
 theorem Λceiled_inert_half (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ) [PosReal s1] [PosReal t1]
 [PosReal s2] [PosReal t2] (det: a * d = b * c + 1)
@@ -264,9 +266,9 @@ lemma Λceiled_inert' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
     apply Λceiled_homo s1 t1 (p * s1 + q * t1) l
   · exact Λceiled_inert a b c d s1 t1 s2 t2 p q det left1 gt right2 pBound qBound
 
-/-
-The δₚ evaluation is inert within the threshold,
-as in the ordering doesn't change for changing s/t
+/-!
+The `δₚ` evaluation is inert within the threshold,
+as in the ordering doesn't change for changing $s/t$.
 -/
 lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -306,9 +308,10 @@ lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
   obtain what := lt_of_le_of_lt pq2 r1
   simp only [lt_self_iff_false] at what
 
-/-
-A variation of Λceiled_inert, concering about a ceiling created by lattice point below ℕ
-This will be used for w related theories
+/-!
+A variation of `Λceiled_inert`, concering about a ceiling created by lattice point below `ℕ`,
+and with `Λceiled_inert_t'` that removes the ordering requirement.
+This will be used for w related theories.
 -/
 lemma Λceiled_inert_t (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -396,7 +399,6 @@ lemma Λceiled_inert_t (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
         · simp only [Nat.cast_nonneg]
         · apply le_of_lt PosReal.pos
 
-/- again Λceiled_inert_t' removes the ordering requirement -/
 lemma Λceiled_inert_t' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -424,8 +426,8 @@ lemma Λceiled_inert_t' (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
     apply Λceiled_homo s1 t1 (p * s1 - t1) l
   · exact Λceiled_inert_t a b c d s1 t1 s2 t2 p det left1 gt right2 pBound
 
-/-
-The mediant of Farey neighbors is within the inert interval
+/-!
+The mediant of Farey neighbors is within the inert interval.
 -/
 lemma abcdLeftRight (a b c d: ℕ+) (det: a * d = b * c + 1):
 (a: ℝ) * (b + d) > b * (a + c) ∧ (d: ℝ) * (a + c) > c * (b + d) := by
@@ -444,10 +446,10 @@ lemma abcdLeftRight (a b c d: ℕ+) (det: a * d = b * c + 1):
     rw [(by ring: b * c + 1 + d * c = b * c + d * c + 1)]
     exact PNat.lt_add_right (b * c + d * c) 1
 
-/-
-δₖ sequence is inert within an inert interval.
+/-!
+`δₖ` sequence is inert within an inert interval.
 This version is a bit primitive, where it requires a sequence of lattice points
-that generates δₖ to exist first, and we don't have an explicit bound yet
+that generates `δₖ` to exist first, and we don't have an explicit bound yet.
 -/
 lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ → ℕ × ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -626,9 +628,9 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       have what := gt_of_ge_of_gt inFloor' preserveLt
       simp only [gt_iff_lt, lt_self_iff_false] at what
 
-/-
+/-!
 Here we have series of little lemma to eventually prove the cardinality of
-all lattice points in an inert interval
+all lattice points in an inert interval.
 -/
 
 def FintypeIcc (L: ℕ): Type := Set.Icc 0 L
@@ -970,8 +972,8 @@ lemma ΛrectangleDisjoint (a b c d: ℕ+): (Λtriangle a b c d).toFinset ∩ (Λ
   simp only [not_lt]
   apply le_of_lt mem
 
-/-
-Here we finally get the value of the cardinality, which we will use to character rise the bound of n
+/-!
+Here we finally get the value of the cardinality, which we will use to character rise the bound of `n`.
 -/
 lemma ΛtriangleCard (a b c d: ℕ+) (det: a * d = b * c + 1):
 (Λtriangle a b c d).toFinset.card = (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) := by
@@ -987,11 +989,7 @@ lemma ΛtriangleCard (a b c d: ℕ+) (det: a * d = b * c + 1):
   simp only [Set.toFinset_card, Fintype.card_ofFinset, Finset.card_empty, tsub_zero, ne_eq,
     OfNat.ofNat_ne_zero, not_false_eq_true, mul_div_cancel_left₀]
 
-instance abPos(a b: ℕ+): PosReal (a + b) where
-  pos := by norm_cast; simp only [PNat.add_coe, add_pos_iff, PNat.pos, or_self]
-
-
-/- We define the the sequence of lattice points that will generate δₖ -/
+/-! We define the the sequence of lattice points that will generate `δₖ` -/
 lemma pqOfδₖ_abcd_exist(a b c d: ℕ+) (k: ℕ):
 ∃ (pq: ℕ × ℕ), δₚ (a + c) (b + d) pq = δₖ (a + c) (b + d) k := by
   obtain h := δₖ_in_Δ (a + c) (b + d) k
@@ -1140,9 +1138,9 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
   rw [kTriangleCardBound] at kTriangleCardBoundFromMax
   simp only [add_le_add_iff_left, Nat.not_ofNat_le_one] at kTriangleCardBoundFromMax
 
-/-
-Now we can prove a stronger version of δₖ_inert, because we know the sequence of lattice points
-always exists, and we have the explicit bound
+/-!
+Now we can prove a stronger version of `δₖ_inert`, because we know the sequence of lattice points
+always exists, and we have the explicit bound.
 -/
 lemma δₖ_inert_fixed (a b c d: ℕ+) (s t: ℝ) (k: ℕ)
 [PosReal s] [PosReal t]
@@ -1177,8 +1175,8 @@ lemma δₖ_inert_fixed (a b c d: ℕ+) (s t: ℝ) (k: ℕ)
     exact Nat.lt_of_le_pred bound1 mem
   · exact Nat.le_sub_one_of_lt kbound
 
-/-
-From δₖ, we can prove nₖ is inert
+/-!
+From `δₖ`, we can prove `nₖ` is inert,
 -/
 lemma nₖ_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -1214,9 +1212,9 @@ nₖ s1 t1 k = nₖ s2 t2 k := by
     obtain ⟨pb, qb⟩ := BoundDecomposite _ _ pqBound
     apply Λceiled_inert' a b c d s1 t1 s2 t2 _ _ det left1 right1 left2 right2 pb qb
 
-/-
-...and wₖ is inert. This prove is longer because one need to consider
-some wₖ might corresponds to a ceiling generated by a lattice point below ℕ
+/-!
+...and `wₖ` is inert. This prove is longer because one need to consider
+some `wₖ` might corresponds to a ceiling generated by a lattice point below `ℕ`.
 -/
 lemma wₖ_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -1267,10 +1265,10 @@ wₖ s1 t1 k = wₖ s2 t2 k := by
       rw [add_sub_assoc, add_sub_assoc, shift1, shift2]
       apply Λceiled_inert' a b c d s1 t1 s2 t2 _ _ det left1 right1 left2 right2 pb qb'
 
-/-
-We define the bound for n
+/-!
+We define the bound for `n`
 The first definition explicit for computation, but we also immediately prove a formula that's
-more useful for theorem proving
+more useful for theorem proving.
 -/
 def nBranching (a b c d: ℕ+) := 1 + ∑pq ∈ (Λtriangle a b c d).toFinset, Jₚ pq
 
@@ -1278,14 +1276,12 @@ theorem nBranchingFormula (a b c d: ℕ+) (det: a * d = b * c + 1):
 nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
   symm
   have twoBound: (2:ℕ)  ≤ (a + c + 1) * (b + d + 1) := by
-    have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp only [Nat.reduceAdd, Nat.reduceMul,
-      Nat.reduceLeDiff]
+    have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
     apply le_trans twoNine
     gcongr
     repeat exact NeZero.one_le
   have fourBound: (4:ℕ)  ≤ (a + c + 1) * (b + d + 1) := by
-    have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp only [Nat.reduceAdd, Nat.reduceMul,
-      Nat.reduceLeDiff]
+    have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
     apply le_trans fourNine
     gcongr
     repeat exact NeZero.one_le
@@ -1295,8 +1291,7 @@ nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) 
     refine (Nat.le_div_iff_mul_le ?_).mpr ?_
     · simp only [Nat.ofNat_pos]
     · norm_num
-      have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp only [Nat.reduceAdd, Nat.reduceMul,
-        Nat.reduceLeDiff]
+      have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
       apply le_trans fourNine
       gcongr
       repeat exact NeZero.one_le
@@ -1428,8 +1423,8 @@ nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) 
     obtain chain := lt_trans chain lkrel
     simp only [lt_self_iff_false] at chain
 
-/-
-kceiled is inert within the bound of n
+/-!
+`kceiled` is inert within the bound of `n`.
 -/
 lemma kceiled_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -1478,8 +1473,8 @@ kceiled s1 t1 n = kceiled s2 t2 n := by
     rw [nₖ_inert a b c d s1 t1 s2 t2 k det left1 right1 left2 right2 kInBound']
     exact h
 
-/-
-... so is kₙ
+/-!
+... so is `kₙ`
 -/
 lemma kₙ_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -1493,8 +1488,8 @@ kₙ s1 t1 n = kₙ s2 t2 n := by
   simp only [Set.toFinset_inj]
   apply kceiled_inert a b c d s1 t1 s2 t2 n det left1 right1 left2 right2 nbound
 
-/-
-Here come our main theorems: wₘᵢₙ, wₘₐₓ, and wₗᵢ are all inert
+/-!
+Here come our main theorems: `wₘᵢₙ`, `wₘₐₓ`, and `wₗᵢ` are all inert.
 -/
 theorem wₘᵢₙ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
@@ -1732,13 +1727,13 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
     obtain knot2 := kₙ_not_exist s2 t2 n n1
     rw [knot1, knot2]
 
-/-
+/-!
 We start proving another family ot theorems: inert at edge
-These are essentially saying w functions are inert for (a=1,b=N,c=0,d=1) and for (a=1,b=0,c=N,d=1)
+These are essentially saying `w` functions are inert for $(a=1,b=N,c=0,d=1)$ and for $(a=1,b=0,c=N,d=1)$
 But as we have been developing our theory for positive inters only, these need special treatment.
 
-We will also prove stronger theorems where we find the value of w explicity.
-In fact, they are at the edge 1 or n - 1, hence the name.
+We will also prove stronger theorems where we find the value of `w` explicity.
+In fact, they are at the edge $1$ or $n - 1$, hence the name.
 -/
 
 lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
