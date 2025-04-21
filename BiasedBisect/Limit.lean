@@ -351,7 +351,7 @@ E s t ~[atTop] Eℝ s t := by
       exact Real.continuousOn_log.mono (by simp [hn])
   refine IsEquivalent.congr_left ?_ congr_left.symm
   refine IsEquivalent.congr_right ?_ congr_right.symm
-  refine IsEquivalent.integral ?_ ?_ ?_ ?_
+  refine IsEquivalent.integral_real_Ioc ?_ ?_ ?_ ?_
   · refine (IsEquivalent.trans ?_ (dE_Asymptotic s t)).trans ?_
     · simp_rw [add_assoc]
       apply IsEquivalent.add_isLittleO IsEquivalent.refl
@@ -375,7 +375,6 @@ E s t ~[atTop] Eℝ s t := by
         simp only [Function.comp_apply, Real.norm_eq_abs, abs_eq_self]
         exact Real.log_nonneg hx
       exact Filter.Tendsto.congr' this.symm Real.tendsto_log_atTop
-  · exact (Real.tendsto_log_atTop.atTop_add tendsto_const_nhds).atTop_div_const (ρ_range s t)
   · intro n hn
     apply (dE_integrable' s t 1 n).def'.congr_set_ae
     apply Eventually.of_forall
@@ -388,6 +387,7 @@ E s t ~[atTop] Eℝ s t := by
     refine integrableOn_Icc_iff_integrableOn_Ioc.mp <| ContinuousOn.integrableOn_Icc ?_
     refine ContinuousOn.div_const (ContinuousOn.add ?_ continuousOn_const) _
     exact Real.continuousOn_log.mono (by simp)
+  · exact (Real.tendsto_log_atTop.atTop_add tendsto_const_nhds).atTop_div_const (ρ_range s t)
 
 /-!
 To study the asymptotic behavior of `w`, we extend the result `w_Asymtotic_int`
