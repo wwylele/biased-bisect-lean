@@ -1,7 +1,8 @@
 import BiasedBisect.CrossSection
 import BiasedBisect.Integer
-import BiasedBisect.MathlibTopologyOrderIsLUB
 import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
+
+import Mathlib.Topology.Instances.Real.Lemmas
 
 /-!
 # Asymptotics
@@ -540,8 +541,8 @@ Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) atTop (nhds (g s t)) := by
   rw [limrw]
 
   -- We can find two rational sequences approaching r, from below and above
-  obtain ⟨below, belowMono, belowLt, belowLim⟩ := Rat.exists_seq_strictMono_tendsto_real r
-  obtain ⟨above, aboveMono, aboveLt, aboveLim⟩ := Rat.exists_seq_strictAnti_tendsto_real r
+  obtain ⟨below, belowMono, belowLt, belowLim⟩ := r.exists_seq_rat_strictMono_tendsto
+  obtain ⟨above, aboveMono, aboveLt, aboveLim⟩ := r.exists_seq_rat_strictAnti_tendsto
 
   -- We will use the two rational sequences to squeeze the limit.
   -- However, these are double limit (r' -> r and N -> ∞), so we can't use squeeze theorem directly

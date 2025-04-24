@@ -211,9 +211,9 @@ theorem Asymptotics.IsEquivalent.integral_real_Ioc {f g : ℝ → ℝ}
         apply hc y <| le_of_lt <| (max_lt_iff.mp hy).2
       refine le_trans ?_ (MeasureTheory.integral_mono_ae
         (by apply MeasureTheory.integrable_const) h_zac this)
-      simp only [Pi.one_apply, integral_const, MeasurableSet.univ, Measure.restrict_apply,
-        Set.univ_inter, Real.volume_Ioc, smul_eq_mul, mul_one]
-      rw [ENNReal.toReal_ofReal (le_trans (by simp) <| le_tsub_of_add_le_left hx)]
+      simp only [Pi.one_apply, integral_const, MeasurableSet.univ, measureReal_restrict_apply,
+        Set.univ_inter, Real.volume_real_Ioc, smul_eq_mul, mul_one, le_sup_iff]
+      left
       exact le_trans (by simp) <| le_tsub_of_add_le_left hx
     · exact (hg_all x).mono_set <| Set.Ioc_subset_Ioc_left (by simp)
     · apply (MeasureTheory.ae_restrict_iff' measurableSet_Ioc).mpr
