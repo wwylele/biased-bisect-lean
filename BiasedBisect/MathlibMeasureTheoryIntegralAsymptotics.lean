@@ -21,13 +21,13 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     ∀ c' > c, IsBigOWith c' atTop
       (fun a ↦ ∫ x in (Set.Iic a), f x ∂μ) (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) := by
   intro c' hc
-  apply Asymptotics.isBigOWith_iff.mpr
+  apply isBigOWith_iff.mpr
   conv in _ ≤ _ => rw [← sub_nonneg]
-  refine Filter.tendsto_atTop.mp ?_ 0
+  refine tendsto_atTop.mp ?_ 0
 
   obtain ⟨m_integral_nonneg, h_integral_nonneg⟩ := tendsto_atTop_atTop.mp h_tendsto 0
   obtain ⟨m_nonneg, h_nonneg'⟩ := eventually_atTop.mp h_nonneg
-  obtain ⟨m_fg, hfg'⟩ := eventually_atTop.mp <| Asymptotics.isBigOWith_iff.mp hfg
+  obtain ⟨m_fg, hfg'⟩ := eventually_atTop.mp <| isBigOWith_iff.mp hfg
 
   let m := max m_integral_nonneg (max m_nonneg m_fg)
 
@@ -41,7 +41,7 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     =ᶠ[atTop] (fun a ↦ c' *
       ‖∫ (x : α) in Set.Iic a, g x ∂μ‖
       - ‖∫ (x : α) in Set.Iic a, f x ∂μ‖) := by
-    apply Filter.eventually_atTop.mpr
+    apply eventually_atTop.mpr
     use m
     intro b hmb
     simp only [Real.norm_eq_abs, sub_left_inj]
@@ -49,15 +49,13 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     refine mul_eq_mul_left_iff.mpr (Or.inl ?_)
     have h_integral_nonneg': 0 ≤ ∫ (x : α) in Set.Iic b, g x ∂μ := by
       apply h_integral_nonneg
-      refine le_trans ?_ hmb
-      unfold m
-      exact le_sup_left
+      exact le_trans le_sup_left hmb
 
     rw [abs_eq_self.mpr h_integral_nonneg']
-    rw [← MeasureTheory.setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
+    rw [← setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
       measurableSet_Ioc (hg m) hgm]
     rw [Set.Iic_union_Ioc_eq_Iic hmb]
-  apply Filter.Tendsto.congr' this
+  apply Tendsto.congr' this
 
   have : (fun a ↦
       c' * (∫ (x : α) in Set.Iic m, g x ∂μ)
@@ -67,7 +65,7 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
       c' * (∫ (x : α) in Set.Iic m, g x ∂μ)
       + c' * (∫ (x : α) in Set.Ioc m a, g x ∂μ)
       - ‖∫ (x : α) in Set.Iic a, f x ∂μ‖) := by
-    apply Filter.eventually_atTop.mpr
+    apply eventually_atTop.mpr
     use m
     intro b hmb
     simp only
@@ -75,14 +73,14 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     apply sub_le_sub_left
     have : Set.Iic b = Set.Iic m ∪ Set.Ioc m b := (Set.Iic_union_Ioc_eq_Iic hmb).symm
     rw [this]
-    rw [MeasureTheory.setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
+    rw [setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
       measurableSet_Ioc (hf m) hfm]
     apply le_trans (norm_add_le _ _)
     apply add_le_add_left
-    apply le_trans (MeasureTheory.norm_integral_le_integral_norm _)
+    apply le_trans (norm_integral_le_integral_norm _)
     rw [← integral_mul_left]
-    apply MeasureTheory.integral_mono_ae hfm.norm (hgm.const_mul _)
-    apply (MeasureTheory.ae_restrict_iff' measurableSet_Ioc).mpr
+    apply integral_mono_ae hfm.norm (hgm.const_mul _)
+    apply (ae_restrict_iff' measurableSet_Ioc).mpr
     apply Eventually.of_forall
     intro x ⟨hx, _⟩
     have hx' : m_fg ≤ x := by
@@ -94,18 +92,18 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     refine le_of_lt <| lt_of_le_of_lt ?_ hx
     exact le_sup_of_le_right <| le_sup_left
 
-  refine Filter.tendsto_atTop_mono' _ this ?_
-  apply Filter.Tendsto.add_atTop tendsto_const_nhds
-  apply Filter.Tendsto.const_mul_atTop (sub_pos.mpr hc)
-  apply Filter.Tendsto.atTop_of_const_add (∫ (x : α) in Set.Iic m, g x ∂μ)
+  refine tendsto_atTop_mono' _ this ?_
+  apply Tendsto.add_atTop tendsto_const_nhds
+  apply Tendsto.const_mul_atTop (sub_pos.mpr hc)
+  apply Tendsto.atTop_of_const_add (∫ (x : α) in Set.Iic m, g x ∂μ)
 
   have: (fun x ↦ ∫ (x : α) in Set.Iic x, g x ∂μ) =ᶠ[atTop]
     (fun x ↦ ∫ (x : α) in Set.Iic m, g x ∂μ + ∫ (x : α) in Set.Ioc m x, g x ∂μ) := by
-    apply Filter.eventually_atTop.mpr
+    apply eventually_atTop.mpr
     use m
     intro b hmb
     simp only
-    rw [← MeasureTheory.setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
+    rw [← setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
       measurableSet_Ioc (hg m) hgm]
     rw [Set.Iic_union_Ioc_eq_Iic hmb]
   exact h_tendsto.congr' this
@@ -129,7 +127,7 @@ theorem Asymptotics.IsLittleO.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     (h_nonneg: ∀ᶠ x in atTop, 0 ≤ g x)
     (h_tendsto: Tendsto (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) atTop atTop):
     (fun a ↦ ∫ x in (Set.Iic a), f x ∂μ) =o[atTop] (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) := by
-  apply Asymptotics.IsLittleO.of_isBigOWith
+  apply IsLittleO.of_isBigOWith
   intro c hc
   obtain ⟨c', hc'_pos, hc'c⟩ := exists_between hc
   exact (hfg.forall_isBigOWith hc'_pos).atTop_integral_Iic_of_nonneg_of_tendsto_integral
@@ -143,7 +141,7 @@ theorem Asymptotics.IsEquivalent.atTop_integral_Iic_of_nonneg_of_tendsto_integra
     (h_nonneg: ∀ᶠ x in atTop, 0 ≤ g x)
     (h_tendsto: Tendsto (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) atTop atTop):
     (fun a ↦ ∫ x in (Set.Iic a), f x ∂μ) ~[atTop] (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) := by
-  apply Asymptotics.IsLittleO.isEquivalent
+  apply IsLittleO.isEquivalent
   have: (fun a ↦ ∫ x in Set.Iic a, f x ∂μ) - (fun a ↦ ∫ x in Set.Iic a, g x ∂μ)
     = fun a ↦ ∫ x in Set.Iic a, f x - g x ∂μ := by
     ext a
@@ -172,7 +170,7 @@ theorem Asymptotics.IsEquivalent.integral_real_Ioc {f g : ℝ → ℝ}
   have h_nonneg: ∀ᶠ x in atTop, 0 ≤ g x := Tendsto.eventually_ge_atTop h_tendsto 0
   let μ := volume.restrict (Set.Ioi a)
   have h_tendsto': Tendsto (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) atTop atTop := by
-    obtain ⟨z, hz⟩ := Filter.tendsto_atTop_atTop.mp h_tendsto 0
+    obtain ⟨z, hz⟩ := tendsto_atTop_atTop.mp h_tendsto 0
     have : (fun a ↦ ∫ x in (Set.Iic z), g x ∂μ) + (fun a ↦ ∫ x in (Set.Ioc z a), g x ∂μ) =ᶠ[atTop]
       (fun a ↦ ∫ x in (Set.Iic a), g x ∂μ) := by
       apply eventually_atTop.mpr
@@ -187,13 +185,13 @@ theorem Asymptotics.IsEquivalent.integral_real_Ioc {f g : ℝ → ℝ}
         unfold μ IntegrableOn
         rw [Measure.restrict_restrict measurableSet_Iic, Set.Iic_inter_Ioi]
         exact hg_all z
-      rw [← MeasureTheory.setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
+      rw [← setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
         measurableSet_Ioc hz hza]
       rw [Set.Iic_union_Ioc_eq_Iic hb]
-    apply Filter.Tendsto.congr' this
-    apply Filter.Tendsto.add_atTop tendsto_const_nhds
-    obtain ⟨c, hc⟩ := Filter.tendsto_atTop_atTop.mp h_tendsto 1
-    apply Filter.tendsto_atTop_atTop.mpr
+    apply Tendsto.congr' this
+    apply Tendsto.add_atTop tendsto_const_nhds
+    obtain ⟨c, hc⟩ := tendsto_atTop_atTop.mp h_tendsto 1
+    apply tendsto_atTop_atTop.mpr
     intro v
     use (max (max z a) c) + (max 0 v)
     intro x hx
@@ -201,22 +199,22 @@ theorem Asymptotics.IsEquivalent.integral_real_Ioc {f g : ℝ → ℝ}
     rw [Measure.restrict_restrict measurableSet_Ioc, Set.Ioc_inter_Ioi]
     have: Set.Ioc (max (max z a) c) x ≤ᶠ[ae volume] Set.Ioc (max z a) x := by
       exact Eventually.of_forall <| Set.Ioc_subset_Ioc_left <| le_max_left _ _
-    refine le_trans ?_ (MeasureTheory.setIntegral_mono_set ?_ ?_ this)
+    refine le_trans ?_ (setIntegral_mono_set ?_ ?_ this)
     · have h_zac: IntegrableOn g (Set.Ioc (max (max z a) c) x) := by
         exact (hg_all x).mono_set <| Set.Ioc_subset_Ioc_left (by simp)
       have : 1 ≤ᵐ[volume.restrict (Set.Ioc (max (max z a) c) x)] g := by
-        apply (MeasureTheory.ae_restrict_iff' measurableSet_Ioc).mpr
+        apply (ae_restrict_iff' measurableSet_Ioc).mpr
         apply Eventually.of_forall
         intro y ⟨hy, _⟩
         apply hc y <| le_of_lt <| (max_lt_iff.mp hy).2
-      refine le_trans ?_ (MeasureTheory.integral_mono_ae
-        (by apply MeasureTheory.integrable_const) h_zac this)
+      refine le_trans ?_ (integral_mono_ae
+        (by apply integrable_const) h_zac this)
       simp only [Pi.one_apply, integral_const, MeasurableSet.univ, measureReal_restrict_apply,
         Set.univ_inter, Real.volume_real_Ioc, smul_eq_mul, mul_one, le_sup_iff]
       left
       exact le_trans (by simp) <| le_tsub_of_add_le_left hx
     · exact (hg_all x).mono_set <| Set.Ioc_subset_Ioc_left (by simp)
-    · apply (MeasureTheory.ae_restrict_iff' measurableSet_Ioc).mpr
+    · apply (ae_restrict_iff' measurableSet_Ioc).mpr
       apply Eventually.of_forall
       intro y ⟨hy, _⟩
       apply hz y <| le_of_lt (max_lt_iff.mp hy).1
