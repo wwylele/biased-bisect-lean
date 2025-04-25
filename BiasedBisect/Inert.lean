@@ -652,10 +652,8 @@ def Λtriangle (s t: ℕ+) := {pq: ℕ × ℕ | pq.1 * s + pq.2 * t < s * t}
 def ΛtriangleFinset (s t: ℕ+) :=
   Finset.biUnion (Finset.range t) (fun p ↦ {p} ×ˢ Finset.range (((s * (t - p) + (t - 1))) / t))
 
-/- We could have just use the finiteness, but having a computable one is useful -/
-instance ΛtriangleFintype (s t: ℕ+): Fintype (Λtriangle s t) := by
-  apply Fintype.ofFinset (ΛtriangleFinset s t)
-  intro pq
+lemma Λtriangle_is_Finset (s t: ℕ+) (pq: ℕ × ℕ):
+pq ∈ ΛtriangleFinset s t ↔ pq ∈ Λtriangle s t := by
   unfold Λtriangle ΛtriangleFinset
   simp only [Finset.singleton_product, Finset.mem_biUnion, Finset.mem_range, Finset.mem_map,
     Function.Embedding.coeFn_mk, Set.mem_setOf_eq]
@@ -695,6 +693,10 @@ instance ΛtriangleFintype (s t: ℕ+): Fintype (Λtriangle s t) := by
         refine (Nat.lt_div_iff_mul_lt ?_).mpr mem
         simp only [add_pos_iff, PNat.pos, or_self]
       · simp only [Prod.mk.eta]
+
+/- We could have just use the finiteness, but having a computable one is useful -/
+instance ΛtriangleFintype (s t: ℕ+): Fintype (Λtriangle s t) :=
+  Fintype.ofFinset (ΛtriangleFinset s t) (Λtriangle_is_Finset s t)
 
 noncomputable
 instance ΛtriangleDecidable (s t: ℕ+): DecidablePred fun x ↦ x ∈ Λtriangle s t := by
@@ -824,32 +826,6 @@ lemma ΛrectangleCutCard (s t: ℕ+): Fintype.card (ΛrectangleCut s t) = (t + 1
       lt_add_iff_pos_left, add_pos_iff, PNat.pos, or_self, Nat.lt_one_iff, pos_of_gt,
       lt_add_iff_pos_right, and_self, Finset.mem_singleton, Prod.mk.injEq,
       AddLeftCancelMonoid.add_eq_zero, PNat.ne_zero, and_false, not_false_eq_true]
-
-lemma abcdCoprime (a b c d: ℕ+) (det: a * d = b * c + 1):
-PNat.Coprime (a + c) (b + d) := by
-  let k := (a + c: ℕ).gcd (b + d)
-  have kac: k ∣ a + c := by apply Nat.gcd_dvd_left
-  have kbd: k ∣ b + d := by apply Nat.gcd_dvd_right
-  obtain ⟨u, ueq⟩ := kac
-  obtain ⟨v, veq⟩ := kbd
-  zify at ueq
-  zify at veq
-  have aeq: (a: ℤ) = k * u - c := by exact eq_sub_of_add_eq ueq
-  have beq: (b: ℤ) = k * v - d := by exact eq_sub_of_add_eq veq
-  have det': a * d - b * c = (1: ℤ) := by
-    rw [sub_eq_of_eq_add']
-    norm_cast
-  rw [aeq, beq] at det'
-  ring_nf at det'
-  rw [mul_assoc, mul_assoc] at det'
-  rw [← mul_sub] at det'
-  have k1: k = (1:ℤ) := by
-    refine Int.eq_one_of_dvd_one ?_ ?_
-    · simp only [Nat.cast_nonneg]
-    · exact Dvd.intro (u * d - c * v) det'
-  simp only [Nat.cast_eq_one] at k1
-  unfold k at k1
-  norm_cast at k1
 
 lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
 ΛrectangleCut s t = (Λtriangle s t).toFinset ∪ (ΛtriangleUpper s t).toFinset := by
@@ -1126,6 +1102,32 @@ lemma pqOfδₖ_bound (s t: ℕ+) (k: ℕ) (coprime: PNat.Coprime s t)
   rw [kTriangleCardBound] at kTriangleCardBoundFromMax
   simp at kTriangleCardBoundFromMax
 
+lemma abcdCoprime (a b c d: ℕ+) (det: a * d = b * c + 1):
+PNat.Coprime (a + c) (b + d) := by
+  let k := (a + c: ℕ).gcd (b + d)
+  have kac: k ∣ a + c := by apply Nat.gcd_dvd_left
+  have kbd: k ∣ b + d := by apply Nat.gcd_dvd_right
+  obtain ⟨u, ueq⟩ := kac
+  obtain ⟨v, veq⟩ := kbd
+  zify at ueq
+  zify at veq
+  have aeq: (a: ℤ) = k * u - c := by exact eq_sub_of_add_eq ueq
+  have beq: (b: ℤ) = k * v - d := by exact eq_sub_of_add_eq veq
+  have det': a * d - b * c = (1: ℤ) := by
+    rw [sub_eq_of_eq_add']
+    norm_cast
+  rw [aeq, beq] at det'
+  ring_nf at det'
+  rw [mul_assoc, mul_assoc] at det'
+  rw [← mul_sub] at det'
+  have k1: k = (1:ℤ) := by
+    refine Int.eq_one_of_dvd_one ?_ ?_
+    · simp only [Nat.cast_nonneg]
+    · exact Dvd.intro (u * d - c * v) det'
+  simp only [Nat.cast_eq_one] at k1
+  unfold k at k1
+  norm_cast at k1
+
 /-!
 Now we can prove a stronger version of `δₖ_inert`, because we know the sequence of lattice points
 always exists, and we have the explicit bound.
@@ -1263,7 +1265,7 @@ wₖ s1 t1 k = wₖ s2 t2 k := by
 
 /-!
 We define the bound for `n`
-The first definition explicit for computation, but we also immediately prove a formula that's
+The first definition allows explicit computation, but we also immediately prove a formula that's
 more useful for theorem proving.
 -/
 def nBranching (s t: ℕ+) := 1 + ∑pq ∈ (Λtriangle s t).toFinset, Jₚ pq
@@ -1271,16 +1273,16 @@ def nBranching (s t: ℕ+) := 1 + ∑pq ∈ (Λtriangle s t).toFinset, Jₚ pq
 theorem nBranchingFormula (s t: ℕ+) (coprime: PNat.Coprime s t):
 nBranching s t = nₖ s t (((s + 1) * (t + 1)) / 2 - 1) := by
   symm
-  have twoBound: (2:ℕ)  ≤ (s + 1) * (t + 1) := by
+  have twoBound: (2:ℕ) ≤ (s + 1) * (t + 1) := by
     have twoNine: 2 ≤ (1 + 1) * (1 + 1) := by simp
     apply le_trans twoNine
     gcongr
-    repeat exact NeZero.one_le
+    all_goals exact NeZero.one_le
   have fourBound: (4:ℕ) ≤ (s + 1) * (t + 1) := by
     have fourNine: 4 ≤ (1 + 1) * (1 + 1) := by simp
     apply le_trans fourNine
     gcongr
-    repeat exact NeZero.one_le
+    all_goals exact NeZero.one_le
   unfold nBranching
   have nonzero: (s + 1: ℕ) * (t + 1) / 2 - 1 ≠ 0 := by
     refine Nat.sub_ne_zero_iff_lt.mpr ?_
@@ -1508,8 +1510,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
     apply Nat.div_ne_zero_iff.mpr
     constructor
     · simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true]
-    · have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp only [Nat.reduceAdd, Nat.reduceMul,
-      Nat.reduceLeDiff]
+    · have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
       apply le_trans twoNine
       gcongr
       repeat exact NeZero.one_le
