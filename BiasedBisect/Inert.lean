@@ -991,9 +991,9 @@ lemma ΛtriangleCard (s t: ℕ+) (coprime: PNat.Coprime s t):
     OfNat.ofNat_ne_zero, not_false_eq_true, mul_div_cancel_left₀]
 
 /-! We define the the sequence of lattice points that will generate `δₖ` -/
-lemma pqOfδₖ_abcd_exist(a b c d: ℕ+) (k: ℕ):
-∃ (pq: ℕ × ℕ), δₚ (a + c) (b + d) pq = δₖ (a + c) (b + d) k := by
-  obtain h := δₖ_in_Δ (a + c) (b + d) k
+lemma pqOfδₖ_exist(s t: ℕ+) (k: ℕ):
+∃ (pq: ℕ × ℕ), δₚ s t pq = δₖ s t k := by
+  obtain h := δₖ_in_Δ s t k
   unfold Δ at h
   simp only [Set.mem_setOf_eq] at h
   unfold δₚ
@@ -1001,19 +1001,18 @@ lemma pqOfδₖ_abcd_exist(a b c d: ℕ+) (k: ℕ):
   exact h
 
 noncomputable
-def pqOfδₖ_abcd (a b c d: ℕ+) (k: ℕ) := (pqOfδₖ_abcd_exist a b c d k).choose
+def pqOfδₖ (s t: ℕ+) (k: ℕ) := (pqOfδₖ_exist s t k).choose
 
-lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
-(h: k < (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ)):
-(pqOfδₖ_abcd a b c d k).1 * (a + c) + (pqOfδₖ_abcd a b c d k).2 * (b + d) < (a + c) * (b + d) := by
-  obtain coprime := abcdCoprime a b c d det
+lemma pqOfδₖ_bound (s t: ℕ+) (k: ℕ) (coprime: PNat.Coprime s t)
+(h: k < (((s + 1) * (t + 1) - 2) / 2: ℕ)):
+(pqOfδₖ s t k).1 * s + (pqOfδₖ s t k).2 * t < s * t := by
   by_contra oob
   simp only [not_lt] at oob
-  let Δtriangle := δₚ (a + c) (b + d) '' Λtriangle (a + c) (b + d)
-  have ΔtriangleCard: Δtriangle.toFinset.card = (Λtriangle (a + c) (b + d)).toFinset.card := by
+  let Δtriangle := δₚ s t '' Λtriangle s t
+  have ΔtriangleCard: Δtriangle.toFinset.card = (Λtriangle s t).toFinset.card := by
     unfold Δtriangle
-    let prot := (Λtriangle (a + c) (b + d)).toFinset.card
-    have h: prot = (Λtriangle (a + c) (b + d)).toFinset.card := by rfl
+    let prot := (Λtriangle s t).toFinset.card
+    have h: prot = (Λtriangle s t).toFinset.card := by rfl
     rw [← h]
     simp only [Set.toFinset_image]
     rw [h]
@@ -1021,41 +1020,40 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
     unfold Set.InjOn
     simp only [Set.coe_toFinset, Prod.forall, Prod.mk.injEq]
     intro p q mem p2 q2 mem2 eq
-    norm_cast at eq
     unfold Λtriangle at mem
     simp only [Set.mem_setOf_eq] at mem
-    have mem': δₚ ↑↑(a + c) ↑↑(b + d) (p, q) < ↑↑(a + c) * ↑↑(b + d) := by
+    have mem': δₚ s t (p, q) < s * t := by
       unfold δₚ
       simp only [PNat.add_coe, Nat.cast_add]
       norm_cast
-    obtain pqeq := unique_pq (a + c) (b + d) (p, q) (p2, q2) coprime eq mem'
+    obtain pqeq := unique_pq s t (p, q) (p2, q2) coprime eq mem'
     exact Prod.mk_inj.mp pqeq
 
-  let kTriangle := (δₖ (a + c) (b + d)) ⁻¹' Δtriangle
+  let kTriangle := (δₖ s t) ⁻¹' Δtriangle
   have kTriangleFintype: Fintype kTriangle := by
     refine Set.Finite.fintype ?_
     refine Set.Finite.preimage ?_ ?_
     · intro k1 m1 k2 m2 eq
-      apply (StrictMonoOn.eq_iff_eq (strictMonoOn_univ.mpr (δₖ_mono (a+c) (b+d))) ?_ ?_).mp eq
+      apply (StrictMonoOn.eq_iff_eq (strictMonoOn_univ.mpr (δₖ_mono s t)) ?_ ?_).mp eq
       · simp only [Set.mem_univ]
       · simp only [Set.mem_univ]
     · exact Set.toFinite Δtriangle
 
   have kTriangleCard: kTriangle.toFinset.card = Δtriangle.toFinset.card := by
     unfold kTriangle
-    apply Finset.card_nbij (δₖ (a + c) (b + d))
+    apply Finset.card_nbij (δₖ s t)
     · intro k mem
       simp only [Set.mem_toFinset, Set.mem_preimage] at mem
       simp only [Set.mem_toFinset]
       exact mem
     · intro d1 mem1 d2 mem2 eq
-      apply (StrictMonoOn.eq_iff_eq (strictMonoOn_univ.mpr (δₖ_mono (a+c) (b+d))) ?_ ?_).mp eq
+      apply (StrictMonoOn.eq_iff_eq (strictMonoOn_univ.mpr (δₖ_mono s t)) ?_ ?_).mp eq
       · simp only [Set.mem_univ]
       · simp only [Set.mem_univ]
     · intro δ mem
       simp only [Set.coe_toFinset] at mem
       simp only [Set.coe_toFinset, Set.mem_image, Set.mem_preimage]
-      have δinΔ: δ ∈ Δ (a+c) (b+d) := by
+      have δinΔ: δ ∈ Δ s t := by
         unfold Δtriangle at mem
         simp only [Set.mem_image, Prod.exists] at mem
         rcases mem with ⟨p, q, mem, mem2⟩
@@ -1065,7 +1063,7 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
         unfold δₚ at mem2
         simp only at mem2
         exact mem2
-      obtain ⟨k, keq⟩ := δₖ_surjΔ (a+c) (b+d) δ δinΔ
+      obtain ⟨k, keq⟩ := δₖ_surjΔ s t δ δinΔ
       use k
       constructor
       · rw [keq]
@@ -1073,7 +1071,7 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
       · exact keq
 
   have kTriangleBound (kt: ℕ) (mem: kt ∈ kTriangle): kt < k := by
-    have δrel: δₖ (a+c) (b+d) kt < δₖ (a+c) (b+d) k := by
+    have δrel: δₖ s t kt < δₖ s t k := by
       unfold kTriangle Δtriangle Λtriangle at mem
       simp only [Set.mem_preimage, Set.mem_image, Set.mem_setOf_eq, Prod.exists] at mem
       obtain ⟨p, q, pqBound, pqEq⟩ := mem
@@ -1084,59 +1082,49 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
       apply lt_of_lt_of_le pqBound
       rify at oob
       convert oob
-      obtain kspec := Exists.choose_spec (pqOfδₖ_abcd_exist a b c d k)
+      obtain kspec := Exists.choose_spec (pqOfδₖ_exist s t k)
       unfold δₚ at kspec
       simp only at kspec
-      unfold pqOfδₖ_abcd
+      unfold pqOfδₖ
       exact id (Eq.symm kspec)
 
-    apply (StrictMono.lt_iff_lt (δₖ_mono (a+c) (b+d))).mp δrel
+    apply (StrictMono.lt_iff_lt (δₖ_mono s t)).mp δrel
 
-  have kTriangleCardBound: kTriangle.toFinset.card = (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) := by
+  have kTriangleCardBound: kTriangle.toFinset.card = (((s + 1) * (t + 1) - 2) / 2: ℕ) := by
     rw [kTriangleCard]
     rw [ΔtriangleCard]
-    exact ΛtriangleCard (a + c) (b + d) coprime
+    exact ΛtriangleCard s t coprime
 
-  have kTriangleMaxBound (kt: ℕ) (mem: kt ∈ kTriangle): kt ≤ (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) - 2 := by
-    obtain le1: kt ≤ k - 1 := by exact Nat.le_sub_one_of_lt (kTriangleBound kt mem)
-    apply le_trans le1
-    obtain le2: k ≤ ((a + c + 1) * (b + d + 1) - 2) / 2 - 1 := by exact Nat.le_sub_one_of_lt h
-    exact Nat.sub_le_sub_right le2 1
+  have kTriangleMaxBound (kt: ℕ) (mem: kt ∈ kTriangle): kt + 1 ≤ (((s + 1) * (t + 1) - 2) / 2: ℕ) - 1 := by
+    obtain le := Nat.add_one_le_of_lt <| kTriangleBound kt mem
+    exact le_trans le (Nat.le_sub_one_of_lt h)
 
-  have notSaturated: (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) ≥ 2 := by
-    apply Nat.le_div_two_iff_mul_two_le.mpr
-    norm_num
-    apply Nat.le_sub_of_add_le
-    norm_num
-    have sixNine: 6 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp only [Nat.reduceAdd, Nat.reduceMul,
-      Nat.reduceLeDiff]
-    apply le_trans sixNine
-    gcongr
-    repeat exact NeZero.one_le
+  have notSaturated: 1 ≤ (((s + 1) * (t + 1) - 2) / 2: ℕ) := by
+    trans ((1 + 1) * (1 + 1) - 2) / 2
+    · norm_num
+    · gcongr
+      all_goals exact NeZero.one_le
 
-  set N := (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) - 2
-  have n2: (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) = N + 2 := by
-    unfold N
-    rw [Nat.sub_add_cancel]
-    exact notSaturated
+  set N := (((s + 1) * (t + 1) - 2) / 2: ℕ) - 1
+  have n2: (((s + 1) * (t + 1) - 2) / 2: ℕ) = N + 1 := by
+    rw [Nat.sub_add_cancel notSaturated]
 
   rw [n2] at kTriangleCardBound
 
-  have kTriangleCardBoundFromMax: kTriangle.toFinset.card ≤ N + 1 := by
-    let boundSet := Finset.range (N + 1)
+  have kTriangleCardBoundFromMax: kTriangle.toFinset.card ≤ N := by
+    let boundSet := Finset.range N
     have sub: kTriangle.toFinset ⊆ boundSet := by
       unfold boundSet
       simp only [Set.toFinset_subset, Finset.coe_range]
       intro k mem
       simp only [Set.mem_Iio]
-      apply Nat.lt_add_one_of_le
       exact kTriangleMaxBound k mem
-    have boundCard: boundSet.card = N + 1 := by exact Finset.card_range (N + 1)
+    have boundCard: boundSet.card = N := by exact Finset.card_range N
     rw [← boundCard]
     apply Finset.card_le_card sub
 
   rw [kTriangleCardBound] at kTriangleCardBoundFromMax
-  simp only [add_le_add_iff_left, Nat.not_ofNat_le_one] at kTriangleCardBoundFromMax
+  simp at kTriangleCardBoundFromMax
 
 /-!
 Now we can prove a stronger version of `δₖ_inert`, because we know the sequence of lattice points
@@ -1147,10 +1135,11 @@ lemma δₖ_inert_fixed (a b c d: ℕ+) (s t: ℝ) (k: ℕ)
 (det: a * d = b * c + 1)
 (left: a * t > b * s) (right: d * s > c * t)
 (kbound: k < (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ)):
-δₖ s t k = δₚ s t (pqOfδₖ_abcd a b c d k) := by
+δₖ s t k = δₚ s t (pqOfδₖ (a + c) (b + d) k) := by
+  obtain coprime := abcdCoprime a b c d det
   have bound1: 1 ≤ (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) := by
     exact Nat.one_le_of_lt kbound
-  apply δₖ_inert a b c d (a + c) (b + d) s t (((a + c + 1) * (b + d + 1) - 2) / 2 - 1) (pqOfδₖ_abcd a b c d) det
+  apply δₖ_inert a b c d (a + c) (b + d) s t (((a + c + 1) * (b + d + 1) - 2) / 2 - 1) (pqOfδₖ (a + c) (b + d)) det
   · rw [mul_add, mul_add]
     rw [mul_comm]
     apply (add_lt_add_iff_left _).mpr
@@ -1167,11 +1156,14 @@ lemma δₖ_inert_fixed (a b c d: ℕ+) (s t: ℝ) (k: ℕ)
   · exact left
   · exact right
   · intro k' mem
-    obtain eq := Exists.choose_spec (pqOfδₖ_abcd_exist a b c d k')
+    obtain eq := Exists.choose_spec (pqOfδₖ_exist (a + c) (b + d) k')
+    push_cast at eq
     rw [← eq]
+    unfold pqOfδₖ
+    push_cast
     rfl
   · intro k' mem
-    apply pqOfδₖ_abcd_bound a b c d k' det
+    apply pqOfδₖ_bound (a + c) (b + d) k' coprime
     exact Nat.lt_of_le_pred bound1 mem
   · exact Nat.le_sub_one_of_lt kbound
 
@@ -1185,6 +1177,7 @@ lemma nₖ_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
 (kbound: k < (((a + c + 1) * (b + d + 1)) / 2: ℕ)):
 nₖ s1 t1 k = nₖ s2 t2 k := by
+  obtain coprime := abcdCoprime a b c d det
   rw [nₖ_accum, nₖ_accum]
   by_cases k0: k = 0
   · rw [k0]
@@ -1208,7 +1201,7 @@ nₖ s1 t1 k = nₖ s2 t2 k := by
     congr 1
     unfold δₚ
     simp only [Set.toFinset_inj]
-    obtain pqBound := pqOfδₖ_abcd_bound a b c d (k - 1) det k1bound
+    obtain pqBound := pqOfδₖ_bound (a + c) (b + d) (k - 1) coprime k1bound
     norm_cast at pqBound
     obtain ⟨pb, qb⟩ := BoundDecomposite _ _ pqBound
     apply Λceiled_inert' a b c d s1 t1 s2 t2 _ _ det left1 right1 left2 right2 pb qb
@@ -1224,6 +1217,7 @@ lemma wₖ_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (k: ℕ)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
 (kbound: k < (((a + c + 1) * (b + d + 1)) / 2: ℕ)):
 wₖ s1 t1 k = wₖ s2 t2 k := by
+  obtain coprime := abcdCoprime a b c d det
   rw [wₖ_accum, wₖ_accum]
   by_cases k0: k = 0
   · rw [k0]
@@ -1247,10 +1241,10 @@ wₖ s1 t1 k = wₖ s2 t2 k := by
     congr 1
     unfold δₚ
     simp only [Set.toFinset_inj]
-    obtain pqBound := pqOfδₖ_abcd_bound a b c d (k - 1) det k1bound
+    obtain pqBound := pqOfδₖ_bound (a + c) (b + d) (k - 1) coprime k1bound
     norm_cast at pqBound
     obtain ⟨pb, qb⟩ := BoundDecomposite _ _ pqBound
-    set q := (pqOfδₖ_abcd a b c d (k - 1)).2
+    set q := (pqOfδₖ (a + c) (b + d) (k - 1)).2
     by_cases q0: q = 0
     · simp only [q0, CharP.cast_eq_zero, zero_mul, add_zero]
       apply Λceiled_inert_t' a b c d s1 t1 s2 t2 _ det left1 right1 left2 right2 pb
@@ -1274,30 +1268,25 @@ more useful for theorem proving.
 -/
 def nBranching (s t: ℕ+) := 1 + ∑pq ∈ (Λtriangle s t).toFinset, Jₚ pq
 
-theorem nBranchingFormula (a b c d: ℕ+) (det: a * d = b * c + 1):
-nBranching (a + c) (b + d) = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
-  obtain coprime := abcdCoprime a b c d det
+theorem nBranchingFormula (s t: ℕ+) (coprime: PNat.Coprime s t):
+nBranching s t = nₖ s t (((s + 1) * (t + 1)) / 2 - 1) := by
   symm
-  have twoBound: (2:ℕ)  ≤ (a + c + 1) * (b + d + 1) := by
-    have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+  have twoBound: (2:ℕ)  ≤ (s + 1) * (t + 1) := by
+    have twoNine: 2 ≤ (1 + 1) * (1 + 1) := by simp
     apply le_trans twoNine
     gcongr
     repeat exact NeZero.one_le
-  have fourBound: (4:ℕ)  ≤ (a + c + 1) * (b + d + 1) := by
-    have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
+  have fourBound: (4:ℕ) ≤ (s + 1) * (t + 1) := by
+    have fourNine: 4 ≤ (1 + 1) * (1 + 1) := by simp
     apply le_trans fourNine
     gcongr
     repeat exact NeZero.one_le
   unfold nBranching
-  have nonzero: (a + c + 1: ℕ) * (b + d + 1) / 2 - 1 ≠ 0 := by
+  have nonzero: (s + 1: ℕ) * (t + 1) / 2 - 1 ≠ 0 := by
     refine Nat.sub_ne_zero_iff_lt.mpr ?_
     refine (Nat.le_div_iff_mul_le ?_).mpr ?_
     · simp only [Nat.ofNat_pos]
-    · norm_num
-      have fourNine: 4 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
-      apply le_trans fourNine
-      gcongr
-      repeat exact NeZero.one_le
+    · simpa using fourBound
   rw [nₖ_accum]
   simp only [nonzero, ↓reduceIte, add_right_inj]
   unfold Jceiled
@@ -1307,13 +1296,13 @@ nBranching (a + c) (b + d) = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) /
   · unfold Λceiled
     intro pq mem
     simp only [Set.mem_setOf_eq] at mem
-    have inΔ: (pq.1: ℝ) * (a + c) + pq.2 * (b + d) ∈ Δ (a + c) (b + d) := by
+    have inΔ: (pq.1: ℝ) * s + pq.2 * t ∈ Δ s t := by
       unfold Δ
       simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
-    obtain ⟨k, keq⟩ := δₖ_surjΔ (a + c) (b + d)  _ inΔ
+    obtain ⟨k, keq⟩ := δₖ_surjΔ s t  _ inΔ
     rw [← keq] at mem
-    obtain kmono := (StrictMono.le_iff_le (δₖ_mono (a + c) (b + d))).mp mem
-    have klt: k < ((a + c + 1) * (b + d + 1) - 2) / 2 := by
+    obtain kmono := (StrictMono.le_iff_le (δₖ_mono s t)).mp mem
+    have klt: k < ((s + 1) * (t + 1) - 2) / 2 := by
       apply Nat.lt_of_le_sub_one (Nat.zero_lt_of_ne_zero nonzero) at kmono
       convert kmono using 1
       apply Nat.eq_sub_of_add_eq
@@ -1321,11 +1310,11 @@ nBranching (a + c) (b + d) = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) /
       apply Nat.div_eq_sub_div
       · simp only [Nat.ofNat_pos]
       · exact twoBound
-    let pq' := pqOfδₖ_abcd a b c d k
-    obtain pq'eq := Exists.choose_spec (pqOfδₖ_abcd_exist a b c d k)
-    obtain bound := pqOfδₖ_abcd_bound a b c d k det klt
+    let pq' := pqOfδₖ s t k
+    obtain pq'eq := Exists.choose_spec (pqOfδₖ_exist s t k)
+    obtain bound := pqOfδₖ_bound s t k coprime klt
     rify at bound
-    unfold pqOfδₖ_abcd at bound
+    unfold pqOfδₖ at bound
     unfold δₚ at pq'eq
     simp only at pq'eq
     rw [pq'eq] at bound
@@ -1334,8 +1323,8 @@ nBranching (a + c) (b + d) = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) /
     simp only [Set.mem_setOf_eq, gt_iff_lt]
     rify
     exact bound
-  · let Δtriangle := δₚ (a + c) (b + d) '' Λtriangle (a + c) (b + d)
-    have ΔtriangleCard: Δtriangle.toFinset.card ≤ (Λtriangle (a + c) (b + d)).toFinset.card := by
+  · let Δtriangle := δₚ s t '' Λtriangle s t
+    have ΔtriangleCard: Δtriangle.toFinset.card ≤ (Λtriangle s t).toFinset.card := by
       unfold Δtriangle
       simp only [Set.toFinset_image]
       exact Finset.card_image_le
@@ -1343,47 +1332,45 @@ nBranching (a + c) (b + d) = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) /
     obtain ⟨pq, inTriangle, outCeiled⟩ := Set.not_subset_iff_exists_mem_not_mem.mp exception
     unfold Λceiled at outCeiled
     simp only [Set.mem_setOf_eq, not_le] at outCeiled
-    have inΔ: (pq.1: ℝ) * (a + c) + pq.2 * (b + d) ∈ Δ (a + c) (b + d) := by
+    have inΔ: (pq.1: ℝ) * s + pq.2 * t ∈ Δ s t := by
       unfold Δ
       simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
-    obtain ⟨k', keq⟩ := δₖ_surjΔ (a + c) (b + d) _ inΔ
+    obtain ⟨k', keq⟩ := δₖ_surjΔ s t _ inΔ
     rw [← keq] at outCeiled
     rw [Nat.sub_sub] at outCeiled
     norm_num at outCeiled
-    obtain k'floor := (StrictMono.lt_iff_lt (δₖ_mono (a + c) (b + d))).mp outCeiled
-    have k'mem: δₖ (a + c) (b + d) k' ∈ Δtriangle := by
+    obtain k'floor := (StrictMono.lt_iff_lt (δₖ_mono s t)).mp outCeiled
+    have k'mem: δₖ s t k' ∈ Δtriangle := by
       rw [keq]
       unfold Δtriangle
-      exact Set.mem_image_of_mem (δₚ (a + c) (b + d)) inTriangle
-    rw [ΛtriangleCard (a + c) (b + d) coprime] at ΔtriangleCard
-    have hole: ∃(l: ℕ), l ≤ (a + c + 1) * (b + d + 1) / 2 - 2 ∧ δₖ (a + c) (b + d) l ∉ Δtriangle := by
+      exact Set.mem_image_of_mem (δₚ s t) inTriangle
+    rw [ΛtriangleCard s t coprime] at ΔtriangleCard
+    have hole: ∃(l: ℕ), l ≤ (s + 1) * (t + 1) / 2 - 2 ∧ δₖ s t l ∉ Δtriangle := by
       by_contra full
       simp only [not_exists, not_and, not_not] at full
-      have subset: Finset.image (δₖ (↑↑a + ↑↑c) (↑↑b + ↑↑d)) (Finset.Icc 0 ((a + c + 1) * (b + d + 1) / 2 - 2))
+      have subset: Finset.image (δₖ s t) (Finset.Icc 0 ((s + 1) * (t + 1) / 2 - 2))
         ⊆ Δtriangle.toFinset := by
         refine Finset.subset_iff.mpr ?_
-        simp only [Finset.mem_image, Finset.mem_Icc, zero_le, true_and, Set.mem_toFinset,
-          forall_exists_index, and_imp, forall_apply_eq_imp_iff₂]
-        exact full
-      have subset': Finset.image (δₖ (↑↑a + ↑↑c) (↑↑b + ↑↑d)) ({k'}) ⊆ Δtriangle.toFinset := by
+        simpa using full
+      have subset': Finset.image (δₖ s t) ({k'}) ⊆ Δtriangle.toFinset := by
         refine Finset.subset_iff.mpr ?_
         simp only [Finset.image_singleton, Finset.mem_singleton, Set.mem_toFinset, forall_eq]
         exact k'mem
-      let uni := (Finset.Icc (0: ℕ) ((a + c + 1) * (b + d + 1) / 2 - 2)) ∪ {k'}
-      have subset_uni: Finset.image (δₖ (↑↑a + ↑↑c) (↑↑b + ↑↑d)) uni ⊆ Δtriangle.toFinset := by
+      let uni := (Finset.Icc (0: ℕ) ((s + 1) * (t + 1) / 2 - 2)) ∪ {k'}
+      have subset_uni: Finset.image (δₖ s t) uni ⊆ Δtriangle.toFinset := by
         unfold uni
         rw [Finset.image_union]
         apply Finset.union_subset subset subset'
-      have disj: (Finset.Icc (0: ℕ) ((a + c + 1) * (b + d + 1) / 2 - 2)) ∩ {k'} = ∅ := by
+      have disj: (Finset.Icc (0: ℕ) ((s + 1) * (t + 1) / 2 - 2)) ∩ {k'} = ∅ := by
         apply Finset.disjoint_iff_inter_eq_empty.mp
         simp only [Finset.disjoint_singleton_right, Finset.mem_Icc, zero_le, true_and, not_le]
         exact k'floor
-      have uniCard: uni.card = (a + c + 1) * (b + d + 1) / 2 - 2 + 1 + 1 - 0 := by
+      have uniCard: uni.card = (s + 1) * (t + 1) / 2 - 2 + 1 + 1 - 0 := by
         unfold uni
         rw [Finset.card_union]
         rw [disj]
         simp only [Nat.card_Icc, tsub_zero, Finset.card_singleton, Finset.card_empty]
-      have imageCard: (Finset.image (δₖ (↑↑a + ↑↑c) (↑↑b + ↑↑d)) uni).card = (a + c + 1) * (b + d + 1) / 2 - 2 + 1 + 1 - 0 := by
+      have imageCard: (Finset.image (δₖ s t) uni).card = (s + 1) * (t + 1) / 2 - 2 + 1 + 1 - 0 := by
         rw [← uniCard]
         apply Finset.card_image_iff.mpr
         apply Set.injOn_of_injective
@@ -1394,14 +1381,14 @@ nBranching (a + c) (b + d) = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) /
       have zero2: 0 < 2 := by simp only [Nat.ofNat_pos]
       rw [Nat.div_eq_sub_div zero2 twoBound] at chain
       simp only [Nat.reduceSubDiff, tsub_zero] at chain
-      have subAddCanCancel: (1: ℕ) ≤ ((a + c + 1) * (b + d + 1) - 2) / 2 := by
+      have subAddCanCancel: (1: ℕ) ≤ ((s + 1) * (t + 1) - 2) / 2 := by
         exact Nat.one_le_of_lt chain
       rw [Nat.sub_add_cancel subAddCanCancel] at chain
       simp at chain
     obtain ⟨l, lrange, lnotmem⟩ := hole
     obtain lrange := lt_of_le_of_lt lrange k'floor
-    obtain lkrel := δₖ_mono (a + c) (b + d) lrange
-    obtain lpq := δₖ_in_Δ (a + c) (b + d) l
+    obtain lkrel := δₖ_mono s t lrange
+    obtain lpq := δₖ_in_Δ s t l
     unfold Δ at lpq
     rcases lpq with ⟨lp, lq, lpqeq⟩
     rw [← lpqeq] at lkrel
@@ -1434,7 +1421,9 @@ lemma kceiled_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
 (nbound: n ≤ nBranching (a + c) (b + d)):
 kceiled s1 t1 n = kceiled s2 t2 n := by
-  rw [nBranchingFormula a b c d det] at nbound
+  obtain coprime := abcdCoprime a b c d det
+  rw [nBranchingFormula (a + c) (b + d) coprime] at nbound
+  push_cast at nbound
   unfold kceiled
   ext k
   simp only [Set.mem_setOf_eq]
@@ -1499,6 +1488,7 @@ theorem wₘᵢₙ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
 (h: n ≥ 2) (nbound: n ≤ nBranching (a + c) (b + d)):
 wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
+  obtain coprime := abcdCoprime a b c d det
   obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
   unfold wₘᵢₙ
   have n1: n ≥ 1 := by apply ge_trans h; simp only [ge_iff_le, Nat.one_le_ofNat]
@@ -1549,7 +1539,8 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
       exact k1bound
   · simp only [not_lt] at nlt
     have neq: n = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
-      rw [nBranchingFormula a b c d det] at nbound
+      rw [nBranchingFormula (a + c) (b + d) coprime] at nbound
+      push_cast at nbound
       apply le_antisymm nbound nlt
     let neq2 := neq
     rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
@@ -1615,14 +1606,16 @@ theorem wₘₐₓ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
 (h: n ≥ 2) (nbound: n ≤ nBranching (a + c) (b + d)):
 wₘₐₓ s1 t1 n = wₘₐₓ s2 t2 n := by
-  rw [nBranchingFormula a b c d det] at nbound
+  obtain coprime := abcdCoprime a b c d det
+  rw [nBranchingFormula (a + c) (b + d) coprime] at nbound
   obtain rec1 := eq_sub_of_add_eq' (wₘₘ_rec t1 s1 n h)
   obtain rec2 := eq_sub_of_add_eq' (wₘₘ_rec t2 s2 n h)
   rw [rec1, rec2]
   congr 1
   rw [nₖ_symm] at nbound
-  have nboundeq: nₖ (b + d) (a + c) ((a + c + 1) * (b + d + 1) / 2 - 1)
-    = nₖ (d + b) (c + a) ((d + b + 1) * (c + a + 1) / 2 - 1) := by
+  have nboundeq: nₖ (b + d: ℕ+) (a + c: ℕ+) (((a + c: ℕ+) + 1) * ((b + d: ℕ+) + 1) / 2 - 1)
+    = nₖ (d + b: ℕ+) (c + a: ℕ+) (((d + b: ℕ+) + 1) * ((c + a: ℕ+) + 1) / 2 - 1) := by
+    push_cast
     congr 1
     · apply add_comm
     · apply add_comm
@@ -1633,7 +1626,8 @@ wₘₐₓ s1 t1 n = wₘₐₓ s2 t2 n := by
   rw [nboundeq] at nbound
   rw [mul_comm a d] at det
   rw [mul_comm b c] at det
-  rw [← nBranchingFormula d c b a det] at nbound
+  obtain coprime := abcdCoprime d c b a det
+  rw [← nBranchingFormula (d + b) (c + a) coprime] at nbound
   apply wₘᵢₙ_inert d c b a t1 s1 t2 s2 n det right1 left1 right2 left2 h nbound
 
 theorem wₗᵢ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
@@ -1643,6 +1637,7 @@ theorem wₗᵢ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
 (_h: n ≥ 2) (nbound: n ≤ nBranching (a + c) (b + d)):
 wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
+  obtain coprime := abcdCoprime a b c d det
   obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
   unfold wₗᵢ
   by_cases n1: n ≥ 1
@@ -1691,7 +1686,8 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
       congr
     · simp only [not_lt] at nlt
       have neq: n = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
-        rw [nBranchingFormula a b c d det] at nbound
+        rw [nBranchingFormula (a + c) (b + d) coprime] at nbound
+        push_cast at nbound
         apply le_antisymm nbound nlt
       let neq2 := neq
       rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
