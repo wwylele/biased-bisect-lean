@@ -635,26 +635,26 @@ all lattice points in an inert interval.
 
 def FintypeIcc (L: ℕ): Type := Set.Icc 0 L
 
-def Λrectangle (a b c d: ℕ+) :=
-  (Finset.range (b + d + 1)) ×ˢ (Finset.range (a + c + 1))
+def Λrectangle (s t: ℕ+) :=
+  (Finset.range (t+ 1)) ×ˢ (Finset.range (s + 1))
 
-instance Λrectangle_fintype (a b c d: ℕ+): Fintype (Λrectangle a b c d) := by
+instance Λrectangle_fintype (s t: ℕ+): Fintype (Λrectangle s t) := by
   unfold Λrectangle
   apply Finset.fintypeCoeSort
 
-lemma Λrectangle_card (a b c d: ℕ+): Fintype.card (Λrectangle a b c d) = (b + d + 1) * (a + c + 1) := by
+lemma Λrectangle_card (s t: ℕ+): Fintype.card (Λrectangle s t) = (t + 1) * (s + 1) := by
   unfold Λrectangle
   simp only [Finset.mem_product, Finset.mem_range, Fintype.card_coe, Finset.card_product,
     Finset.card_range]
 
-def Λtriangle (a b c d: ℕ+) := {pq: ℕ × ℕ | pq.1 * (a + c) + pq.2 * (b + d) < (a + c) * (b + d)}
+def Λtriangle (s t: ℕ+) := {pq: ℕ × ℕ | pq.1 * s + pq.2 * t < s * t}
 
-def ΛtriangleFinset (a b c d: ℕ+) :=
-  Finset.biUnion (Finset.range (b + d)) (fun p ↦ {p} ×ˢ Finset.range ((((a + c) * (b + d - p) + (b + d - 1))) / (b + d)))
+def ΛtriangleFinset (s t: ℕ+) :=
+  Finset.biUnion (Finset.range t) (fun p ↦ {p} ×ˢ Finset.range (((s * (t - p) + (t - 1))) / t))
 
 /- We could have just use the finiteness, but having a computable one is useful -/
-instance ΛtriangleFintype (a b c d: ℕ+): Fintype (Λtriangle a b c d) := by
-  apply Fintype.ofFinset (ΛtriangleFinset a b c d)
+instance ΛtriangleFintype (s t: ℕ+): Fintype (Λtriangle s t) := by
+  apply Fintype.ofFinset (ΛtriangleFinset s t)
   intro pq
   unfold Λtriangle ΛtriangleFinset
   simp only [Finset.singleton_product, Finset.mem_biUnion, Finset.mem_range, Finset.mem_map,
@@ -663,15 +663,15 @@ instance ΛtriangleFintype (a b c d: ℕ+): Fintype (Λtriangle a b c d) := by
   · rintro ⟨p', p'b, q', ⟨q'b, eq⟩⟩
     rw [← eq]
     simp only
-    have qb: q' * (b + d) < (a + c) * (b + d - p') + (b + d - 1) - (b + d - 1) := by
+    have qb: q' * t < s * (t - p') + (t - 1) - (t - 1) := by
       apply (Nat.lt_div_iff_mul_lt ?_).mp q'b
       simp only [add_pos_iff, PNat.pos, or_self]
-    have qb2: q' * (b + d) < (a + c) * (b + d - p') := by
+    have qb2: q' * t < s * (t - p') := by
       convert qb using 1
       symm
       apply Nat.add_sub_self_right
-    have h: p' * (a + c) + q' * (b + d) < p' * (a + c) + (a + c) * (b + d - p') :=
-      Nat.add_lt_add_left qb2 (p' * (a + c))
+    have h: p' * s + q' * t < p' * s + s * (t - p') :=
+      Nat.add_lt_add_left qb2 (p' * s)
     nth_rw 3 [mul_comm] at h
     rw [← mul_add] at h
     convert h using 2
@@ -688,7 +688,7 @@ instance ΛtriangleFintype (a b c d: ℕ+): Fintype (Λtriangle a b c d) := by
       · rw [mul_comm, add_comm] at mem
         apply Nat.lt_sub_of_add_lt at mem
         rw [← Nat.mul_sub] at mem
-        have h: ((a + c) * (b + d - pq.1): ℕ) = (a + c) * (b + d - pq.1) + (b + d - 1) - (b + d - 1) := by
+        have h: (s * (t - pq.1): ℕ) = s * (t - pq.1) + (t - 1) - (t - 1) := by
           symm
           apply Nat.add_sub_self_right
         rw [h] at mem
@@ -697,26 +697,26 @@ instance ΛtriangleFintype (a b c d: ℕ+): Fintype (Λtriangle a b c d) := by
       · simp only [Prod.mk.eta]
 
 noncomputable
-instance ΛtriangleDecidable (a b c d: ℕ+): DecidablePred fun x ↦ x ∈ Λtriangle a b c d := by
+instance ΛtriangleDecidable (s t: ℕ+): DecidablePred fun x ↦ x ∈ Λtriangle s t := by
   apply Classical.decPred
 
 
-def ΛtriangleUpper (a b c d: ℕ+) := {pq: ℕ × ℕ | pq.1 * (a + c) + pq.2 * (b + d) > (a + c) * (b + d)} ∩ (Λrectangle a b c d)
+def ΛtriangleUpper (s t: ℕ+) := {pq: ℕ × ℕ | pq.1 * s + pq.2 * t > s * t} ∩ (Λrectangle s t)
 
-def ΛtriangleUpperSubset (a b c d: ℕ+): ΛtriangleUpper a b c d ⊆ Λrectangle a b c d := by
+def ΛtriangleUpperSubset (s t: ℕ+): ΛtriangleUpper s t ⊆ Λrectangle s t := by
   unfold ΛtriangleUpper
   exact Set.inter_subset_right
 
 noncomputable
-instance ΛtriangleUpperDecidable (a b c d: ℕ+): DecidablePred fun x ↦ x ∈ ΛtriangleUpper a b c d := by
+instance ΛtriangleUpperDecidable (s t: ℕ+): DecidablePred fun x ↦ x ∈ ΛtriangleUpper s t := by
   apply Classical.decPred
 
 noncomputable
-instance ΛtriangleUpperFintype (a b c d: ℕ+): Fintype (ΛtriangleUpper a b c d) := by
-  refine Set.fintypeSubset _ (ΛtriangleUpperSubset a b c d)
+instance ΛtriangleUpperFintype (s t: ℕ+): Fintype (ΛtriangleUpper s t) := by
+  refine Set.fintypeSubset _ (ΛtriangleUpperSubset s t)
 
-def BoundDecomposite (p q: ℕ) (h: p * (a + c) + q * (b + d) < (a + c) * (b + d)):
-    p < b + d ∧ q < a + c := by
+def BoundDecomposite (p q: ℕ) {s t: ℕ+} (h: p * s + q * t < s * t):
+    p < t ∧ q < s := by
     constructor
     · obtain h' := lt_of_add_lt_of_nonneg_left h (Nat.zero_le _)
       rw [mul_comm] at h'
@@ -724,8 +724,8 @@ def BoundDecomposite (p q: ℕ) (h: p * (a + c) + q * (b + d) < (a + c) * (b + d
     · obtain h' := lt_of_add_lt_of_nonneg_right h (Nat.zero_le _)
       exact lt_of_mul_lt_mul_right h' (Nat.zero_le _)
 
-lemma ΛtriangleCardEq (a b c d: ℕ+): (Λtriangle a b c d).toFinset.card = (ΛtriangleUpper a b c d).toFinset.card := by
-  apply Finset.card_nbij (fun ⟨p, q⟩ ↦ ⟨b + d - p, a + c - q⟩ )
+lemma ΛtriangleCardEq (s t: ℕ+): (Λtriangle s t).toFinset.card = (ΛtriangleUpper s t).toFinset.card := by
+  apply Finset.card_nbij (fun ⟨p, q⟩ ↦ ⟨t - p, s - q⟩ )
   · unfold Λtriangle ΛtriangleUpper Λrectangle
     rintro ⟨p, q⟩
     simp only [Set.mem_toFinset, Set.mem_setOf_eq, gt_iff_lt, Finset.coe_product, Finset.coe_range,
@@ -742,13 +742,13 @@ lemma ΛtriangleCardEq (a b c d: ℕ+): (Λtriangle a b c d).toFinset.card = (Λ
           apply Nat.add_lt_add_left
           nth_rw 3 [mul_comm]
           exact mem
-        · refine Nat.mul_le_mul_right (a + c) ?_
+        · refine Nat.mul_le_mul_right s ?_
           exact Nat.le_of_lt pb
-      · refine Nat.mul_le_mul_right (b + d) ?_
+      · refine Nat.mul_le_mul_right t ?_
         exact Nat.le_of_lt qb
     · constructor
-      · exact lt_of_le_of_lt (Nat.sub_le (b + d) p) (Nat.lt_add_one (b + d))
-      · exact lt_of_le_of_lt (Nat.sub_le (a + c) q) (Nat.lt_add_one (a + c))
+      · exact lt_of_le_of_lt (Nat.sub_le t p) (Nat.lt_add_one t)
+      · exact lt_of_le_of_lt (Nat.sub_le s q) (Nat.lt_add_one s)
   · unfold Set.InjOn Λtriangle
     simp only [Set.coe_toFinset, Set.mem_setOf_eq, Prod.mk.injEq, and_imp, Prod.forall]
     intro p q mem p2 q2 mem2 pp qq
@@ -771,7 +771,7 @@ lemma ΛtriangleCardEq (a b c d: ℕ+): (Λtriangle a b c d).toFinset.card = (Λ
       Set.mem_setOf_eq, Set.mem_prod, Set.mem_Iio, Set.mem_image, Prod.mk.injEq, Prod.exists,
       and_imp]
     intro mem pb qb
-    use (b + d - p), (a + c - q)
+    use (t - p), (s - q)
     constructor
     · rw [Nat.sub_mul, Nat.sub_mul]
       rw [← Nat.add_sub_assoc]
@@ -779,16 +779,16 @@ lemma ΛtriangleCardEq (a b c d: ℕ+): (Λtriangle a b c d).toFinset.card = (Λ
         · rw [Nat.sub_sub]
           apply Nat.sub_lt_right_of_lt_add
           · apply add_le_add
-            · refine Nat.mul_le_mul_right (a + c) ?_
+            · refine Nat.mul_le_mul_right s ?_
               exact Nat.le_of_lt_succ pb
-            · refine Nat.mul_le_mul_right (b + d) ?_
+            · refine Nat.mul_le_mul_right t ?_
               exact Nat.le_of_lt_succ qb
           · rw [mul_comm]
             apply Nat.add_lt_add_left
             exact mem
-        · refine Nat.mul_le_mul_right (a + c) ?_
+        · refine Nat.mul_le_mul_right s ?_
           exact Nat.le_of_lt_succ pb
-      · refine Nat.mul_le_mul_right (b + d) ?_
+      · refine Nat.mul_le_mul_right t ?_
         exact Nat.le_of_lt_succ qb
     · constructor
       · refine Eq.symm (Nat.eq_sub_of_add_eq' ?_)
@@ -798,13 +798,13 @@ lemma ΛtriangleCardEq (a b c d: ℕ+): (Λtriangle a b c d).toFinset.card = (Λ
         refine Nat.sub_add_cancel ?_
         exact Nat.le_of_lt_succ qb
 
-def ΛrectangleCut (a b c d: ℕ+) := (Λrectangle a b c d \ {((b:ℕ) + d, 0)}) \ {(0, (a:ℕ) + c)}
+def ΛrectangleCut (s t: ℕ+) := (Λrectangle s t \ {((t: ℕ), 0)}) \ {(0, (s: ℕ))}
 
-instance ΛrectangleCutFintype (a b c d: ℕ+): Fintype (ΛrectangleCut a b c d) := by
+instance ΛrectangleCutFintype (s t: ℕ+): Fintype (ΛrectangleCut s t) := by
   unfold ΛrectangleCut
   apply Finset.fintypeCoeSort
 
-lemma ΛrectangleCutCard (a b c d: ℕ+): Fintype.card (ΛrectangleCut a b c d) = (b + d + 1) * (a + c + 1) - 2 := by
+lemma ΛrectangleCutCard (s t: ℕ+): Fintype.card (ΛrectangleCut s t) = (t + 1) * (s + 1) - 2 := by
   have two: 2 = 1 + 1 := by simp only [Nat.reduceAdd]
   rw [two]
   rw [← Nat.sub_sub]
@@ -814,7 +814,7 @@ lemma ΛrectangleCutCard (a b c d: ℕ+): Fintype.card (ΛrectangleCut a b c d) 
   · rw [Finset.card_sdiff]
     · congr
       rw [← Λrectangle_card]
-      exact Eq.symm (Fintype.card_coe (Λrectangle a b c d))
+      exact Eq.symm (Fintype.card_coe (Λrectangle s t))
     · unfold Λrectangle
       simp only [Finset.singleton_subset_iff, Finset.mem_product, Finset.mem_range,
         lt_add_iff_pos_right, Nat.lt_one_iff, pos_of_gt, lt_add_iff_pos_left, add_pos_iff, PNat.pos,
@@ -826,7 +826,7 @@ lemma ΛrectangleCutCard (a b c d: ℕ+): Fintype.card (ΛrectangleCut a b c d) 
       AddLeftCancelMonoid.add_eq_zero, PNat.ne_zero, and_false, not_false_eq_true]
 
 lemma abcdCoprime (a b c d: ℕ+) (det: a * d = b * c + 1):
-(a + c: ℕ).gcd (b + d) = 1 := by
+PNat.Coprime (a + c) (b + d) := by
   let k := (a + c: ℕ).gcd (b + d)
   have kac: k ∣ a + c := by apply Nat.gcd_dvd_left
   have kbd: k ∣ b + d := by apply Nat.gcd_dvd_right
@@ -848,10 +848,11 @@ lemma abcdCoprime (a b c d: ℕ+) (det: a * d = b * c + 1):
     · simp only [Nat.cast_nonneg]
     · exact Dvd.intro (u * d - c * v) det'
   simp only [Nat.cast_eq_one] at k1
-  exact k1
+  unfold k at k1
+  norm_cast at k1
 
-lemma ΛrectangleDecompose (a b c d: ℕ+) (det: a * d = b * c + 1):
-ΛrectangleCut a b c d = (Λtriangle a b c d).toFinset ∪ (ΛtriangleUpper a b c d).toFinset := by
+lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
+ΛrectangleCut s t = (Λtriangle s t).toFinset ∪ (ΛtriangleUpper s t).toFinset := by
   unfold ΛrectangleCut Λtriangle ΛtriangleUpper Λrectangle
   ext ⟨p, q⟩
   simp only [Finset.mem_sdiff, Finset.mem_product, Finset.mem_range, Finset.mem_singleton,
@@ -881,7 +882,7 @@ lemma ΛrectangleDecompose (a b c d: ℕ+) (det: a * d = b * c + 1):
             or_false] at eq
           rw [eq] at p0
           contradiction
-        · have eq': (a + c) * (b + d - p) = q * (b + d) := by
+        · have eq': s * (t - p) = q * t := by
             rw [Nat.mul_sub]
             apply (Nat.sub_eq_iff_eq_add' ?_).mpr
             · rw [mul_comm _ p]
@@ -889,11 +890,11 @@ lemma ΛrectangleDecompose (a b c d: ℕ+) (det: a * d = b * c + 1):
             · apply (mul_le_mul_left ?_).mpr
               · exact Nat.le_of_lt_succ pbound
               · simp only [add_pos_iff, PNat.pos, or_self]
-          have dvd: (a + c: ℕ) ∣ q * (b + d) := by
+          have dvd: (s: ℕ) ∣ q * t := by
             exact Dvd.intro _ eq'
-          have dvd_q: (a + c: ℕ) ∣ q := by
+          have dvd_q: (s: ℕ) ∣ q := by
             rw [← mul_one q]
-            rw [← abcdCoprime a b c d det]
+            rw [← PNat.coprime_coe.mpr coprime]
             apply Nat.dvd_mul_gcd_iff_dvd_mul.mpr
             exact dvd
           rcases dvd_q with ⟨k, keq⟩
@@ -924,14 +925,14 @@ lemma ΛrectangleDecompose (a b c d: ℕ+) (det: a * d = b * c + 1):
       · constructor
         · constructor
           · refine lt_add_of_lt_of_pos ?_ Nat.one_pos
-            have lt: p * (a + c) < (a + c) * (b + d) := by
+            have lt: p * s < s * t := by
               apply lt_of_add_lt_of_nonneg_left lower (mul_nonneg ?_ ?_)
               · simp only [zero_le]
               · simp only [zero_le]
             rw [mul_comm] at lt
             apply Nat.lt_of_mul_lt_mul_left lt
           · refine lt_add_of_lt_of_pos ?_ Nat.one_pos
-            have lt: q * (b + d) < (a + c) * (b + d) := by
+            have lt: q * t < s * t := by
               apply lt_of_add_lt_of_nonneg_right lower (mul_nonneg ?_ ?_)
               · simp only [zero_le]
               · simp only [zero_le]
@@ -961,7 +962,7 @@ lemma ΛrectangleDecompose (a b c d: ℕ+) (det: a * d = b * c + 1):
         rw [qcut, p0] at upper
         simp only [zero_mul, zero_add, lt_self_iff_false] at upper
 
-lemma ΛrectangleDisjoint (a b c d: ℕ+): (Λtriangle a b c d).toFinset ∩ (ΛtriangleUpper a b c d).toFinset = ∅ := by
+lemma ΛrectangleDisjoint (s t: ℕ+): (Λtriangle s t).toFinset ∩ (ΛtriangleUpper s t).toFinset = ∅ := by
   unfold Λtriangle ΛtriangleUpper
   ext pq
   simp only [gt_iff_lt, Finset.mem_inter, Set.mem_toFinset, Set.mem_setOf_eq, Set.mem_inter_iff,
@@ -975,11 +976,11 @@ lemma ΛrectangleDisjoint (a b c d: ℕ+): (Λtriangle a b c d).toFinset ∩ (Λ
 /-!
 Here we finally get the value of the cardinality, which we will use to character rise the bound of `n`.
 -/
-lemma ΛtriangleCard (a b c d: ℕ+) (det: a * d = b * c + 1):
-(Λtriangle a b c d).toFinset.card = (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) := by
-  obtain reccard := ΛrectangleCutCard a b c d
+lemma ΛtriangleCard (s t: ℕ+) (coprime: PNat.Coprime s t):
+(Λtriangle s t).toFinset.card = (((s + 1) * (t + 1) - 2) / 2: ℕ) := by
+  obtain reccard := ΛrectangleCutCard s t
   simp only [Fintype.card_coe] at reccard
-  rw [ΛrectangleDecompose a b c d det] at reccard
+  rw [ΛrectangleDecompose s t coprime] at reccard
   rw [Finset.card_union] at reccard
   rw [ΛrectangleDisjoint] at reccard
   rw [← ΛtriangleCardEq] at reccard
@@ -1005,13 +1006,14 @@ def pqOfδₖ_abcd (a b c d: ℕ+) (k: ℕ) := (pqOfδₖ_abcd_exist a b c d k).
 lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
 (h: k < (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ)):
 (pqOfδₖ_abcd a b c d k).1 * (a + c) + (pqOfδₖ_abcd a b c d k).2 * (b + d) < (a + c) * (b + d) := by
+  obtain coprime := abcdCoprime a b c d det
   by_contra oob
   simp only [not_lt] at oob
-  let Δtriangle := δₚ (a + c) (b + d) '' Λtriangle a b c d
-  have ΔtriangleCard: Δtriangle.toFinset.card = (Λtriangle a b c d).toFinset.card := by
+  let Δtriangle := δₚ (a + c) (b + d) '' Λtriangle (a + c) (b + d)
+  have ΔtriangleCard: Δtriangle.toFinset.card = (Λtriangle (a + c) (b + d)).toFinset.card := by
     unfold Δtriangle
-    let prot := (Λtriangle a b c d).toFinset.card
-    have h: prot = (Λtriangle a b c d).toFinset.card := by rfl
+    let prot := (Λtriangle (a + c) (b + d)).toFinset.card
+    have h: prot = (Λtriangle (a + c) (b + d)).toFinset.card := by rfl
     rw [← h]
     simp only [Set.toFinset_image]
     rw [h]
@@ -1020,8 +1022,6 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
     simp only [Set.coe_toFinset, Prod.forall, Prod.mk.injEq]
     intro p q mem p2 q2 mem2 eq
     norm_cast at eq
-    obtain coprime := abcdCoprime a b c d det
-    norm_cast at coprime
     unfold Λtriangle at mem
     simp only [Set.mem_setOf_eq] at mem
     have mem': δₚ ↑↑(a + c) ↑↑(b + d) (p, q) < ↑↑(a + c) * ↑↑(b + d) := by
@@ -1095,7 +1095,7 @@ lemma pqOfδₖ_abcd_bound (a b c d: ℕ+) (k: ℕ) (det: a * d = b * c + 1)
   have kTriangleCardBound: kTriangle.toFinset.card = (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) := by
     rw [kTriangleCard]
     rw [ΔtriangleCard]
-    exact ΛtriangleCard a b c d det
+    exact ΛtriangleCard (a + c) (b + d) coprime
 
   have kTriangleMaxBound (kt: ℕ) (mem: kt ∈ kTriangle): kt ≤ (((a + c + 1) * (b + d + 1) - 2) / 2: ℕ) - 2 := by
     obtain le1: kt ≤ k - 1 := by exact Nat.le_sub_one_of_lt (kTriangleBound kt mem)
@@ -1209,6 +1209,7 @@ nₖ s1 t1 k = nₖ s2 t2 k := by
     unfold δₚ
     simp only [Set.toFinset_inj]
     obtain pqBound := pqOfδₖ_abcd_bound a b c d (k - 1) det k1bound
+    norm_cast at pqBound
     obtain ⟨pb, qb⟩ := BoundDecomposite _ _ pqBound
     apply Λceiled_inert' a b c d s1 t1 s2 t2 _ _ det left1 right1 left2 right2 pb qb
 
@@ -1247,6 +1248,7 @@ wₖ s1 t1 k = wₖ s2 t2 k := by
     unfold δₚ
     simp only [Set.toFinset_inj]
     obtain pqBound := pqOfδₖ_abcd_bound a b c d (k - 1) det k1bound
+    norm_cast at pqBound
     obtain ⟨pb, qb⟩ := BoundDecomposite _ _ pqBound
     set q := (pqOfδₖ_abcd a b c d (k - 1)).2
     by_cases q0: q = 0
@@ -1270,10 +1272,11 @@ We define the bound for `n`
 The first definition explicit for computation, but we also immediately prove a formula that's
 more useful for theorem proving.
 -/
-def nBranching (a b c d: ℕ+) := 1 + ∑pq ∈ (Λtriangle a b c d).toFinset, Jₚ pq
+def nBranching (s t: ℕ+) := 1 + ∑pq ∈ (Λtriangle s t).toFinset, Jₚ pq
 
 theorem nBranchingFormula (a b c d: ℕ+) (det: a * d = b * c + 1):
-nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
+nBranching (a + c) (b + d) = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) := by
+  obtain coprime := abcdCoprime a b c d det
   symm
   have twoBound: (2:ℕ)  ≤ (a + c + 1) * (b + d + 1) := by
     have twoNine: 2 ≤ (1 + 1 + 1) * (1 + 1 + 1) := by simp
@@ -1331,12 +1334,10 @@ nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) 
     simp only [Set.mem_setOf_eq, gt_iff_lt]
     rify
     exact bound
-  · let Δtriangle := δₚ (a + c) (b + d) '' Λtriangle a b c d
-    have ΔtriangleCard: Δtriangle.toFinset.card ≤ (Λtriangle a b c d).toFinset.card := by
+  · let Δtriangle := δₚ (a + c) (b + d) '' Λtriangle (a + c) (b + d)
+    have ΔtriangleCard: Δtriangle.toFinset.card ≤ (Λtriangle (a + c) (b + d)).toFinset.card := by
       unfold Δtriangle
-      set protect := (Λtriangle a b c d).toFinset.card
       simp only [Set.toFinset_image]
-      unfold protect
       exact Finset.card_image_le
     by_contra exception
     obtain ⟨pq, inTriangle, outCeiled⟩ := Set.not_subset_iff_exists_mem_not_mem.mp exception
@@ -1354,7 +1355,7 @@ nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) 
       rw [keq]
       unfold Δtriangle
       exact Set.mem_image_of_mem (δₚ (a + c) (b + d)) inTriangle
-    rw [ΛtriangleCard a b c d det] at ΔtriangleCard
+    rw [ΛtriangleCard (a + c) (b + d) coprime] at ΔtriangleCard
     have hole: ∃(l: ℕ), l ≤ (a + c + 1) * (b + d + 1) / 2 - 2 ∧ δₖ (a + c) (b + d) l ∉ Δtriangle := by
       by_contra full
       simp only [not_exists, not_and, not_not] at full
@@ -1396,7 +1397,7 @@ nBranching a b c d = nₖ (a + c) (b + d) (((a + c + 1) * (b + d + 1)) / 2 - 1) 
       have subAddCanCancel: (1: ℕ) ≤ ((a + c + 1) * (b + d + 1) - 2) / 2 := by
         exact Nat.one_le_of_lt chain
       rw [Nat.sub_add_cancel subAddCanCancel] at chain
-      simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at chain
+      simp at chain
     obtain ⟨l, lrange, lnotmem⟩ := hole
     obtain lrange := lt_of_le_of_lt lrange k'floor
     obtain lkrel := δₖ_mono (a + c) (b + d) lrange
@@ -1431,7 +1432,7 @@ lemma kceiled_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(nbound: n ≤ nBranching a b c d):
+(nbound: n ≤ nBranching (a + c) (b + d)):
 kceiled s1 t1 n = kceiled s2 t2 n := by
   rw [nBranchingFormula a b c d det] at nbound
   unfold kceiled
@@ -1481,7 +1482,7 @@ lemma kₙ_inert(a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(nbound: n ≤ nBranching a b c d):
+(nbound: n ≤ nBranching (a + c) (b + d)):
 kₙ s1 t1 n = kₙ s2 t2 n := by
   unfold kₙ
   congr 1
@@ -1496,7 +1497,7 @@ theorem wₘᵢₙ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
+(h: n ≥ 2) (nbound: n ≤ nBranching (a + c) (b + d)):
 wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
   obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
   unfold wₘᵢₙ
@@ -1612,7 +1613,7 @@ theorem wₘₐₓ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
+(h: n ≥ 2) (nbound: n ≤ nBranching (a + c) (b + d)):
 wₘₐₓ s1 t1 n = wₘₐₓ s2 t2 n := by
   rw [nBranchingFormula a b c d det] at nbound
   obtain rec1 := eq_sub_of_add_eq' (wₘₘ_rec t1 s1 n h)
@@ -1640,7 +1641,7 @@ theorem wₗᵢ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 (det: a * d = b * c + 1)
 (left1: a * t1 > b * s1) (right1: d * s1 > c * t1)
 (left2: a * t2 > b * s2) (right2: d * s2 > c * t2)
-(_h: n ≥ 2) (nbound: n ≤ nBranching a b c d):
+(_h: n ≥ 2) (nbound: n ≤ nBranching (a + c) (b + d)):
 wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
   obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
   unfold wₗᵢ

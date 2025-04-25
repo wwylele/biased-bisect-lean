@@ -45,7 +45,7 @@ lemma InertSeg.det1.lt {seg: InertSeg} (h: seg.det1):
 /-!
 An inert tuple is actually inert if n is below the branching point.
 -/
-def InertSeg.inert (n: ℕ+) (seg: InertSeg) := n ≤ nBranching seg.a seg.b seg.c seg.d
+def InertSeg.inert (n: ℕ+) (seg: InertSeg) := n ≤ nBranching (seg.a + seg.c) (seg.b + seg.d)
 
 /-!
 Given a list of potentially inert tuple list,
@@ -55,7 +55,7 @@ to hopefully make the entire list actually inert.
 def genSeg (n: ℕ+) (input: List InertSeg): List InertSeg := match input with
 | .nil => .nil
 | .cons head tail =>
-  if nBranching head.a head.b head.c head.d < n then
+  if nBranching (head.a + head.c) (head.b + head.d) < n then
     [⟨head.a, head.b, head.a + head.c, head.b + head.d⟩,
      ⟨head.a + head.c, head.b + head.d, head.c, head.d⟩] ++ genSeg n tail
   else
@@ -148,8 +148,7 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
             or_self, mul_lt_mul_right, not_lt]
           rw [(by ring_nf: (head.a + (head.a + head.c) - 1:ℕ) = head.a + head.c + head.a - 1)]
           apply Nat.le_sub_of_add_le
-          simp only [add_le_add_iff_left]
-          exact NeZero.one_le
+          simpa using NeZero.one_le
         · intro _ _ _
           apply Nat.zero_le
       · constructor
@@ -189,8 +188,7 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
             rw [mul_comm]
             simp only [add_pos_iff, PNat.pos, or_self, mul_le_mul_right]
             apply Nat.le_sub_of_add_le
-            simp only [add_le_add_iff_left]
-            exact NeZero.one_le
+            simpa using NeZero.one_le
           · intro _ _ _
             apply Nat.zero_le
         · apply genSegInert
@@ -469,7 +467,7 @@ lemma wₗᵢAntiOnInterval (N: ℕ+) (n: ℝ) (hn: n ≤ N) (n2: 2 ≤ n):
     simp only [mul_one, gt_iff_lt]
     exact (lt_div_iff₀' (by simp only [Nat.cast_pos, PNat.pos])).mp h
 
-  have hBranching: n ≤ nBranching seg.a seg.b seg.c seg.d := le_trans hn (Nat.cast_le.mpr inert)
+  have hBranching: n ≤ nBranching (seg.a + seg.c) (seg.b + seg.d) := le_trans hn (Nat.cast_le.mpr inert)
   obtain xeqleft|xgtleft := eq_or_lt_of_le xleft
   · obtain yeqleft|ygtleft := eq_or_lt_of_le yleft
     · simp_rw [← xeqleft, ← yeqleft]
