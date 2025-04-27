@@ -132,18 +132,6 @@ theorem Asymptotics.IsEquivalent.comp_tendsto {α : Type u_1} {β : Type u_2} {E
 (f ∘ k) ~[l'] (g ∘ k) :=
   IsLittleO.comp_tendsto hfg hk
 
-theorem Asymptotics.isEquivalent_map {α : Type u_1} {β : Type u_2} {E : Type u_3} [NormedAddCommGroup E]
-{f : α → E} {g : α → E} {k : β → α} {l : Filter β} :
-f ~[Filter.map k l] g ↔ (f ∘ k) ~[l] (g ∘ k) :=
-  isLittleO_map
-
-
-theorem Asymptotics.IsEquivalent.pow {α : Type*} {β : Type*} [NormedField β]
-    {f g : α → β} {l : Filter α} (h : f ~[l] g) (n: ℕ):
-    f ^ n ~[l] g ^ n := by
-  induction n with
-  | zero => simpa using IsEquivalent.refl
-  | succ n ih => simpa [pow_succ] using ih.mul h
 
 lemma PNat_val_tendsto : Tendsto PNat.val atTop atTop := by
   refine tendsto_atTop_atTop.mpr ?_
@@ -165,8 +153,7 @@ lemma divEquivalent (d:ℕ): (fun (n:ℕ) ↦ ((n / d:ℕ):ℝ)) ~[atTop] (fun (
         tendsto_natCast_atTop_atTop.atTop_div_const (by simpa using Nat.zero_lt_of_ne_zero hd)
       apply (tendsto_nat_floor_div_atTop.comp this).congr
       intro n
-      simp only [Function.comp_apply, Pi.div_apply]
-      rw [Nat.floor_div_eq_div]
+      simp [Nat.floor_div_eq_div]
 
 
 lemma nBranchingAsymptotic (t: ℕ+) :
