@@ -485,6 +485,14 @@ lemma ξPolynomialDerivative(s t: ℕ+):
   rw [Polynomial.derivative_monomial, Polynomial.derivative_monomial]
   simp only [one_mul]
 
+lemma ξPolynomialNonzero(s t: ℕ+) : ξPolynomial s t ≠ 0 := by
+  by_contra!
+  have : (ξPolynomial s t).eval 0 = 0 := by
+    rw [this]
+    simp
+  unfold ξPolynomial at this
+  simp at this
+
 
 lemma ξPolynomialFactorizeMulti(s t: ℕ+):
 ξPolynomial s t = Polynomial.C (ξPolynomial s t).leadingCoeff * ((ξPolynomial s t).roots.map (Polynomial.X - Polynomial.C ·)).prod := by
@@ -608,6 +616,18 @@ s * r ^ (s - 1: ℕ) + t * r ^ (t - 1: ℕ) ≠ 0 := by
     · exact whathalf s t s1 t1 lt what
     · exact whathalf t s t1 s1 gt what.symm
 
+lemma ξPolynomialSeparable(s t: ℕ+): (ξPolynomial s t).Separable := by
+  apply (ξPolynomial s t).separable_def.mpr
+  apply (Polynomial.isCoprime_iff_aeval_ne_zero_of_isAlgClosed ℂ ℂ _ _).mpr
+  intro r
+  apply not_or_of_imp
+  rw [ξPolynomialDerivative]
+  simp only [Polynomial.coe_aeval_eq_eval, Polynomial.eval_add, Polynomial.eval_monomial]
+  intro hr
+  apply ξNonMult
+  unfold ξSet
+  simp [hr, ξPolynomialNonzero]
+
 lemma ξPolynomialFactorize(s t: ℕ+):
 ξPolynomial s t = Polynomial.C (ξPolynomial s t).leadingCoeff * Lagrange.nodal (ξSet s t) id := by
   unfold Lagrange.nodal
@@ -622,44 +642,7 @@ lemma ξPolynomialFactorize(s t: ℕ+):
   obtain rmem' := Multiset.mem_dedup.mp rmem
   have root1: Multiset.count r (ξPolynomial s t).roots = 1 := by
     apply le_antisymm
-    · unfold Polynomial.roots
-      have n0: ξPolynomial s t ≠ 0 := by
-        exact Polynomial.ne_zero_of_mem_roots rmem'
-      simp only [n0, ↓reduceDIte, ge_iff_le]
-      obtain ⟨_,multiEq⟩ := Exists.choose_spec (Polynomial.exists_multiset_roots n0)
-      rw [multiEq r]
-      by_contra ge2
-      simp only [not_le] at ge2
-      apply Nat.succ_le_iff.mpr at ge2
-      apply (Polynomial.le_rootMultiplicity_iff n0).mp at ge2
-      simp only [Nat.succ_eq_add_one, Nat.reduceAdd] at ge2
-      obtain ⟨factor, feq⟩ := dvd_iff_exists_eq_mul_left.mp ge2
-      obtain der := ξPolynomialDerivative s t
-      rw [feq] at der
-      simp only [Polynomial.derivative_mul] at der
-      rw [Polynomial.derivative_pow] at der
-      have square: (Polynomial.X - Polynomial.C r) ^ 2 = (Polynomial.X - Polynomial.C r) * (Polynomial.X - Polynomial.C r) := by
-        ring
-      rw [square] at der
-      simp only [Nat.cast_ofNat, Nat.add_one_sub_one, pow_one, Polynomial.derivative_sub,
-        Polynomial.derivative_X, Polynomial.derivative_C, sub_zero, mul_one] at der
-      rw [← mul_assoc, ← mul_assoc, ← add_mul] at der
-      have dvd: Polynomial.X - Polynomial.C r ∣ Polynomial.monomial (s - 1) (s:ℂ) + Polynomial.monomial (t - 1) (t:ℂ) := by
-        exact
-          Dvd.intro_left
-            (Polynomial.derivative factor * (Polynomial.X - Polynomial.C r) +
-              factor * Polynomial.C 2)
-            der
-      obtain req_of_der := Polynomial.eval_dvd dvd (x := r)
-      simp only [Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C, sub_self,
-        Polynomial.eval_add, Polynomial.eval_monomial, GroupWithZero.dvd_iff,
-        forall_const] at req_of_der
-      obtain req_of_pol := Polynomial.isRoot_of_mem_roots rmem'
-      unfold ξPolynomial at req_of_pol
-      simp only [map_one, Polynomial.IsRoot.def, Polynomial.eval_sub, Polynomial.eval_add,
-        Polynomial.eval_monomial, one_mul, Polynomial.eval_one] at req_of_pol
-      obtain noneq := ξNonMult s t r rmem
-      contradiction
+    · exact Polynomial.count_roots_le_one (ξPolynomialSeparable s t) _
     · exact Multiset.one_le_count_iff_mem.mpr rmem'
   rw [root1]
   simp only [pow_one]

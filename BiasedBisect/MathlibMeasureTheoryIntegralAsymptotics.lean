@@ -78,7 +78,7 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     apply le_trans (norm_add_le _ _)
     apply add_le_add_left
     apply le_trans (norm_integral_le_integral_norm _)
-    rw [← integral_mul_left]
+    rw [← integral_const_mul]
     apply integral_mono_ae hfm.norm (hgm.const_mul _)
     apply (ae_restrict_iff' measurableSet_Ioc).mpr
     apply Eventually.of_forall
