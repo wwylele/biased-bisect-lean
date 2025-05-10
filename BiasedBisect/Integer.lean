@@ -1237,7 +1237,7 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
   have dvd: (s:ℤ) ∣ ks := by
     refine IsCoprime.dvd_of_dvd_mul_right ?_ sdvd
     apply Int.isCoprime_iff_nat_coprime.mpr
-    simp only [Int.natAbs_ofNat, PNat.coprime_coe]
+    simp only [Int.natAbs_natCast, PNat.coprime_coe]
     exact coprime
   obtain ⟨factor, feq⟩ := dvd
   rw [feq] at kseq'

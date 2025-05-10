@@ -266,7 +266,7 @@ decreasing_by
       · intro i h
         simpa using Finset.mem_range.mp h
       · intro i _ j _ ij
-        exact Nat.succ_inj'.mp ij
+        exact Nat.succ_inj.mp ij
       · intro i imem
         obtain ⟨ileft, iright⟩ := Finset.mem_Ioo.mp imem
         simp only [Finset.coe_range, Set.mem_image, Set.mem_Iio]
