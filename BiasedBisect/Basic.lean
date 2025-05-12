@@ -333,7 +333,7 @@ its base, as indicated by the ceiled variation, behaves friendly for the order.
 -/
 lemma Δ_WF (s t: ℝ) [PosReal s] [PosReal t]: Set.IsWF (Δ s t) := by
   have Δceiled_has_no_chain (ceil: ℝ):
-    ∀ (f : ℕ → ℝ), StrictAnti f → ¬∀(n: ℕ), f (OrderDual.toDual n) ∈ Δceiled s t ceil := by
+    ∀ (f : ℕ → ℝ), StrictAnti f → ¬∀(n: ℕ), f n ∈ Δceiled s t ceil := by
       apply Set.isWF_iff_no_descending_seq.mp
       apply Δceiled_WF s t ceil
 
@@ -342,15 +342,15 @@ lemma Δ_WF (s t: ℝ) [PosReal s] [PosReal t]: Set.IsWF (Δ s t) := by
 
   rintro assume_Δ_has_chain
   have Δ_chain_is_in_Δceiled:
-    ∀n: ℕ, f (OrderDual.toDual n) ∈ Δceiled s t (f (OrderDual.toDual 0)) := by
+    ∀n: ℕ, f n ∈ Δceiled s t (f 0) := by
       intro n
       rw [Δceiled]
       constructor
       · exact assume_Δ_has_chain n
-      · simp only [toDual_zero, Set.mem_setOf_eq]
+      · simp only [Set.mem_setOf_eq]
         apply fStrictAnti.le_iff_le.mpr
         simp only [zero_le]
-  exact Δceiled_has_no_chain (f (OrderDual.toDual 0)) f fStrictAnti Δ_chain_is_in_Δceiled
+  exact Δceiled_has_no_chain (f 0) f fStrictAnti Δ_chain_is_in_Δceiled
 
 /-!
 Δ always has the smallest element 0
