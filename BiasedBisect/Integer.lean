@@ -240,7 +240,7 @@ theorem Φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): Φ s t δ = 1 := by
     simp only [Set.toFinset_eq_empty]
     unfold Λceiled
     simp only
-    apply Set.eq_empty_iff_forall_not_mem.mpr
+    apply Set.eq_empty_iff_forall_notMem.mpr
     rintro ⟨p, q⟩
     simp only [Set.mem_setOf_eq, not_le]
     apply lt_of_lt_of_le

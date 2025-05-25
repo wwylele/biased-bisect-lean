@@ -118,7 +118,7 @@ lemma φδₖt(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
     convert Finset.sum_empty
     unfold Λceiled
     simp only [Set.toFinset_eq_empty]
-    refine Set.eq_empty_of_forall_not_mem ?_
+    refine Set.eq_empty_of_forall_notMem ?_
     intro pq
     simp only [Set.mem_setOf_eq, not_le]
     apply lt_of_lt_of_le (neg_neg_of_pos PosReal.pos)

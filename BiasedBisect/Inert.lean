@@ -942,7 +942,7 @@ lemma ΛrectangleDisjoint (s t: ℕ+): (Λtriangle s t).toFinset ∩ (Λtriangle
   unfold Λtriangle ΛtriangleUpper
   ext pq
   simp only [gt_iff_lt, Finset.mem_inter, Set.mem_toFinset, Set.mem_setOf_eq, Set.mem_inter_iff,
-    Finset.mem_coe, Finset.not_mem_empty, iff_false, not_and]
+    Finset.mem_coe, Finset.notMem_empty, iff_false, not_and]
   intro mem
   rw [imp_iff_not_or]
   left
@@ -1331,7 +1331,7 @@ nBranching s t = nₖ s t (((s + 1) * (t + 1)) / 2 - 1) := by
       simp only [Set.toFinset_image]
       exact Finset.card_image_le
     by_contra exception
-    obtain ⟨pq, inTriangle, outCeiled⟩ := Set.not_subset_iff_exists_mem_not_mem.mp exception
+    obtain ⟨pq, inTriangle, outCeiled⟩ := Set.not_subset_iff_exists_mem_notMem.mp exception
     unfold Λceiled at outCeiled
     simp only [Set.mem_setOf_eq, not_le] at outCeiled
     have inΔ: (pq.1: ℝ) * s + pq.2 * t ∈ Δ s t := by

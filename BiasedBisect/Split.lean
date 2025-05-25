@@ -649,7 +649,7 @@ lemma wslope (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
   by_cases q0: (pqOfδₖSplit s t ε k K k' kBound εbound k'left k'right).2 = 0
   · have rwJt: (Λline s (t + ε) (δₖ s (t + ε) k' - (t + ε))).toFinset = ∅ := by
       simp only [Set.toFinset_eq_empty]
-      apply Set.eq_empty_of_forall_not_mem
+      apply Set.eq_empty_of_forall_notMem
       intro pq
       by_contra pqmem
       obtain what := memTranslate pq pqmem

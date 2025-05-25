@@ -267,7 +267,7 @@ def ℕceiled (ceil: ℝ) := {p: ℕ | p ≤ ceil}
 instance ℕceiled_finite (ceil: ℝ): Finite (ℕceiled ceil) := by
   by_cases h: ceil < 0
   · have empty: ℕceiled ceil = ∅ := by
-      apply Set.eq_empty_of_forall_not_mem
+      apply Set.eq_empty_of_forall_notMem
       intro s
       unfold ℕceiled
       simp only [Set.mem_setOf_eq, not_le]
@@ -747,7 +747,7 @@ lemma Λline_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
   unfold Λline
   ext pq
   simp only [Set.mem_preimage, Set.mem_empty_iff_false, iff_false]
-  apply Set.not_mem_singleton_iff.mpr
+  apply Set.notMem_singleton_iff.mpr
   apply ne_of_gt
   apply lt_of_lt_of_le neg
   apply add_nonneg
@@ -1994,7 +1994,7 @@ instance kceiled_finite (s t n: ℝ) [PosReal s] [PosReal t]: Finite (kceiled s 
     exact Finite.Set.subset (ℕceiled (Nat.ceil n)) sub
   · simp only [ge_iff_le, not_le] at npos
     have empty: (kceiled s t n) = ∅ := by
-      apply Set.eq_empty_of_forall_not_mem
+      apply Set.eq_empty_of_forall_notMem
       intro x
       unfold kceiled
       simp only [Set.mem_setOf_eq, not_le]
@@ -2110,7 +2110,7 @@ lemma kₙ_not_exist (s t n: ℝ) (np: n < 1) [PosReal s] [PosReal t]: kₙ s t 
   have empty: (kceiled s t n).toFinset = ∅ := by
     unfold kceiled
     simp only [Set.toFinset_eq_empty]
-    apply Set.eq_empty_of_forall_not_mem
+    apply Set.eq_empty_of_forall_notMem
     intro k
     simp only [Set.mem_setOf_eq, not_le]
     apply lt_of_lt_of_le np
