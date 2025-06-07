@@ -15,7 +15,7 @@ structure ΦComputer (s t: ℕ+) where
   buffer : Vector ℕ t
   next_δ : ℕ
   next_pos : Fin t
-  eqΦ : ∀ i: Fin t, buffer.get (next_pos - (Fin.ofNat' t 1) - i) = Φ s t (next_δ - 1 - i)
+  eqΦ : ∀ i: Fin t, buffer.get (next_pos - (Fin.ofNat t 1) - i) = Φ s t (next_δ - 1 - i)
 
 def ΦComputer.init (s t: ℕ+) (hst: s ≤ t): ΦComputer s t := {
   hst
@@ -24,7 +24,7 @@ def ΦComputer.init (s t: ℕ+) (hst: s ≤ t): ΦComputer s t := {
   next_pos := ⟨0, by simp⟩
   eqΦ := by
     intro i
-    simp only [Fin.mk_zero', Fin.ofNat'_eq_cast, Nat.cast_one, zero_sub, CharP.cast_eq_zero,
+    simp only [Fin.mk_zero', Fin.ofNat_eq_cast, Nat.cast_one, zero_sub, CharP.cast_eq_zero,
       Int.reduceNeg]
     have neg: (-1 -i: ℤ) < 0 := by
       simp only [Int.reduceNeg, sub_neg]
@@ -36,8 +36,29 @@ def ΦComputer.init (s t: ℕ+) (hst: s ≤ t): ΦComputer s t := {
 }
 
 theorem Fin.coe_sub_one' {n : ℕ+} {a : ℕ+}:
-    Fin.ofNat' n a - 1 = Fin.ofNat' n (a - 1) := by
-  simp
+    Fin.ofNat n a - 1 = Fin.ofNat n (a - 1) := by
+  rw [Fin.ofNat_sub]
+
+  trans Fin.ofNat n (a - 1 + n)
+  · obtain rfl | hn := eq_or_ne n 1
+    · ext
+      simp
+    · congr 1
+      have : ((1 : Fin n) : ℕ) = 1 := by
+        rw [val_one', Nat.mod_eq]
+        simp only [PNat.pos, true_and, ite_eq_right_iff]
+        intro h
+        exfalso
+        obtain what := lt_of_le_of_ne h (by simpa using hn)
+        simp at what
+      rw [this]
+      rw [← Nat.sub_add_comm (by apply PNat.one_le)]
+      rw [add_comm]
+      rw [Nat.sub_add_comm (by apply PNat.one_le)]
+  · refine eq_of_val_eq ?_
+    rw [ofNat_eq_cast, ofNat_eq_cast, val_natCast, val_natCast]
+    apply Nat.add_mod_right
+
 
 theorem Fin.coe_neg_one' {n : ℕ+}:
     ((-1 : Fin n): ℕ) = n - 1 := by
@@ -59,24 +80,35 @@ structure ΦOutput (s t: ℕ+) where
   Φteq : Φ s t (δ - t) = Φt
 
 def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦOutput s t :=
-  let pos_s := input.next_pos - Fin.ofNat' t s
+  let pos_s := input.next_pos - Fin.ofNat t s
 
   let Φs := input.buffer.get pos_s
   have Φseq: Φs = Φ s t (input.next_δ - s) := by
-    convert input.eqΦ (Fin.ofNat' t s - 1) using 2
+    convert input.eqΦ (Fin.ofNat t s - 1) using 2
     · unfold pos_s
-      simp
-    · rw [Fin.coe_sub_one', Fin.ofNat'_eq_cast, Fin.val_natCast]
+      rw [sub_sub]
+      congr 1
+      rw [add_comm]
+      exact (sub_add_cancel _ _).symm
+    · rw [Fin.coe_sub_one', Fin.ofNat_eq_cast, Fin.val_natCast]
       rw [Nat.mod_eq_of_lt (Nat.sub_one_lt_of_le (by simp) (by norm_cast; exact input.hst))]
       simp
 
   let Φt := input.buffer.get input.next_pos
   have Φteq: Φt = Φ s t (input.next_δ - t) := by
-    convert input.eqΦ (Fin.ofNat' t 0 - 1) using 2
-    · simp
-    · simp only [Fin.ofNat'_eq_cast, Nat.cast_zero, zero_sub]
-      rw [Fin.coe_neg_one']
-      simp
+    convert input.eqΦ (Fin.ofNat t 0 - 1) using 2
+    · rw [sub_sub]
+      convert (sub_zero _).symm
+      rw [add_comm]
+      exact (sub_add_cancel (Fin.ofNat t 0) 1)
+    · rw [sub_sub]
+      congr 1
+      apply eq_add_of_sub_eq'
+      trans ((t - 1 : ℕ) : ℤ)
+      · simp
+      · congr 1
+        rw [← Fin.coe_neg_one']
+        rfl
 
   let Φst := Φs + Φt
   have Φsteq: Φst = Φ s t input.next_δ := by
@@ -97,7 +129,9 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
       simp
     · rw [← Vector.get_eq_getElem]
       convert input.eqΦ (i - 1) using 2
-      · simp
+      · rw [← sub_add]
+        rw [add_sub_right_comm, add_sub_right_comm]
+        rfl
       · have i0: i ≠ 0 := by
           contrapose! new with i0
           rw [i0]

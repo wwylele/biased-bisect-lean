@@ -66,7 +66,7 @@ HasSum (fun pq ↦ Jₚ pq * x ^ pq.1 * y ^ pq.2) (1 - (x + y))⁻¹ := by
       refine mul_le_mul_of_nonneg_right ?_ (by apply norm_nonneg)
       norm_cast
       apply Jₚ_bound
-    refine Summable.of_norm_bounded termBound ?_ raise
+    refine Summable.of_norm_bounded ?_ raise
     apply Summable.mul_norm
     all_goals
     · simp only [norm_pow, norm_mul, RCLike.norm_ofNat, summable_geometric_iff_norm_lt_one,

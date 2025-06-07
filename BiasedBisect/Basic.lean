@@ -279,7 +279,7 @@ instance ℕceiled_finite (ceil: ℝ): Finite (ℕceiled ceil) := by
     apply Set.Finite.subset (Set.finite_le_nat (Nat.floor ceil))
     simp only [Set.setOf_subset_setOf]
     intro s hs
-    exact (Nat.le_floor_iff (le_of_not_lt h)).mpr hs
+    exact (Nat.le_floor_iff (le_of_not_gt h)).mpr hs
 
 def ΛRec (pbound qbound: ℝ) := Set.prod (ℕceiled pbound) (ℕceiled qbound)
 
@@ -3853,7 +3853,7 @@ wₘᵢₙℤ s t n = wₘᵢₙ s t n := by
   by_cases n1: (n: ℝ) < 1
   · rw [kₙ_not_exist s t n n1]
     simp only [Int.cast_zero]
-  · have n1: (n: ℝ) ≥ 1 := by exact le_of_not_lt n1
+  · have n1: (n: ℝ) ≥ 1 := le_of_not_gt n1
     rcases kₙ_exist s t n n1 with ⟨k, keq⟩
     rw [keq]
     simp only [Int.cast_max, Int.cast_natCast, Int.cast_sub, Int.cast_add]
@@ -3864,7 +3864,7 @@ wₘₐₓℤ s t n = wₘₐₓ s t n := by
   by_cases n1: (n: ℝ) < 1
   · rw [kₙ_not_exist s t n n1]
     simp only [Int.cast_zero]
-  · have n1: (n: ℝ) ≥ 1 := by exact le_of_not_lt n1
+  · have n1: (n: ℝ) ≥ 1 := le_of_not_gt n1
     rcases kₙ_exist s t n n1 with ⟨k, keq⟩
     rw [keq]
     simp only [Int.cast_min, Int.cast_natCast, Int.cast_sub, Int.cast_add]

@@ -603,10 +603,10 @@ s * r ^ (s - 1: ℕ) + t * r ^ (t - 1: ℕ) ≠ 0 := by
         gcongr
         · show (D:ℤ) < D + S
           apply (lt_add_iff_pos_right (D:ℤ)).mpr
-          exact Int.ofNat_pos.mpr Spos
+          exact Int.natCast_pos.mpr Spos
         · show (S:ℤ) < D + S
           apply (lt_add_iff_pos_left (S:ℤ)).mpr
-          refine Int.ofNat_pos.mpr ?_
+          refine Int.natCast_pos.mpr ?_
           exact Nat.zero_lt_sub_of_lt h
       contradiction
     have snet': (s:ℕ) ≠ t := by
