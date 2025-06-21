@@ -625,7 +625,7 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
         exact
           Set.IsWF.min_le (Δfloored_WF s1 t1 (δₖ s1 t1 k)) (Δfloored_nonempty s1 t1 (δₖ s1 t1 k))
             inFloor
-      have what := gt_of_ge_of_gt inFloor' preserveLt
+      have what := lt_of_le_of_lt' inFloor' preserveLt
       simp only [gt_iff_lt, lt_self_iff_false] at what
 
 /-!

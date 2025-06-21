@@ -125,14 +125,6 @@ lemma nBranchingBound (s t: ℕ+) :
       exact Int.lt_tdiv_add_one_mul_self _ (by simp)
     · simp
 
-
-theorem Asymptotics.IsEquivalent.comp_tendsto {α : Type u_1} {β : Type u_2} {E : Type u_3}
-[NormedAddCommGroup E]  {f : α → E} {g : α → E} {l : Filter α} (hfg : f ~[l] g) {k : β → α} {l' : Filter β}
-(hk : Filter.Tendsto k l' l) :
-(f ∘ k) ~[l'] (g ∘ k) :=
-  IsLittleO.comp_tendsto hfg hk
-
-
 lemma PNat_val_tendsto : Tendsto PNat.val atTop atTop := by
   refine tendsto_atTop_atTop.mpr ?_
   intro n

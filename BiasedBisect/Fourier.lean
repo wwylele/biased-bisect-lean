@@ -2,7 +2,7 @@ import BiasedBisect.Inv
 import BiasedBisect.Multigeometric
 import Mathlib.Analysis.Fourier.FourierTransform
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
-import Mathlib.Analysis.SpecialFunctions.Integrals
+import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.MeasureTheory.Integral.ExpDecay
 
 
@@ -103,7 +103,7 @@ lemma φRegLe (s t μ σ x: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
 lemma φReg_neg (s t μ σ x: ℝ) (h: x < 0) [PosReal s] [PosReal t] : φReg s t μ σ x = 0 := by
   unfold φReg
   apply mul_eq_zero_of_right
-  simp only [Set.mem_Ici, not_le, h, Set.indicator_of_not_mem, zero_add]
+  simp only [Set.mem_Ici, not_le, h, Set.indicator_of_notMem, zero_add]
   convert tsum_zero with pq
   apply mul_eq_zero_of_right
   unfold smStep
@@ -266,7 +266,7 @@ Integrable (φRegFourierIntegrant s t μ σ f) := by
       rw [← φReg]
       rw [abs_of_nonneg (by apply φRegNonneg)]
       apply φRegBound
-  apply MeasureTheory.IntegrableOn.integrable_of_ae_not_mem_eq_zero integrableOn
+  apply MeasureTheory.IntegrableOn.integrable_of_ae_notMem_eq_zero integrableOn
   simp only [Set.mem_Ioi, not_lt]
   suffices ∀ᵐ (x : ℝ), x ∈ Set.Iic 0 → φRegFourierIntegrant s t μ σ f x = 0 by exact this
   rw [← MeasureTheory.ae_restrict_iff' measurableSet_Iic,
@@ -402,7 +402,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
   rw [mul_min_of_nonneg _ _ (le_of_lt σpos)] at σBound'
   obtain ⟨sBound, tBound⟩ := lt_inf_iff.mp σBound'
   unfold φRegFourierIntegrantRight φRegFourierIntegrantRightSummand
-  simp_rw [← integral_mul_left, ← mul_assoc]
+  simp_rw [← integral_const_mul, ← mul_assoc]
   symm
   apply MeasureTheory.integral_tsum_of_summable_integral_norm
   · rintro ⟨p, q⟩
@@ -417,7 +417,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
         Left.neg_neg_iff]
       exact σpos
     obtain cexpIntegrable' := Integrable.norm cexpIntegrable
-    refine MeasureTheory.IntegrableOn.integrable_of_ae_not_mem_eq_zero (s := (Set.Ioi 0)) ?_ ?_
+    refine MeasureTheory.IntegrableOn.integrable_of_ae_notMem_eq_zero (s := (Set.Ioi 0)) ?_ ?_
     · apply Integrable.mono' cexpIntegrable'
       · apply Continuous.aestronglyMeasurable
         apply Continuous.mul (by fun_prop)
@@ -448,7 +448,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
       conv in (fun x ↦ _) =>
         intro x
         rw [mul_assoc, norm_mul]
-      rw [integral_mul_left]
+      rw [integral_const_mul]
       rw [norm_mul]
       refine mul_le_mul ?_ ?_ (by apply norm_nonneg) ?_
       · norm_cast
@@ -505,7 +505,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
         all_goals
         · apply pow_nonneg
           · norm_num
-    refine Summable.of_norm_bounded _ ?_ normBound
+    refine Summable.of_norm_bounded ?_ normBound
 
     have summandRw: (fun (pq: ℕ × ℕ) ↦ 2 ^ pq.1 * 2 ^ pq.2 * (rexp (-σ * (pq.1 * s + pq.2 * t)) / σ))
      = fun (pq: ℕ × ℕ) ↦ ((2 * rexp (-σ * s)) ^ pq.1 * (2 * rexp (-σ * t)) ^ pq.2) / σ := by

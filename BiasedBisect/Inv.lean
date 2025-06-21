@@ -56,7 +56,7 @@ lemma φ_inv (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
       simp only [add_le_add_iff_left, Nat.cast_le]
       apply Jceiled_mono
       exact δGe
-    apply gt_of_ge_of_gt JceiledLe
+    apply lt_of_le_of_lt' JceiledLe
     have pull_cast: (1: ℝ) + (Jceiled s t (δₖ s t k)) = ((1 + Jceiled s t (δₖ s t k): ℕ): ℝ) := by
       simp only [Nat.cast_add, Nat.cast_one]
     have n_accum: 1 + Jceiled s t (δₖ s t k) = nₖ s t (k + 1) := by

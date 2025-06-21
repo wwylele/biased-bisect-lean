@@ -2,6 +2,7 @@ import BiasedBisect.Basic
 import BiasedBisect.Compute
 import BiasedBisect.Continuous
 import BiasedBisect.CrossSection
+import BiasedBisect.Fourier
 import BiasedBisect.Inert
 import BiasedBisect.Integer
 import BiasedBisect.Inv

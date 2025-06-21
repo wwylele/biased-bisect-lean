@@ -2385,7 +2385,7 @@ dE s t w < δₖ s t k - t := by
   simp only [Set.mem_toFinset, Set.mem_setOf_eq] at leq
   by_cases Leq0: l = 0
   · rw [Leq0, δ₀]
-    have Jceiled_lt: 1 + (Jceiled s t (δₖ s t K - t)) > (1:ℝ) := gt_of_gt_of_ge high low
+    have Jceiled_lt: 1 + (Jceiled s t (δₖ s t K - t)) > (1:ℝ) := lt_of_lt_of_le' high low
     simp only [gt_iff_lt, lt_add_iff_pos_right, Nat.cast_pos] at Jceiled_lt
     have nonneg: (δₖ s t K - t) ≥ 0 := by
       contrapose Jceiled_lt with Jceiled_zero
@@ -2438,7 +2438,7 @@ dE s t w > δₖ s t k - t := by
 
   have tr: nₖ s t (l + 1) > wₖ s t (k + 1)  := by
     rify
-    exact gt_of_gt_of_ge l_greater low
+    exact lt_of_lt_of_le' l_greater low
 
   rw [wₖ_accum, nₖ_accum] at tr
   simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
@@ -3722,7 +3722,7 @@ E s t n < D s t n w := by
   · rintro x ⟨xleft, xright⟩
     simp only [Left.neg_pos_iff]
     apply dD_neg s t n x n2
-    · apply gt_of_gt_of_ge xleft leftBound
+    · apply lt_of_lt_of_le' xleft leftBound
     · exact xright
   · exact rightBound
 
