@@ -24,7 +24,7 @@ def ΦComputer.init (s t: ℕ+) (hst: s ≤ t): ΦComputer s t := {
   next_pos := ⟨0, by simp⟩
   eqΦ := by
     intro i
-    simp only [Fin.mk_zero', Fin.ofNat_eq_cast, Nat.cast_one, zero_sub, CharP.cast_eq_zero,
+    simp only [Fin.mk_zero', Fin.ofNat_eq_cast, zero_sub, CharP.cast_eq_zero,
       Int.reduceNeg]
     have neg: (-1 -i: ℤ) < 0 := by
       simp only [Int.reduceNeg, sub_neg]

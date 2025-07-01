@@ -70,7 +70,7 @@ HasSum (fun pq ↦ Jₚ pq * x ^ pq.1 * y ^ pq.2) (1 - (x + y))⁻¹ := by
     apply Summable.mul_norm
     all_goals
     · simp only [norm_pow, norm_mul, RCLike.norm_ofNat, summable_geometric_iff_norm_lt_one,
-        Real.norm_ofNat, norm_norm]
+        norm_norm]
       apply (lt_inv_mul_iff₀ ?_).mp
       · simp only [mul_one]
         try apply xbound

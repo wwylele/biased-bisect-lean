@@ -626,7 +626,7 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
           Set.IsWF.min_le (Δfloored_WF s1 t1 (δₖ s1 t1 k)) (Δfloored_nonempty s1 t1 (δₖ s1 t1 k))
             inFloor
       have what := lt_of_le_of_lt' inFloor' preserveLt
-      simp only [gt_iff_lt, lt_self_iff_false] at what
+      simp only [lt_self_iff_false] at what
 
 /-!
 Here we have series of little lemma to eventually prove the cardinality of
@@ -663,7 +663,7 @@ pq ∈ ΛtriangleFinset s t ↔ pq ∈ Λtriangle s t := by
     simp only
     have qb: q' * t < s * (t - p') + (t - 1) - (t - 1) := by
       apply (Nat.lt_div_iff_mul_lt ?_).mp q'b
-      simp only [add_pos_iff, PNat.pos, or_self]
+      simp only [PNat.pos]
     have qb2: q' * t < s * (t - p') := by
       convert qb using 1
       symm
@@ -691,7 +691,7 @@ pq ∈ ΛtriangleFinset s t ↔ pq ∈ Λtriangle s t := by
           apply Nat.add_sub_self_right
         rw [h] at mem
         refine (Nat.lt_div_iff_mul_lt ?_).mpr mem
-        simp only [add_pos_iff, PNat.pos, or_self]
+        simp only [PNat.pos]
       · simp only [Prod.mk.eta]
 
 /- We could have just use the finiteness, but having a computable one is useful -/
@@ -760,12 +760,12 @@ lemma ΛtriangleCardEq (s t: ℕ+): (Λtriangle s t).toFinset.card = (Λtriangle
     · zify at pp
       rw [Nat.cast_sub (le_of_lt pb)] at pp
       rw [Nat.cast_sub (le_of_lt p2b)] at pp
-      simp only [Nat.cast_add, sub_right_inj, Nat.cast_inj] at pp
+      simp only [sub_right_inj, Nat.cast_inj] at pp
       exact pp
     · zify at qq
       rw [Nat.cast_sub (le_of_lt qb)] at qq
       rw [Nat.cast_sub (le_of_lt q2b)] at qq
-      simp only [Nat.cast_add, sub_right_inj, Nat.cast_inj] at qq
+      simp only [sub_right_inj, Nat.cast_inj] at qq
       exact qq
   · unfold Set.SurjOn Λtriangle ΛtriangleUpper Λrectangle
     rintro ⟨p, q⟩
@@ -822,10 +822,7 @@ lemma ΛrectangleCutCard (s t: ℕ+): Fintype.card (ΛrectangleCut s t) = (t + 1
         lt_add_iff_pos_right, Nat.lt_one_iff, pos_of_gt, lt_add_iff_pos_left, add_pos_iff, PNat.pos,
         or_self, and_self]
   · unfold Λrectangle
-    simp only [Finset.singleton_subset_iff, Finset.mem_sdiff, Finset.mem_product, Finset.mem_range,
-      lt_add_iff_pos_left, add_pos_iff, PNat.pos, or_self, Nat.lt_one_iff, pos_of_gt,
-      lt_add_iff_pos_right, and_self, Finset.mem_singleton, Prod.mk.injEq,
-      AddLeftCancelMonoid.add_eq_zero, PNat.ne_zero, and_false, not_false_eq_true]
+    simp
 
 lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
 ΛrectangleCut s t = (Λtriangle s t).toFinset ∪ (ΛtriangleUpper s t).toFinset := by
@@ -845,8 +842,7 @@ lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
       by_cases p0: p = 0
       · obtain q0 := qcut p0
         rw [p0] at eq
-        simp only [zero_mul, zero_add, mul_eq_mul_right_iff, AddLeftCancelMonoid.add_eq_zero,
-          PNat.ne_zero, and_self, or_false] at eq
+        simp only [zero_mul, zero_add, mul_eq_mul_right_iff, PNat.ne_zero, or_false] at eq
         rw [eq] at q0
         contradiction
       · by_cases q0: q = 0
@@ -854,8 +850,7 @@ lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
           rw [q0] at eq
           simp only [zero_mul, add_zero] at eq
           rw [mul_comm] at eq
-          simp only [mul_eq_mul_right_iff, AddLeftCancelMonoid.add_eq_zero, PNat.ne_zero, and_self,
-            or_false] at eq
+          simp only [mul_eq_mul_right_iff, PNat.ne_zero, or_false] at eq
           rw [eq] at p0
           contradiction
         · have eq': s * (t - p) = q * t := by
@@ -865,7 +860,7 @@ lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
               exact eq
             · apply (mul_le_mul_left ?_).mpr
               · exact Nat.le_of_lt_succ pbound
-              · simp only [add_pos_iff, PNat.pos, or_self]
+              · simp
           have dvd: (s: ℕ) ∣ q * t := by
             exact Dvd.intro _ eq'
           have dvd_q: (s: ℕ) ∣ q := by
@@ -882,15 +877,13 @@ lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
           | 1 =>
             simp only [mul_one] at keq
             rw [keq] at eq
-            simp only [right_eq_add, mul_eq_zero, AddLeftCancelMonoid.add_eq_zero, PNat.ne_zero,
-              and_self, or_false] at eq
+            simp only [right_eq_add, mul_eq_zero, PNat.ne_zero, or_false] at eq
             rw [eq] at p0
             contradiction
           | k' + 2 =>
             rw [keq] at qbound
             apply Nat.le_of_lt_add_one at qbound
-            simp only [add_pos_iff, PNat.pos, or_self, mul_le_iff_le_one_right,
-              Nat.reduceLeDiff] at qbound
+            simp only [PNat.pos, mul_le_iff_le_one_right, Nat.reduceLeDiff] at qbound
 
     · constructor
       · exact pbound
@@ -1000,7 +993,7 @@ lemma pqOfδₖ_bound (s t: ℕ+) (k: ℕ) (coprime: PNat.Coprime s t)
     simp only [Set.mem_setOf_eq] at mem
     have mem': δₚ s t (p, q) < s * t := by
       unfold δₚ
-      simp only [PNat.add_coe, Nat.cast_add]
+      simp only
       norm_cast
     obtain pqeq := unique_pq s t (p, q) (p2, q2) coprime eq mem'
     exact Prod.mk_inj.mp pqeq
@@ -1493,7 +1486,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
   obtain coprime := abcdCoprime a b c d det
   obtain ⟨abcd1, abcd2⟩ := abcdLeftRight a b c d det
   unfold wₘᵢₙ
-  have n1: n ≥ 1 := by apply ge_trans h; simp only [ge_iff_le, Nat.one_le_ofNat]
+  have n1: n ≥ 1 := by apply ge_trans h; simp
   rcases kₙ_exist s1 t1 n n1 with ⟨k1, k1eq⟩
   rcases kₙ_exist s2 t2 n n1 with ⟨k2, k2eq⟩
   rw [k1eq, k2eq]
@@ -1894,7 +1887,7 @@ theorem wₘᵢₙ_inert_edge (N: ℕ+) (s t n: ℝ)
 wₘᵢₙ s t n = 1 := by
   have hN: N + (2:ℕ) = N + 1 + 1 := by ring
   unfold wₘᵢₙ
-  have n1: n ≥ 1 := by apply ge_trans h; simp only [ge_iff_le, Nat.one_le_ofNat]
+  have n1: n ≥ 1 := by apply ge_trans h; simp
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
   rw [keq]
   simp only
@@ -1989,7 +1982,7 @@ theorem wₘₐₓ_inert_edge (N: ℕ+) (s t n: ℝ)
 wₘₐₓ s t n = 1 := by
   have hN: N + (2:ℕ) = N + 1 + 1 := by ring
   unfold wₘₐₓ
-  have n1: n ≥ 1 := by apply ge_trans h; simp only [ge_iff_le, Nat.one_le_ofNat]
+  have n1: n ≥ 1 := by apply ge_trans h; simp
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
   rw [keq]
   simp only

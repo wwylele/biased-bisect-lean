@@ -154,6 +154,7 @@ theorem Δ_homo(s t l: ℝ) [lpos: PosReal l]: ∀δ, δ ∈ Δ s t ↔ l * δ �
 For each lattice point, we can assign a $δ$. As previously mentioned,
 this is injective only when $s/t$ is irrational.
 -/
+noncomputable
 def δₚ(s t: ℝ) (pq: ℕ × ℕ): ℝ :=
   match pq with
   | (p, q) => p * s + q * t
@@ -221,8 +222,7 @@ lemma Λceiled₀ (s t: ℝ) [PosReal s] [PosReal t]: Λceiled s t 0 = {(0, 0)} 
     rcases zero with ⟨p0, q0⟩
     rw [p0]
     rw [q0]
-    simp only [Prod.mk_zero_zero, Set.mem_setOf_eq, Prod.fst_zero, CharP.cast_eq_zero, zero_mul,
-      Prod.snd_zero, add_zero, le_refl]
+    simp only [CharP.cast_eq_zero, zero_mul, add_zero, le_refl]
 
 /-!
 If the ceiling is negative, `Λceiled` is the empty set.
@@ -988,7 +988,7 @@ Jline s t (δ - s) = ∑⟨p, q⟩ ∈ (Λline s t δ).toFinset, shut p (Jₚ (p
   · unfold Set.InjOn
     simp only [Set.coe_toFinset, Prod.forall, Prod.mk.injEq]
     intro a b abmem c d cdmem ab_eq_cd
-    simp only [Prod.mk.injEq, add_left_inj] at ab_eq_cd
+    simp only [add_left_inj] at ab_eq_cd
     trivial
   · simp only [Set.coe_toFinset]
     unfold Λline Set.MapsTo
@@ -2418,7 +2418,7 @@ lemma w_gt (s t w: ℝ) (k: ℕ) [PosReal s] [PosReal t]
 dE s t w > δₖ s t k - t := by
   have w1: w ≥ 1 := by
     apply ge_trans low
-    simp only [ge_iff_le, Nat.one_le_cast]
+    simp only [Nat.one_le_cast]
     apply wₖ_min s t (k + 1)
     simp only [ge_iff_le, le_add_iff_nonneg_left, zero_le]
   unfold dE
@@ -2562,7 +2562,7 @@ lemma wₘₘ_rec (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 wₘᵢₙ s t n + wₘₐₓ t s n = n := by
   unfold wₘᵢₙ wₘₐₓ
   rw [kₙ_symm t s]
-  have n1: n ≥ 1 := by apply ge_trans n2; simp only [ge_iff_le, Nat.one_le_ofNat]
+  have n1: n ≥ 1 := by apply ge_trans n2; simp only [Nat.one_le_ofNat]
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
   have k1: k ≥ 1 := by
     have mem: 1 ∈ (kceiled s t n).toFinset := by
@@ -2755,7 +2755,7 @@ lemma wₗᵢ_rec (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 wₗᵢ s t n + wₗᵢ t s n = n := by
   have n1: n ≥ 1 := by
     apply ge_trans n2
-    simp only [ge_iff_le, Nat.one_le_ofNat]
+    simp only [Nat.one_le_ofNat]
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
   have k1: k ≥ 1 := by
     have mem: 1 ∈ (kceiled s t n).toFinset := by
@@ -3606,15 +3606,15 @@ The cost equals the strategy evaluation at the optimal strategy `wₗᵢ`
 -/
 lemma E_wₗᵢ (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 E s t n = D s t n (wₗᵢ s t n) := by
-  have rec: n - wₗᵢ s t n = wₗᵢ' s t n := by
+  have r: n - wₗᵢ s t n = wₗᵢ' s t n := by
     nth_rw 1 [← wₗᵢ_rec s t n n2]
     rw [wₗᵢ_symm t s]
     simp only [add_sub_cancel_left]
   unfold D
-  rw [rec]
+  rw [r]
   have n1: n ≥ 1 := by
     apply ge_trans n2
-    simp only [ge_iff_le, Nat.one_le_ofNat]
+    simp only [Nat.one_le_ofNat]
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
   unfold wₗᵢ wₗᵢ'
   rw [keq]
@@ -3786,7 +3786,7 @@ IsOptimalCost (E s t) s t := by
       obtain ew := E_w s t n (wₘᵢₙ s t n) n2 refl (wₘₘ_order s t n)
       unfold D at ew
       exact ew.symm
-  · simp only [Set.mem_image, Set.mem_Icc, ge_iff_le, forall_exists_index, and_imp]
+  · simp only [Set.mem_image, Set.mem_Icc, forall_exists_index, and_imp]
     intro d w low high eq
     have deq: d = D s t n w := by exact id (Eq.symm eq)
     rw [deq]
@@ -3911,7 +3911,7 @@ IsOptimalCostℤ (Eℤ s t) s t := by
       push_cast
       rw [wₘᵢₙℤeq]
       exact ew.symm
-  · simp only [Set.mem_image, Set.mem_Icc, ge_iff_le, forall_exists_index, and_imp]
+  · simp only [Set.mem_image, Set.mem_Icc, forall_exists_index, and_imp]
     intro d w low high eq
     rify at low
     rify at high

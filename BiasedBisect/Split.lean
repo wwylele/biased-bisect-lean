@@ -717,7 +717,7 @@ StrictMonoOn
   obtain ⟨k2left, k2right⟩ := k2mem
   unfold slopeₖ
   rw [wₖ, wₖ, nₖ, nₖ]
-  simp only [Nat.cast_add, add_sub_cancel_left, add_tsub_cancel_right]
+  simp only [Nat.cast_add, add_sub_cancel_left]
   rw [wslope s t ε k K k1 kBound εbound k1left k1right]
   rw [wslope s t ε k K k2 kBound εbound k2left k2right]
   obtain δlt := δₖ_mono s (t + ε) lt

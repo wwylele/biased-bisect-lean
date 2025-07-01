@@ -183,20 +183,20 @@ Jceiled s t (δ - s) = ∑⟨p, q⟩ ∈ (Λceiled s t δ).toFinset, shut p (J�
   · unfold Set.InjOn
     simp only [Set.coe_toFinset, Prod.forall, Prod.mk.injEq]
     intro a b abmem c d cdmem ab_eq_cd
-    simp only [Prod.mk.injEq, add_left_inj] at ab_eq_cd
+    simp only [add_left_inj] at ab_eq_cd
     trivial
   · simp only [Set.coe_toFinset]
     unfold Λceiled Set.MapsTo
     intro ⟨p, q⟩  pqmem
-    simp only [Set.mem_preimage, Set.mem_setOf_eq] at pqmem ⊢
+    simp only [Set.mem_setOf_eq] at pqmem ⊢
     simp only [Nat.cast_add, Nat.cast_one]
     linarith
   · intro ⟨p, q⟩ pqmem pqnmem
     have p0: p = 0 := by
       unfold Λceiled at pqmem
-      simp only [Set.mem_toFinset, Set.mem_preimage, Set.mem_setOf_eq] at pqmem
+      simp only [Set.mem_toFinset, Set.mem_setOf_eq] at pqmem
       unfold Λceiled at pqnmem
-      simp only [Set.coe_toFinset, Set.mem_image, Set.mem_preimage, Prod.exists, not_exists,
+      simp only [Set.coe_toFinset, Set.mem_image, Prod.exists, not_exists,
         not_and] at pqnmem
       contrapose pqnmem
       apply not_forall.mpr

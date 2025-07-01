@@ -1507,7 +1507,7 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
   have Φ0 {d: ℤ}: Φ s t d > (0:ℝ) := by
     norm_cast
     unfold Φ
-    simp only [gt_iff_lt, add_pos_iff, Nat.lt_one_iff, pos_of_gt, true_or]
+    simp
   have ξ0 (n: ℝ): ξ₀ s t ^ (dE_int s t n - 1) > 0 := by apply zpow_pos (ξ₀min s t)
   have ξ0' (n: ℝ): ξ₀ s t ^ (dE_int s t n) > 0 := by apply zpow_pos (ξ₀min s t)
   have ξRes₀0 (n: ℝ): ξ₀ s t ^ dE_int s t n * Res₀ s t > 0 := mul_pos (ξ0' n) (Res₀pos s t)

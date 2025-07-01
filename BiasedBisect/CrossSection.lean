@@ -144,8 +144,8 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
             add_pos_iff, PNat.pos, or_self, mul_lt_mul_right, tsub_lt_self_iff, Nat.lt_one_iff,
             pos_of_gt, and_self]
         · unfold Λtriangle
-          simp only [Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, zero_add, add_pos_iff, PNat.pos,
-            or_self, mul_lt_mul_right, not_lt]
+          simp only [Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, zero_add, PNat.pos,
+            mul_lt_mul_right, not_lt]
           rw [(by ring_nf: (head.a + (head.a + head.c) - 1:ℕ) = head.a + head.c + head.a - 1)]
           apply Nat.le_sub_of_add_le
           simpa using NeZero.one_le
@@ -186,7 +186,7 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
           · unfold Λtriangle
             simp only [Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, add_zero, not_lt]
             rw [mul_comm]
-            simp only [add_pos_iff, PNat.pos, or_self, mul_le_mul_right]
+            simp only [PNat.pos, mul_le_mul_right]
             apply Nat.le_sub_of_add_le
             simpa using NeZero.one_le
           · intro _ _ _
@@ -555,7 +555,7 @@ SetsCover (l1 ++ l2) a c := by
     unfold SetsCover at h1
     obtain ⟨h1Icc, h1le⟩ := h1
     unfold SetsCover
-    simp only [List.cons_append, List.nil_append, l2long]
+    simp only [List.cons_append, List.nil_append]
     use b
   | head::head2::tail =>
     unfold SetsCover at h1
@@ -686,7 +686,7 @@ SetsCover ((genSeg n list).map segToInterval) a b := by match list with
         rw [headdet]
         exact le_of_lt (PNat.lt_add_right (head.b * head.c) 1)
       · unfold SetsCover
-        simp only [longtail]
+        simp only
         use c
         constructor
         · unfold segToInterval
@@ -704,7 +704,7 @@ SetsCover ((genSeg n list).map segToInterval) a b := by match list with
           · exact tailcover'
   · simp only [List.cons_append, List.nil_append, List.map_cons]
     unfold SetsCover
-    simp only [longtail]
+    simp only
     use c
 
 /-!
