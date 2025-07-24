@@ -730,8 +730,8 @@ lemma ΛtriangleCardEq (s t: ℕ+): (Λtriangle s t).toFinset.card = (Λtriangle
   apply Finset.card_nbij (fun ⟨p, q⟩ ↦ ⟨t - p, s - q⟩ )
   · unfold Λtriangle ΛtriangleUpper Λrectangle
     rintro ⟨p, q⟩
-    simp only [Set.mem_toFinset, Set.mem_setOf_eq, gt_iff_lt, Finset.coe_product, Finset.coe_range,
-      Set.mem_inter_iff, Set.mem_prod, Set.mem_Iio]
+    suffices p * s + q * t < s * t →
+      s * t < (t - p) * s + (s - q) * t ∧ t - p < t + 1 ∧ s - q < s + 1 by simpa using this
     intro mem
     constructor
     · obtain ⟨pb, qb⟩ := BoundDecomposite p q mem
@@ -1012,9 +1012,7 @@ lemma pqOfδₖ_bound (s t: ℕ+) (k: ℕ) (coprime: PNat.Coprime s t)
     unfold kTriangle
     apply Finset.card_nbij (δₖ s t)
     · intro k mem
-      simp only [Set.mem_toFinset, Set.mem_preimage] at mem
-      simp only [Set.mem_toFinset]
-      exact mem
+      simpa using mem
     · intro d1 mem1 d2 mem2 eq
       apply (StrictMonoOn.eq_iff_eq (strictMonoOn_univ.mpr (δₖ_mono s t)) ?_ ?_).mp eq
       · simp only [Set.mem_univ]
