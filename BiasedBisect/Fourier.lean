@@ -4,6 +4,7 @@ import Mathlib.Analysis.Fourier.FourierTransform
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.MeasureTheory.Integral.ExpDecay
+import Mathlib.MeasureTheory.Integral.IntegrableOn
 
 
 open Real
@@ -21,7 +22,7 @@ lemma φ_grossBound (s t x: ℝ) (h: x ≥ - max s t) [PosReal s] [PosReal t]:
   rw [← Real.exp_add, ← mul_add]
   apply Real.exp_monotone
   refine mul_le_mul_of_nonneg_right ?_ (neg_le_iff_add_nonneg.mp h)
-  apply (ρf_anti s t).le_iff_le.mp
+  apply (ρf_anti s t).le_iff_ge.mp
   rw [ρ_satisfies]
   unfold ρf
   rw [(by norm_num: (1:ℝ) = 2⁻¹ + 2⁻¹)]
@@ -344,7 +345,7 @@ lemma φReg_Fourier2 (s t μ σ f: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) [
   have leftIntegrable: MeasureTheory.Integrable (φRegFourierIntegrantLeft σ f) := by
     unfold φRegFourierIntegrantLeft
     apply (MeasureTheory.integrable_indicator_iff measurableSet_Ici).mpr
-    apply integrableOn_Ici_iff_integrableOn_Ioi.mpr
+    apply (integrableOn_Ici_iff_integrableOn_Ioi (by simp)).mpr
     apply (MeasureTheory.integrable_norm_iff (by apply Continuous.aestronglyMeasurable; fun_prop)).mp
     have exprw: (fun (x:ℝ) ↦ ‖cexp (-(2 * π * f * I + σ) * x)‖) = fun (x:ℝ) ↦ rexp (-σ * x) := by
       ext x

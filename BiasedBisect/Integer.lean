@@ -1,5 +1,6 @@
 import BiasedBisect.Inv
 import BiasedBisect.Multigeometric
+import Mathlib.Algebra.Group.NatPowAssoc
 import Mathlib.Analysis.Complex.Arg
 import Mathlib.Analysis.Complex.Polynomial.Basic
 import Mathlib.Data.PNat.Prime

@@ -54,7 +54,7 @@ lemma ρ_exist (s t: ℝ) [PosReal s] [PosReal t]:
 
   have cont: ContinuousOn (ρf s t) (Set.Icc 0 ρbound) := by unfold ρf; fun_prop
   have ρ0: 0 < ρbound := by
-    apply (ρf_anti s t).lt_iff_lt.mp
+    apply (ρf_anti s t).lt_iff_gt.mp
     apply lt_trans ρboundspec
     unfold ρf
     simp

@@ -385,7 +385,7 @@ E s t ~[atTop] Eℝ s t := by
     · exact left_eq_inf.mpr hn
     · exact Eq.symm (max_eq_right hn)
   · intro n hn
-    refine integrableOn_Icc_iff_integrableOn_Ioc.mp <| ContinuousOn.integrableOn_Icc ?_
+    refine (integrableOn_Icc_iff_integrableOn_Ioc (by simp)).mp <| ContinuousOn.integrableOn_Icc ?_
     refine ContinuousOn.div_const (ContinuousOn.add ?_ continuousOn_const) _
     exact Real.continuousOn_log.mono (by simp)
   · exact (Real.tendsto_log_atTop.atTop_add tendsto_const_nhds).atTop_div_const (ρ_range s t)
@@ -610,10 +610,10 @@ Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) atTop (nhds (g s t)) := by
         · exact le_of_lt gleftε
       simp only [Set.mem_Ioo]
       constructor
-      · apply (ginv_anti.lt_iff_lt (g_range _ _) rightmem).mp
+      · apply (ginv_anti.lt_iff_gt (g_range _ _) rightmem).mp
         rw [ginv_comp]
         exact r'right
-      · apply (ginv_anti.lt_iff_lt leftmem (g_range _ _)).mp
+      · apply (ginv_anti.lt_iff_gt leftmem (g_range _ _)).mp
         rw [ginv_comp]
         exact r'left
   obtain ⟨dr, drpos, drspec⟩ := g_continuous

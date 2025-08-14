@@ -348,7 +348,7 @@ lemma Δ_WF (s t: ℝ) [PosReal s] [PosReal t]: Set.IsWF (Δ s t) := by
       constructor
       · exact assume_Δ_has_chain n
       · simp only [Set.mem_setOf_eq]
-        apply fStrictAnti.le_iff_le.mpr
+        apply fStrictAnti.le_iff_ge.mpr
         simp only [zero_le]
   exact Δceiled_has_no_chain (f 0) f fStrictAnti Δ_chain_is_in_Δceiled
 
@@ -3213,9 +3213,9 @@ Here is a more useful version with the correction term $s + t$
 lemma dE_integrable' (s t m n: ℝ) [PosReal s] [PosReal t]:
 IntervalIntegrable (fun x ↦ (dE s t x) + s + t) MeasureTheory.volume m n := by
   have ti: IntervalIntegrable (fun x ↦ t) MeasureTheory.volume m n := by
-    apply intervalIntegrable_const
+    apply intervalIntegrable_const (by simp)
   have si: IntervalIntegrable (fun x ↦ s) MeasureTheory.volume m n := by
-    apply intervalIntegrable_const
+    apply intervalIntegrable_const (by simp)
 
   refine IntervalIntegrable.add ?_ ti
   refine IntervalIntegrable.add ?_ si
@@ -3486,7 +3486,7 @@ D s t n w2 - D s t n w1 = ∫ w in w1..w2, dD s t n w := by
   have integ1: IntervalIntegrable (fun w ↦ (dE s t w + s + t) - (dE s t (n - w) + s + t)) MeasureTheory.volume w1 w2 := by
     apply IntervalIntegrable.sub (dE_integrable' s t w1 w2) integ0
   have integ2: IntervalIntegrable (fun w ↦ (t - s)) MeasureTheory.volume w1 w2 := by
-    apply intervalIntegrable_const
+    apply intervalIntegrable_const (by simp)
   rw [intervalIntegral.integral_add integ1 integ2]
   rw [intervalIntegral.integral_sub (dE_integrable' s t w1 w2) integ0]
   rw [intervalIntegral.integral_const]
