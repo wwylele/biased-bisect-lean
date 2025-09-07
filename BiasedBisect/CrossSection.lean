@@ -186,7 +186,7 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
           · unfold Λtriangle
             simp only [Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, add_zero, not_lt]
             rw [mul_comm]
-            simp only [PNat.pos, mul_le_mul_right]
+            simp only [PNat.pos, mul_le_mul_iff_left₀]
             apply Nat.le_sub_of_add_le
             simpa using NeZero.one_le
           · intro _ _ _

@@ -472,7 +472,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
             · simp only [neg_re, ofReal_re, Left.neg_neg_iff]
               exact σpos
           rw [rightrw]
-          gcongr
+          gcongr with x hx
           · refine Integrable.mono' (g := fun x ↦ Real.exp (-σ * x)) (exp_neg_integrableOn_Ioi _ σpos) ?_ ?_
             · apply Continuous.aestronglyMeasurable
               apply Continuous.mul (by fun_prop)
@@ -488,8 +488,8 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
               rw [abs_eq_self.mpr (by apply smStepNonneg)]
               apply smStepLe1
           · exact exp_neg_integrableOn_Ioi _ σpos
-          · intro x
-            simp only [neg_add_rev, mul_re, add_re, neg_re, ofReal_re, re_ofNat, im_ofNat,
+          · exact measurableSet_Ioi
+          · simp only [neg_add_rev, mul_re, add_re, neg_re, ofReal_re, re_ofNat, im_ofNat,
               ofReal_im, mul_zero, sub_zero, mul_im, zero_mul, add_zero, I_re, I_im, mul_one,
               sub_self, neg_zero, neg_mul, add_im, neg_im, zero_add, norm_real, norm_eq_abs]
             apply (mul_le_of_le_one_right (by apply exp_nonneg))
@@ -515,7 +515,6 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
       rw [← rexp_mul_n, ← rexp_mul_n]
       rw [mul_add, Real.exp_add]
       field_simp
-      ring_nf
 
     rw [summandRw]
     apply Summable.div_const
@@ -606,6 +605,7 @@ lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [
     rw [← intervalIntegral.integral_of_le ((le_add_iff_nonneg_right δ).mpr (le_of_lt PosReal.pos))]
     rw [intervalIntegral.integral_deriv_eq_sub' _ (funext fun x => (der x).deriv) (fun x _ => (der x).differentiableAt) (by fun_prop)]
     field_simp [l2μ0]
+    push_cast
     ring
 
 
@@ -713,7 +713,7 @@ lemma φReg_FourierInv (s t μ σ x: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ)
   · apply ContinuousAt.comp continuous_ofReal.continuousAt
     apply φRegContinuousAt
     exact ne_of_gt xBound
--/
+
 
 def rootSet (s t: ℝ): Set ℂ := sorry
 
@@ -724,3 +724,4 @@ def φRegFourierDecompTerm (s t μ: ℝ) (z r: ℂ) :=
 lemma φRegFourierDecomp (s t μ σ f: ℝ):
 φRegFourierResult s t μ σ f = ∑' r: rootSet s t, φRegFourierDecompTerm s t μ (2 * π * f * I + σ) r := by
   sorry
+-/

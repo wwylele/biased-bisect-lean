@@ -196,7 +196,7 @@ lemma Λceiled_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
       all_goals
         apply add_le_add
         all_goals
-          apply (mul_le_mul_right PosReal.pos).mpr
+          apply (mul_le_mul_iff_left₀ PosReal.pos).mpr
           simp only [Nat.cast_le]
           trivial
     · simp only [not_le] at qless
@@ -219,7 +219,7 @@ lemma Λceiled_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
         · apply (mul_lt_mul_right PosReal.pos).mpr
           simp only [Nat.cast_lt]
           trivial
-        · apply (mul_le_mul_right PosReal.pos).mpr
+        · apply (mul_le_mul_iff_left₀ PosReal.pos).mpr
           simp only [Nat.cast_le]
           trivial
     · simp only [ge_iff_le, not_le] at qmore
@@ -392,7 +392,7 @@ lemma Λceiled_inert_t (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
       simp only [not_le]
       rw [sub_eq_add_neg]
       apply add_lt_add_of_le_of_lt
-      · apply (mul_le_mul_right PosReal.pos).mpr
+      · apply (mul_le_mul_iff_left₀ PosReal.pos).mpr
         simp only [Nat.cast_le]; exact pless
       · apply lt_of_lt_of_le (neg_neg_of_pos PosReal.pos)
         apply mul_nonneg
@@ -858,7 +858,7 @@ lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
             apply (Nat.sub_eq_iff_eq_add' ?_).mpr
             · rw [mul_comm _ p]
               exact eq
-            · apply (mul_le_mul_left ?_).mpr
+            · apply (mul_le_mul_iff_right₀ ?_).mpr
               · exact Nat.le_of_lt_succ pbound
               · simp
           have dvd: (s: ℕ) ∣ q * t := by
@@ -1759,11 +1759,11 @@ lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
         rw [q0]; simp only [CharP.cast_eq_zero, zero_mul, add_zero]
         apply (mul_lt_mul_right PosReal.pos).mp at mem
         simp only [Nat.cast_lt] at mem
-        apply (mul_le_mul_right PosReal.pos).mpr
+        apply (mul_le_mul_iff_left₀ PosReal.pos).mpr
         norm_cast
       · have kbound': k + 1 ≤ N := by exact Nat.le_of_lt_succ kbound
         have h: (k + 1) * s ≤ N * s := by
-          apply (mul_le_mul_right PosReal.pos).mpr
+          apply (mul_le_mul_iff_left₀ PosReal.pos).mpr
           norm_cast
         apply le_trans h
         apply le_trans (le_of_lt left)

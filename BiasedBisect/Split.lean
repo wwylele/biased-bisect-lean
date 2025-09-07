@@ -1127,7 +1127,7 @@ wₗᵢ s (t + ε) n ≤ wₗᵢ s t n := by
       simp only
 
       field_simp [deno0, deno1]
-      ring
+      ring!
 
   rw [rightrw]
   apply add_le_add

@@ -1252,19 +1252,18 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
       have : 2 * Real.pi ≤ ξ.arg := by
         rw [← one_mul (2 * Real.pi)]
         rw [← ktwopi]
-        rw [mul_le_mul_right]
-        · exact Int.cast_one_le_of_pos pos
-        · exact Real.two_pi_pos
+        rw [mul_le_mul_iff_left₀ Real.two_pi_pos]
+        exact Int.cast_one_le_of_pos pos
       obtain what := le_trans this (Complex.arg_le_pi ξ)
       nth_rw 2 [← one_mul Real.pi] at what
-      apply (mul_le_mul_right Real.pi_pos).mp at what
+      apply (mul_le_mul_iff_left₀ Real.pi_pos).mp at what
       simp only [Nat.not_ofNat_le_one] at what
     · by_contra neg
       simp only [not_le] at neg
       have : ξ.arg ≤ -(2 * Real.pi) := by
         rw [neg_eq_neg_one_mul]
         rw [← ktwopi]
-        rw [mul_le_mul_right]
+        rw [mul_le_mul_iff_left₀ ]
         · exact Int.cast_le_neg_one_of_neg neg
         · exact Real.two_pi_pos
       obtain what := lt_of_lt_of_le (Complex.neg_pi_lt_arg ξ) this

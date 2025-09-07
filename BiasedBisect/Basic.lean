@@ -198,7 +198,7 @@ lemma Λceiled_homo (s t δ l: ℝ) [PosReal l]:
   simp only [Set.mem_setOf_eq]
   rw [← mul_assoc, ← mul_assoc, mul_comm _ l, mul_comm _ l]
   rw [mul_assoc, mul_assoc, ← mul_add]
-  rw [mul_le_mul_left PosReal.pos]
+  rw [mul_le_mul_iff_right₀ PosReal.pos]
 
 /-!
 As an important example, the subset ceiled by $0$ only includes the point $(0, 0)$
@@ -389,8 +389,7 @@ Obviously, floored sets are also symmetric.
 lemma Δfloored_symm (s t floor: ℝ):
 Δfloored s t floor = Δfloored t s floor := by
   unfold Δfloored
-  congr
-  apply Δ_symm
+  rw [Δ_symm]
 
 /-!
 ... and homogeneous.
@@ -457,8 +456,7 @@ Again the symmetry is passed on to `δnext`.
 lemma δnext_symm (s t floor: ℝ) [PosReal s] [PosReal t]:
 δnext s t floor = δnext t s floor := by
   unfold δnext
-  congr
-  apply Δfloored_symm
+  simp_rw [Δfloored_symm]
 
 /-!
 `δnext` is homogeneous.
