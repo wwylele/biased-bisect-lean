@@ -3986,8 +3986,7 @@ theorem Eℤ_Unique (s t: ℝ) (Efun: ℤ → ℝ) [PosReal s] [PosReal t]
       have meq: m = 1 := by exact Eq.symm (Int.le_antisymm m1 m1')
       rw [meq]
       rw [E1, Eℤ₁]
-    · intro n n1 prev
-      intro m m1 mlenp1
+    · intro n n1 prev m m1 mlenp1
       by_cases mlen: m ≤ n
       · exact prev m m1 mlen
       · have n12: n + 1 ≥ 2 := by exact Int.le_add_of_neg_add_le_right n1

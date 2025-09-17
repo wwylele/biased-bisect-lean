@@ -288,7 +288,7 @@ decreasing_by
       refine (Nat.sub_add_cancel ?_).symm
       exact NeZero.one_le
     rw [this]
-    nth_rw 1 [Finset.range_succ]
+    nth_rw 1 [Finset.range_add_one]
     rw [Finset.sum_insert (by simp)]
     have: Finset.range (t' + 1) = insert 0 (Finset.Ioo 0 (t' + 1)) := by
       simp

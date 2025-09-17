@@ -812,8 +812,8 @@ lemma ΛrectangleCutCard (s t: ℕ+): Fintype.card (ΛrectangleCut s t) = (t + 1
   rw [← Nat.sub_sub]
   unfold ΛrectangleCut
   simp only [Finset.mem_sdiff, Finset.mem_singleton, Fintype.card_coe]
-  rw [Finset.card_sdiff]
-  · rw [Finset.card_sdiff]
+  rw [Finset.card_sdiff_of_subset]
+  · rw [Finset.card_sdiff_of_subset]
     · congr
       rw [← Λrectangle_card]
       exact Eq.symm (Fintype.card_coe (Λrectangle s t))
