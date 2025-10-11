@@ -741,7 +741,7 @@ HasSum (fun i:ℕ ↦ x ^ i * Φ s t i) ((((ξPolynomial s t).eval 1)⁻¹ - ((�
     apply HasSum.sigma totalSum
     intro i
     simp only
-    apply Finset.hasSum
+    exact Finset.hasSum _ _ (SummationFilter.unconditional _)
 
 lemma PartialFractionDecompostion [Field F] [DecidableEq F]
 (x: F) (roots: Finset F) (hasroots: roots.Nonempty) (notroot: x ∉ roots):
@@ -1269,7 +1269,7 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
       obtain what := lt_of_lt_of_le (Complex.neg_pi_lt_arg ξ) this
       apply neg_lt_neg_iff.mp at what
       nth_rw 2 [← one_mul Real.pi] at what
-      apply (mul_lt_mul_right Real.pi_pos).mp at what
+      apply (mul_lt_mul_iff_left₀ Real.pi_pos).mp at what
       simp only [Nat.not_ofNat_lt_one] at what
   rw [factor0] at ktwopi
   simp only [Int.cast_zero, zero_mul] at ktwopi

@@ -125,9 +125,9 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
           intro p q pqmem
           obtain pqmemp := Nat.lt_of_add_right_lt pqmem
           rw [mul_comm] at pqmemp
-          simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_left] at pqmemp
+          simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_iff_right₀] at pqmemp
           obtain pqmemq := Nat.lt_of_le_of_lt (Nat.le_add_left ..) pqmem
-          simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_right] at pqmemq
+          simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_iff_left₀] at pqmemq
 
           rw [(by ring: p * (head.a + (head.a + head.c)) + q * (head.b + (head.b + head.d)) =
             p * (head.a + head.c) + q * (head.b + head.d) + p * head.a + q * head.b)]
@@ -135,17 +135,17 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
             (head.a + head.c) * (head.b + head.d) + (head.b + head.d) * head.a + (head.a + head.c) * head.b + head.a * head.b)]
           refine lt_trans ?_ (lt_add_of_pos_right _ (by apply Nat.pos_of_neZero))
           refine add_lt_add (add_lt_add pqmem ?_) ?_
-          · simp only [PNat.pos, mul_lt_mul_right]
+          · simp only [PNat.pos, mul_lt_mul_iff_left₀]
             exact pqmemp
-          · simp only [PNat.pos, mul_lt_mul_right]
+          · simp only [PNat.pos, mul_lt_mul_iff_left₀]
             exact pqmemq
         · unfold Λtriangle
           simp only [PNat.add_coe, Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, zero_add,
-            add_pos_iff, PNat.pos, or_self, mul_lt_mul_right, tsub_lt_self_iff, Nat.lt_one_iff,
+            add_pos_iff, PNat.pos, or_self, mul_lt_mul_iff_left₀, tsub_lt_self_iff, Nat.lt_one_iff,
             pos_of_gt, and_self]
         · unfold Λtriangle
           simp only [Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, zero_add, PNat.pos,
-            mul_lt_mul_right, not_lt]
+            mul_lt_mul_iff_left₀, not_lt]
           rw [(by ring_nf: (head.a + (head.a + head.c) - 1:ℕ) = head.a + head.c + head.a - 1)]
           apply Nat.le_sub_of_add_le
           simpa using NeZero.one_le
@@ -165,23 +165,23 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
             intro p q pqmem
             obtain pqmemp := Nat.lt_of_add_right_lt pqmem
             rw [mul_comm] at pqmemp
-            simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_left] at pqmemp
+            simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_iff_right₀] at pqmemp
             obtain pqmemq := Nat.lt_of_le_of_lt (Nat.le_add_left ..) pqmem
-            simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_right] at pqmemq
+            simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_iff_left₀] at pqmemq
             rw [(by ring: p * (head.a + head.c + head.c) + q * (head.b + head.d + head.d) =
               p * (head.a + head.c) + q * (head.b + head.d) + p * head.c + q * head.d)]
             rw [(by ring: ((head.a + head.c + head.c) * (head.b + head.d + head.d): ℕ) =
               (head.a + head.c) * (head.b + head.d) + (head.b + head.d) * head.c + (head.a + head.c) * head.d + head.c * head.d)]
             refine lt_trans ?_ (lt_add_of_pos_right _ (by apply Nat.pos_of_neZero))
             refine add_lt_add (add_lt_add pqmem ?_) ?_
-            · simp only [PNat.pos, mul_lt_mul_right]
+            · simp only [PNat.pos, mul_lt_mul_iff_left₀]
               exact pqmemp
-            · simp only [PNat.pos, mul_lt_mul_right]
+            · simp only [PNat.pos, mul_lt_mul_iff_left₀]
               exact pqmemq
           · unfold Λtriangle
             simp only [PNat.add_coe, Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, add_zero]
             rw [mul_comm]
-            simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_left, tsub_lt_self_iff,
+            simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_iff_right₀, tsub_lt_self_iff,
               Nat.lt_one_iff, pos_of_gt, and_self]
           · unfold Λtriangle
             simp only [Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, add_zero, not_lt]
@@ -310,7 +310,7 @@ lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
             simp only [Finset.singleton_product, PNat.add_coe, PNat.val_ofNat, Nat.reduceAdd,
               Set.subset_toFinset, Finset.coe_map, Function.Embedding.coeFn_mk, Finset.coe_range,
               Set.image_subset_iff, Set.preimage_setOf_eq, zero_mul, zero_add, Nat.ofNat_pos,
-              mul_lt_mul_right]
+              mul_lt_mul_iff_left₀]
             intro p pmem
             simp only [Set.mem_Iio] at pmem
             simp only [Set.mem_setOf_eq]
@@ -340,7 +340,7 @@ lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
           simp only [Set.mem_Iio] at pmem
           simp only [Set.mem_setOf_eq]
           rw [(by ring: 2 * (a + (a + 1): ℕ) = (2 * a + 1) * 2)]
-          simp only [Nat.ofNat_pos, mul_lt_mul_right]
+          simp only [Nat.ofNat_pos, mul_lt_mul_iff_left₀]
           exact pmem
 
 /-!

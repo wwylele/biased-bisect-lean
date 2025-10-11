@@ -207,7 +207,7 @@ lemma Λceiled_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
         apply iff_of_false
         all_goals
           simp only [not_le]
-          apply (mul_lt_mul_right PosReal.pos).mpr
+          apply (mul_lt_mul_iff_left₀ PosReal.pos).mpr
           simp only [Nat.cast_lt]
           trivial
   · simp only [not_le] at pless
@@ -216,7 +216,7 @@ lemma Λceiled_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
       all_goals
         simp only [not_le]
         apply add_lt_add_of_lt_of_le
-        · apply (mul_lt_mul_right PosReal.pos).mpr
+        · apply (mul_lt_mul_iff_left₀ PosReal.pos).mpr
           simp only [Nat.cast_lt]
           trivial
         · apply (mul_le_mul_iff_left₀ PosReal.pos).mpr
@@ -1746,7 +1746,7 @@ lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
         use k + 1, 0
         simp only [Nat.cast_add, Nat.cast_one, CharP.cast_eq_zero, zero_mul, add_zero]
       · simp only [gt_iff_lt, Nat.cast_add, Nat.cast_one, Set.mem_setOf_eq]
-        apply (mul_lt_mul_right PosReal.pos).mpr ?_
+        apply (mul_lt_mul_iff_left₀ PosReal.pos).mpr ?_
         · apply lt_add_one
     · unfold Δfloored Δ
       simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, Nat.cast_add, Nat.cast_one,
@@ -1757,7 +1757,7 @@ lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
       by_cases q0: q = 0
       · rw [q0] at mem; simp only [CharP.cast_eq_zero, zero_mul, add_zero] at mem
         rw [q0]; simp only [CharP.cast_eq_zero, zero_mul, add_zero]
-        apply (mul_lt_mul_right PosReal.pos).mp at mem
+        apply (mul_lt_mul_iff_left₀ PosReal.pos).mp at mem
         simp only [Nat.cast_lt] at mem
         apply (mul_le_mul_iff_left₀ PosReal.pos).mpr
         norm_cast

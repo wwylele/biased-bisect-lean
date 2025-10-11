@@ -28,7 +28,7 @@ def ΛDecomp: ((j:ℕ) × Finset.range (j + 1)) ≃ (ℕ × ℕ) where
     unfold Function.RightInverse Function.LeftInverse
     simp only [add_tsub_cancel_left, Prod.mk.eta, implies_true]
 
-lemma bigeometric_series [RCLike K] (x y: K) (xbound: ‖x‖ < 2⁻¹) (ybound: ‖y‖ < 2⁻¹):
+lemma bigeometric_series {K : Type*} [RCLike K] (x y: K) (xbound: ‖x‖ < 2⁻¹) (ybound: ‖y‖ < 2⁻¹):
 HasSum (fun pq ↦ Jₚ pq * x ^ pq.1 * y ^ pq.2) (1 - (x + y))⁻¹ := by
   apply (Equiv.hasSum_iff ΛDecomp).mp
   unfold ΛDecomp Function.comp
@@ -47,7 +47,7 @@ HasSum (fun pq ↦ Jₚ pq * x ^ pq.1 * y ^ pq.2) (1 - (x + y))⁻¹ := by
       rw [(by zify [cbound]; ring: c + (j - c) = j)]
       ring
     apply HasSum.congr_fun ?_ left
-    apply Finset.hasSum
+    exact Finset.hasSum _ _ (SummationFilter.unconditional _)
 
   refine HasSum.sigma_of_hasSum ?_ binom ?_
   · apply hasSum_geometric_of_norm_lt_one

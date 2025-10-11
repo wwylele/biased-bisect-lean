@@ -403,11 +403,11 @@ lemma Δfloored_homo (s t floor l: ℝ) [PosReal l]:
   · rintro ⟨dgrid, dfloor⟩
     constructor
     · exact (Δ_homo s t l d).mp dgrid
-    · exact (mul_lt_mul_left PosReal.pos).mpr dfloor
+    · exact (mul_lt_mul_iff_right₀ PosReal.pos).mpr dfloor
   · rintro ⟨dgrid, dfloor⟩
     constructor
     · exact (Δ_homo s t l d).mpr dgrid
-    · exact (mul_lt_mul_left PosReal.pos).mp dfloor
+    · exact (mul_lt_mul_iff_right₀ PosReal.pos).mp dfloor
 
 
 /-!
@@ -2716,12 +2716,10 @@ wₘᵢₙ s t n ≤ wₗᵢ s t n ∧ wₗᵢ s t n ≤ wₘₐₓ s t n := by
     · constructor
       all_goals
       · field_simp [deno0]
-        refine (le_div_iff₀ denogt).mpr ?_
         linarith
     · constructor
       all_goals
       · field_simp [deno0]
-        refine (div_le_iff₀ denogt).mpr ?_
         linarith
   · simp only [ge_iff_le, not_le] at n1
     rcases kₙ_not_exist s t n n1 with knone
