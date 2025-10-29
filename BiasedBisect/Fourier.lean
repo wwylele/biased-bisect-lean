@@ -488,7 +488,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
               rw [abs_eq_self.mpr (by apply smStepNonneg)]
               apply smStepLe1
           · exact exp_neg_integrableOn_Ioi _ σpos
-          · exact measurableSet_Ioi
+          · exact measurableSet_Ioi.nullMeasurableSet
           · simp only [neg_add_rev, mul_re, add_re, neg_re, ofReal_re, re_ofNat, im_ofNat,
               ofReal_im, mul_zero, sub_zero, mul_im, zero_mul, add_zero, I_re, I_im, mul_one,
               sub_self, neg_zero, neg_mul, add_im, neg_im, zero_add, norm_real, norm_eq_abs]

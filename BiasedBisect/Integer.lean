@@ -1604,8 +1604,8 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
     Filter.Tendsto (fun n ↦ (Real.log (Φ s t (dE_int s t n) * ((ξ₀ s t)^(dE_int s t n) * Res₀ s t)))  * (Real.log n)⁻¹) Filter.atTop (nhds 0) := by
     rw [(by norm_num: (0:ℝ) = 0 * 0)]
     apply Filter.Tendsto.mul
-    rw [(by rfl: (fun n ↦ Real.log (↑(Φ s t (dE_int s t n)) * (ξ₀ s t ^ (dE_int s t n) * Res₀ s t))) = Real.log ∘ (fun d ↦ ↑(Φ s t d) * (ξ₀ s t ^ d * Res₀ s t)) ∘ (fun n ↦ dE_int s t n))]
-    · apply Filter.Tendsto.comp log1
+    · rw [(by rfl: (fun n ↦ Real.log (↑(Φ s t (dE_int s t n)) * (ξ₀ s t ^ (dE_int s t n) * Res₀ s t))) = Real.log ∘ (fun d ↦ ↑(Φ s t d) * (ξ₀ s t ^ d * Res₀ s t)) ∘ (fun n ↦ dE_int s t n))]
+      apply Filter.Tendsto.comp log1
       apply Filter.Tendsto.comp
       · apply ΦAsymptoticℝ' s t coprime
       · exact dElim

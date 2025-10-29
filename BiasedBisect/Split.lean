@@ -846,7 +846,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
         · rw [add_right_comm]
           apply Nat.succ_le.mpr
           exact Nat.add_lt_of_lt_sub' amem
-    have one: ∀x ∈ set, ∀ y ∈ set, g x = g y → x = y := by
+    have one: Set.InjOn g set := by
       intro x xmem y ymem eq
       unfold g at eq
       exact Nat.add_left_cancel eq
@@ -939,7 +939,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
         · rw [add_right_comm]
           apply Nat.succ_le.mpr
           exact Nat.add_lt_of_lt_sub' amem
-    have one: ∀x ∈ set, ∀ y ∈ set, g x = g y → x = y := by
+    have one: Set.InjOn g set := by
       intro x xmem y ymem eq
       unfold g at eq
       exact Nat.add_left_cancel eq

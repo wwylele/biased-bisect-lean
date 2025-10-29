@@ -302,7 +302,8 @@ decreasing_by
       · intro i _ j _ ij
         exact Nat.succ_inj.mp ij
       · intro i imem
-        obtain ⟨ileft, iright⟩ := Finset.mem_Ioo.mp imem
+        simp only [Finset.coe_Ioo, Set.mem_Ioo] at imem
+        obtain ⟨ileft, iright⟩ := imem
         simp only [Finset.coe_range, Set.mem_image, Set.mem_Iio]
         use i - 1
         constructor
