@@ -844,7 +844,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
           apply Nat.lt_succ_iff.mpr
           exact Nat.le_add_right (kSplitMax s t ε k) a
         · rw [add_right_comm]
-          apply Nat.succ_le.mpr
+          apply Nat.succ_le_iff.mpr
           exact Nat.add_lt_of_lt_sub' amem
     have one: Set.InjOn g set := by
       intro x xmem y ymem eq
@@ -937,7 +937,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
           apply Nat.lt_succ_iff.mpr
           exact Nat.le_add_right k' a
         · rw [add_right_comm]
-          apply Nat.succ_le.mpr
+          apply Nat.succ_le_iff.mpr
           exact Nat.add_lt_of_lt_sub' amem
     have one: Set.InjOn g set := by
       intro x xmem y ymem eq

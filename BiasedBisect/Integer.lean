@@ -157,7 +157,7 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
         simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
       · simp only [Set.disjoint_singleton_left]
         contrapose lt with isOnΛ
-        simp only [not_lt]; simp only [not_not] at isOnΛ
+        simp only [not_lt]
         unfold δnext
         apply le_of_not_gt
         apply Set.IsWF.not_lt_min
@@ -404,7 +404,7 @@ lemma Φjump (s t: ℕ+) (δ: ℤ) (k: ℕ) (h: Φ s t δ = nₖ s t k) (hlt: Φ
   · let k' := k - 1
     have krw: k = k' + 1 := (Nat.succ_pred_eq_of_ne_zero k0).symm
     rw [krw] at h ⊢
-    simp only [Nat.add_eq_zero, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right,
+    simp only [Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right,
       Nat.add_right_inj, Int.cast_add, Int.cast_one, and_self] at h ⊢
     obtain hmono' := Jceiled_mono' _ _ _ _ h
     congr 1
@@ -887,7 +887,6 @@ lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
     exact fun a ↦ h (congrArg norm a)
   have xnotone: x ≠ 1 := by
     contrapose bound with one
-    simp only [ne_eq, Decidable.not_not] at one
     rw [one]
     norm_num
   have onenotroot: 1 ∉ ξSet s t := by
@@ -1180,10 +1179,9 @@ lemma ξ₀Smallest (s t: ℕ+) (coprime: s.Coprime t):
     · simp only [Set.mem_Ici, norm_nonneg]
   apply lt_of_le_of_ne normleFromMono
   contrapose ne with eq
-  simp only [ne_eq, Decidable.not_not];
   unfold ξ₀ ξPolynomialℝ at eq
   simp only [gt_iff_lt, map_one, Polynomial.eval_sub, Polynomial.eval_add, Polynomial.eval_monomial,
-    one_mul, Polynomial.eval_one, and_imp, ne_eq, Decidable.not_not] at eq
+    one_mul, Polynomial.eval_one, and_imp] at eq
   rw [eq] at ξ₀eq
   simp only [norm_one] at memnorm
   rw [← memnorm] at ξ₀eq
@@ -1393,8 +1391,6 @@ Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * Res₀ s t)) F
       · show (s * (ξ₀ s t: ℂ) ^ (s:ℕ) + t * (ξ₀ s t: ℂ) ^ (t:ℕ)) ≠ 0
         obtain noneq := ξNonMult s t (ξ₀ s t:ℂ) mem
         contrapose noneq with eq0
-        simp only [ne_eq, Decidable.not_not] at eq0;
-        simp only [ne_eq, Decidable.not_not]
         have h: s * (ξ₀ s t:ℂ) ^ (s:ℕ) + t * (ξ₀ s t) ^ (t:ℕ) =
           (s * (ξ₀ s t) ^ (s - 1:ℕ) + t * (ξ₀ s t) ^ (t - 1:ℕ)) * (ξ₀ s t) := by
           rw [add_mul]

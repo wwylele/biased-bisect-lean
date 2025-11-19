@@ -229,7 +229,7 @@ lemma φReg_Fourier1 (s t μ σ f: ℝ):
 𝓕 (fun x ↦ (φReg s t μ σ x:ℂ)) f =
 ∫ (x:ℝ), φRegFourierIntegrant s t μ σ f x := by
   unfold φReg φRegFourierIntegrant
-  rw [fourierIntegral_eq']
+  rw [fourier_eq']
   congr
   ext x
   congr 1

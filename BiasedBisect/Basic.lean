@@ -1319,7 +1319,7 @@ Jceiled s t δ + Jline s t (δnext s t δ) = Jceiled s t (δnext s t δ) := by
     unfold δₚ at pqLine
     simp only at pqLine
     contrapose peCeiled with pqEq
-    simp only [ne_eq, Prod.mk.injEq, not_and, Classical.not_imp, Decidable.not_not] at pqEq
+    simp only [Prod.mk.injEq] at pqEq
     rcases pqEq with ⟨pEq, qEq⟩
     rw [pEq, qEq, pqLine]
     simp only [not_le]
@@ -1642,7 +1642,6 @@ wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
             · simp only [Set.disjoint_singleton_left]
               contrapose lt with isOnΛ
               simp only [not_lt]
-              simp only [not_not] at isOnΛ
               unfold δnext
               apply le_of_not_gt
               apply Set.IsWF.not_lt_min

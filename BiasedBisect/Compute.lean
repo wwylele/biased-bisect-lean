@@ -256,7 +256,7 @@ def ΦComputer'.next_after {s t: ℕ+} (input: ΦComputer' s t) (δ: ℤ) (Φδ:
         simp at what'
       · unfold Φ Jceiled_int at Φk1
         rw [nₖ_accum] at Φk1
-        simp only [Int.cast_add, Int.cast_one, Nat.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+        simp only [Int.cast_add, Int.cast_one, Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceIte,
           add_tsub_cancel_right, Nat.add_right_inj] at Φk1
         rify
         rw [δₖ_int_agree]
@@ -271,7 +271,7 @@ def ΦComputer'.next_after {s t: ℕ+} (input: ΦComputer' s t) (δ: ℤ) (Φδ:
 termination_by t * Φδ + 1 - ∑ i ∈ Finset.range t, Φ s t (input.next.2.δ - i)
 decreasing_by
   apply Nat.sub_lt_sub_left
-  · apply Nat.lt_succ.mpr
+  · apply Nat.lt_succ_iff.mpr
     have: (t * Φδ: ℕ) = ∑ _ ∈ Finset.range t, Φδ := by simp
     rw [this]
     apply Finset.sum_le_sum
@@ -316,7 +316,7 @@ decreasing_by
     unfold t'
     simp only [PNat.pos, Nat.cast_pred, CharP.cast_eq_zero, sub_zero]
     rw [← sub_add, ← add_sub_right_comm]
-    rw [Φ_rec s t (input.next.2.δ + 1: ℕ) (Int.ofNat_zero_le _)]
+    rw [Φ_rec s t (input.next.2.δ + 1: ℕ) (Int.natCast_nonneg _)]
     exact (lt_add_iff_pos_left _).mpr (Φ_pos _ _ _)
 
 structure nwComputer (s t: ℕ+) where

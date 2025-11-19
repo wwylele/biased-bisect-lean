@@ -52,12 +52,12 @@ lemma unique_pq (s t: ℕ+) (pq pq': ℕ × ℕ)
     linarith
   have qbound: q * T < S * T := by
     refine lt_of_le_of_lt (le_add_of_nonneg_left ?_) bound
-    exact mul_nonneg (Int.ofNat_zero_le pq.1) (Int.ofNat_zero_le s)
+    exact mul_nonneg (Int.natCast_nonneg pq.1) (Int.natCast_nonneg s)
   have qbound': q' * T < S * T := by
     refine lt_of_le_of_lt (le_add_of_nonneg_left ?_) bound'
-    exact mul_nonneg (Int.ofNat_zero_le pq'.1) (Int.ofNat_zero_le s)
-  have qboundred: q < S := lt_of_mul_lt_mul_right qbound (Int.ofNat_zero_le t)
-  have qboundred': q' < S := lt_of_mul_lt_mul_right qbound' (Int.ofNat_zero_le t)
+    exact mul_nonneg (Int.natCast_nonneg pq'.1) (Int.natCast_nonneg s)
+  have qboundred: q < S := lt_of_mul_lt_mul_right qbound (Int.natCast_nonneg t)
+  have qboundred': q' < S := lt_of_mul_lt_mul_right qbound' (Int.natCast_nonneg t)
   have cop: IsCoprime S T := Nat.isCoprime_iff_coprime.mpr (PNat.coprime_coe.mpr coprime)
   have qfactor: S ∣ (q' - q) * T := Dvd.intro_left (p - p') eq
   have qfactor2: S ∣ (q' - q) := IsCoprime.dvd_of_dvd_mul_right cop qfactor
@@ -67,13 +67,13 @@ lemma unique_pq (s t: ℕ+) (pq pq': ℕ × ℕ)
   have kup: k * S < S := by linarith
   have kup': k < 1 := by
     nth_rw 2 [← one_mul S] at kup
-    exact lt_of_mul_lt_mul_right kup (Int.ofNat_zero_le s)
+    exact lt_of_mul_lt_mul_right kup (Int.natCast_nonneg s)
   have qeq: q = q' - k * S := eq_sub_of_add_eq' (Eq.symm q'eq)
   rw [qeq] at qboundred
   have kdown: k * S > -S := by linarith
   have kdown': k > -1 := by
     rw [← neg_one_mul] at kdown
-    exact lt_of_mul_lt_mul_right kdown (Int.ofNat_zero_le s)
+    exact lt_of_mul_lt_mul_right kdown (Int.natCast_nonneg s)
   have k0: k = 0 := le_antisymm (Int.lt_add_one_iff.mp kup') kdown'
   rw [k0] at qeq
   simp only [zero_mul, sub_zero] at qeq
