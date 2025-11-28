@@ -496,8 +496,8 @@ lemma ξPolynomialNonzero(s t: ℕ+) : ξPolynomial s t ≠ 0 := by
 
 
 lemma ξPolynomialFactorizeMulti(s t: ℕ+):
-ξPolynomial s t = Polynomial.C (ξPolynomial s t).leadingCoeff * ((ξPolynomial s t).roots.map (Polynomial.X - Polynomial.C ·)).prod := by
-  exact Polynomial.eq_prod_roots_of_splits_id (Complex.isAlgClosed.splits (ξPolynomial s t))
+ξPolynomial s t = Polynomial.C (ξPolynomial s t).leadingCoeff * ((ξPolynomial s t).roots.map (Polynomial.X - Polynomial.C ·)).prod :=
+  (Complex.isAlgClosed.splits (ξPolynomial s t)).eq_prod_roots
 
 /-!
 Φ will be expanded in terms of `ξSet`, the roots of `ξPolynomial`.

@@ -75,7 +75,7 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     rw [setIntegral_union (Set.Iic_disjoint_Ioc (le_refl _))
       measurableSet_Ioc (hf m) hfm]
     apply le_trans (norm_add_le _ _)
-    apply add_le_add_left
+    apply add_le_add_right
     apply le_trans (norm_integral_le_integral_norm _)
     rw [← integral_const_mul]
     apply integral_mono_ae hfm.norm (hgm.const_mul _)

@@ -312,7 +312,7 @@ decreasing_by
       · intro i _
         simp
     rw [this]
-    apply add_lt_add_right
+    apply add_lt_add_left
     unfold t'
     simp only [PNat.pos, Nat.cast_pred, CharP.cast_eq_zero, sub_zero]
     rw [← sub_add, ← add_sub_right_comm]

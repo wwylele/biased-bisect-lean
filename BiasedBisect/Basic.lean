@@ -2949,7 +2949,7 @@ Monotone (wₗᵢ s t) := by
             = nₖ s t (km + 1) * wₖ s t km - nₖ s t km * wₖ s t (km + 1) + m * (wₖ s t (km + 1) - wₖ s t km))]
           rw [(by ring: (wₖ s t (km + 1) * (nₖ s t (km + 1) - nₖ s t km): ℝ) =
             nₖ s t (km + 1) * wₖ s t km - nₖ s t km * wₖ s t (km + 1) + nₖ s t (km + 1) * (wₖ s t (km + 1) - wₖ s t km))]
-          apply add_le_add_left
+          apply add_le_add_right
           exact mul_le_mul_of_nonneg_right (le_of_lt mright) mw
         · trans (wₖ s t kn: ℝ)
           · norm_cast
@@ -2962,7 +2962,7 @@ Monotone (wₗᵢ s t) := by
               nₖ s t (kn + 1) * wₖ s t kn - nₖ s t kn * wₖ s t (kn + 1) + nₖ s t kn * (wₖ s t (kn + 1) - wₖ s t kn))]
             rw [(by ring: (nₖ s t (kn + 1) - nₖ s t kn - (n - nₖ s t kn)) * wₖ s t kn + (n - nₖ s t kn) * wₖ s t (kn + 1) =
               nₖ s t (kn + 1) * wₖ s t kn - nₖ s t kn * wₖ s t (kn + 1) + n * (wₖ s t (kn + 1) - wₖ s t kn))]
-            apply add_le_add_left
+            apply add_le_add_right
             exact mul_le_mul_of_nonneg_right nleft nw
       · rw [kmeqkn]
         rw [one_sub_div (ne_of_gt ndeno), one_sub_div (ne_of_gt ndeno)]

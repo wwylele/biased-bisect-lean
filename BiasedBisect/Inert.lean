@@ -91,10 +91,10 @@ lemma slopeBound (a b c d s t: ℕ+) (det: a * d = b * c + 1) (left: c * t < d *
 t ≥ b + d := by
   have left': c * t + 1 ≤ d * s := left
   have left'': (c * t + 1) * b ≤ d * s * b := (mul_le_mul_iff_right b).mpr left'
-  have left''': (c * t + 1) * b + d ≤ d * s * b + d := add_le_add_right left'' d
+  have left''': (c * t + 1) * b + d ≤ d * s * b + d := add_le_add_left left'' d
   rw [(by ring: d * s * b + d = d * (b * s + 1))] at left'''
   have right': b * s + 1 ≤ a * t := right
-  have right'': d * (b * s + 1) ≤ d * (a * t) :=  mul_le_mul_left' right' d
+  have right'': d * (b * s + 1) ≤ d * (a * t) :=  mul_le_mul_right right' d
   have all: (c * t + 1) * b + d ≤ d * (a * t) := le_trans left''' right''
   rw [(by ring: d * (a * t) = a * d * t)] at all
   rw [det] at all
@@ -2006,7 +2006,7 @@ wₘₐₓ s t n = 1 := by
     simp only [Nat.cast_one, Nat.cast_add, inf_eq_left, ge_iff_le]
     show 1 ≤ 1 + n - (k + 1)
     apply le_sub_right_of_add_le
-    apply add_le_add_left
+    apply add_le_add_right
     by_contra ntoosmall
     simp only [not_le] at ntoosmall
     have notmem: k ∉ (kceiled s t n).toFinset := by
