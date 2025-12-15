@@ -65,7 +65,7 @@ theorem Fin.coe_neg_one' {n : ℕ+}:
   obtain n1|n1 := eq_or_lt_of_le (PNat.one_le n)
   · rw [← n1]
     simp
-  · rw [Fin.coe_neg, val_one']
+  · rw [Fin.val_neg', val_one']
     nth_rw 2 [Nat.mod_eq_of_lt (by simpa using n1)]
     rw [Nat.mod_eq_of_lt (by simp)]
 
