@@ -1535,8 +1535,7 @@ lemma nₖ_mono (s t: ℝ) [PosReal s] [PosReal t]: StrictMono (nₖ s t) := by
   have v2 (k l: ℕ) (kl: k < l): nₖ s t k < nₖ s t l := by
     let a := l - k - 1
     have lrw: l = a + 1 + k := by
-      apply Nat.succ_le_of_lt at kl
-      norm_num at kl
+      rw [← Nat.add_one_le_iff] at kl
       apply (Nat.sub_eq_iff_eq_add (le_of_add_le_left kl)).mp
       exact (Nat.sub_eq_iff_eq_add (Nat.le_sub_of_add_le' kl)).mp rfl
     rw [lrw]
