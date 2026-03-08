@@ -2,7 +2,7 @@ name = "BiasedBisect"
 defaultTargets = ["BiasedBisect"]
 
 [leanOptions]
-pp.unicode.fun = true                        # pretty-prints `fun a ↦ b`
+pp.unicode.fun = true             # pretty-prints `fun a ↦ b`
 linter.flexible = true
 linter.hashCommand = true
 linter.oldObtain = true
@@ -18,15 +18,14 @@ linter.style.multiGoal = true
 linter.style.openClassical = true
 linter.style.refine = true
 linter.style.setOption = true
-backward.isDefEq.respectTransparency = false
-
-[[require]]
-name = "mathlib"
-git = "https://github.com/leanprover-community/mathlib4.git"
 
 [[require]]
 scope = "leanprover"
 name = "doc-gen4"
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
 
 [[lean_lib]]
 name = "BiasedBisect"

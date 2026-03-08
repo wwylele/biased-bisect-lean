@@ -225,6 +225,7 @@ noncomputable
 def φRegFourierIntegrant (s t μ σ f x: ℝ): ℂ :=
   cexp ((-2 * π * f * x: ℝ) * I) * (rexp (- σ * x) * (Set.indicator (Set.Ici 0) (fun _ ↦ 1) x + ∑' pq, Jₚ pq * (smStep μ (x - (pq.1 * s + pq.2 * t)))): ℝ)
 
+set_option backward.isDefEq.respectTransparency false in
 lemma φReg_Fourier1 (s t μ σ f: ℝ):
 𝓕 (fun x ↦ (φReg s t μ σ x:ℂ)) f =
 ∫ (x:ℝ), φRegFourierIntegrant s t μ σ f x := by
@@ -389,6 +390,7 @@ noncomputable
 def φRegFourierIntegrantRightSummand (δ μ: ℝ) (l: ℂ) :=
   ∫ (x:ℝ), cexp (l * x) * (smStep μ (x - δ))
 
+set_option backward.isDefEq.respectTransparency false in
 lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) [PosReal s] [PosReal t] [PosReal μ]:
 ∫ (x:ℝ), φRegFourierIntegrantRight s t μ σ f x = ∑' pq, Jₚ pq * φRegFourierIntegrantRightSummand (pq.1 * s + pq.2 * t) μ (-(2 * π * f * I + σ)) := by
   have σpos: 0 < σ:= by
@@ -466,7 +468,6 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
             apply Complex.ofReal_inj.mp
             convert integral_exp_mul_complex_Ioi (a := -σ) ?_ (pq.1 * s + pq.2 * t)
             · norm_cast
-              exact Eq.symm integral_complex_ofReal
             · norm_cast
               simp only [neg_mul, neg_div_neg_eq]
             · simp only [neg_re, ofReal_re, Left.neg_neg_iff]
@@ -546,6 +547,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
       · norm_num
       · apply exp_nonneg
 
+set_option backward.isDefEq.respectTransparency false in
 lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [PosReal μ]:
 φRegFourierIntegrantRightSummand δ μ l = cexp (l * δ) * (1 - cexp (l * μ)) / (l ^ 2 * μ) := by
   rw [mul_sub, ← Complex.exp_add, ← mul_add]

@@ -1261,6 +1261,7 @@ more useful for theorem proving.
 -/
 def nBranching (s t: ℕ+) := 1 + ∑pq ∈ (Λtriangle s t).toFinset, Jₚ pq
 
+set_option backward.isDefEq.respectTransparency false in
 theorem nBranchingFormula (s t: ℕ+) (coprime: PNat.Coprime s t):
 nBranching s t = nₖ s t (((s + 1) * (t + 1)) / 2 - 1) := by
   symm

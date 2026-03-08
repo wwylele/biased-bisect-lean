@@ -101,7 +101,7 @@ lemma ρ_range (s t: ℝ) [PosReal s] [PosReal t]: 0 < ρ s t := by
 /-!
 `g` is the unique real solution to the equation $g^s = (1-g)^t$.
 -/
-
+set_option backward.isDefEq.respectTransparency false in
 lemma g_exist (s t: ℝ) [PosReal s] [PosReal t]:
 ∃! g ∈ Set.Icc (0:ℝ) 1, g ^ s = (1 - g) ^ t := by
   let f := (fun (g:ℝ) ↦ g ^ s - (1 - g) ^ t)

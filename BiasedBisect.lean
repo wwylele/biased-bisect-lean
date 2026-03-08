@@ -9,4 +9,5 @@ import BiasedBisect.Inv
 import BiasedBisect.Limit
 import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
 import BiasedBisect.Multigeometric
+import BiasedBisect.Regime
 import BiasedBisect.Split

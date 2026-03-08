@@ -3017,6 +3017,7 @@ def dD (s t n: ℝ) [PosReal s] [PosReal t]: ℝ → ℝ := fun w ↦ dE s t w -
 /-!
 It is symmetric
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma dD_symm (s t n w: ℝ) [PosReal s] [PosReal t]:
 dD s t n w = -dD t s n (n - w) := by
   unfold dD
@@ -3447,6 +3448,7 @@ def D (s t n w: ℝ) [PosReal s] [PosReal t] := E s t w + E s t (n - w) + t * w 
 /-!
 ... which is symmetric.
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma D_symm (s t n w: ℝ) [PosReal s] [PosReal t]:
 D s t n w = D t s n (n - w) := by
   unfold D
