@@ -502,7 +502,6 @@ lemma ginv_anti: StrictAntiOn ginv (Set.Ioo 0 1) := by
 /-!
 And as expected, `ginv` inverts `g`.
 -/
-set_option backward.isDefEq.respectTransparency false in
 lemma ginv_comp (r: ℝ) [PosReal r]: ginv (g 1 r) = r := by
   unfold ginv
   apply div_eq_of_eq_mul
