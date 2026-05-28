@@ -338,9 +338,7 @@ lemma Δ_WF (s t: ℝ) [PosReal s] [PosReal t]: Set.IsWF (Δ s t) := by
       apply Δceiled_WF s t ceil
 
   apply Set.isWF_iff_no_descending_seq.mpr
-  rintro f fStrictAnti
-
-  rintro assume_Δ_has_chain
+  intro f fStrictAnti assume_Δ_has_chain
   have Δ_chain_is_in_Δceiled:
     ∀n: ℕ, f n ∈ Δceiled s t (f 0) := by
       intro n
@@ -3977,7 +3975,7 @@ theorem Eℤ_Unique (s t: ℝ) (Efun: ℤ → ℝ) [PosReal s] [PosReal t]
 (E1: Efun 1 = 0) (opt: IsOptimalCostℤ Efun s t):
 ∀n ≥ 1, Efun n = Eℤ s t n := by
   have alt: ∀n ≥ 1, ∀m, m ≥ 1 → m ≤ n → Efun m = Eℤ s t m := by
-    apply Int.le_induction
+    apply Int.leInduction
     · intro m m1 m1'
       have meq: m = 1 := by exact Eq.symm (Int.le_antisymm m1 m1')
       rw [meq]

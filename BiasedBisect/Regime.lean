@@ -37,9 +37,9 @@ nBranching s t = 1 + ∑ p ∈ Finset.range t, Jₚ (p + 1, (s * (t - p) - 1) / 
     convert J_sum p ((s * (t - p) - 1) / t) using 3
     rw [← Nat.add_div_right _ (by simp)]
     congr 1
-    rw [← Nat.add_sub_assoc (by norm_cast; exact PNat.one_le t)]
+    rw [← Nat.add_sub_assoc (by norm_cast; exact one_le)]
     rw [← Nat.sub_add_comm (one_le_mul_of_one_le_of_one_le
-      (by norm_cast; exact PNat.one_le s)
+      (by norm_cast; exact one_le)
       (Nat.le_sub_of_add_le' hp))]
 
   rw [Finset.sum_congr rfl this]

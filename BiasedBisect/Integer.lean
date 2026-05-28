@@ -260,7 +260,7 @@ theorem Φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): Φ s t δ = 1 := by
 theorem Φ_rec (s t: ℕ+) (δ: ℤ) (dpos: δ ≥ 0):
 Φ s t δ = Φ s t (δ - s) + Φ s t (δ - t) := by
   have alt: 0 ≤ δ → Φ s t δ = Φ s t (δ - s) + Φ s t (δ - t) := by
-    apply Int.le_induction
+    apply Int.leInduction
     · simp only [zero_sub]
       have sneg: -(s:ℤ) < 0 := by simp only [Left.neg_neg_iff, Nat.cast_pos, PNat.pos]
       have tneg: -(t:ℤ) < 0 := by simp only [Left.neg_neg_iff, Nat.cast_pos, PNat.pos]
@@ -751,7 +751,7 @@ lemma PartialFractionDecompostion [Field F] [DecidableEq F]
   have h0 (r: F) (h: r ∈ roots): (Polynomial.derivative (Lagrange.nodal roots id)).eval r
     = Polynomial.eval r (∏ r' ∈ roots.erase r, (Polynomial.X - Polynomial.C r')) := by
     rw [Lagrange.derivative_nodal]
-    rw [Polynomial.eval_finset_sum]
+    rw [Polynomial.eval_finsetSum]
     unfold Lagrange.nodal
     simp only [id_eq]
     apply Finset.sum_eq_single r
@@ -794,7 +794,7 @@ lemma PartialFractionDecompostion [Field F] [DecidableEq F]
       Polynomial.eval_mul]
     rw [mul_comm]
   rw [h1]
-  rw [← Polynomial.eval_finset_sum]
+  rw [← Polynomial.eval_finsetSum]
   rw [Lagrange.sum_basis (Set.injOn_id _) hasroots]
   simp only [Polynomial.eval_one]
 
@@ -1434,7 +1434,7 @@ Filter.Tendsto (fun (i:ℕ) ↦ (Φ s t i:ℂ) * ((ξ₀ s t)^i * Res₀ s t)) F
 
   have limrw2: nhds (0:ℂ) = nhds (∑ ξ ∈ (ξSet s t).erase (ξ₀ s t), 0) := by simp only [Finset.sum_const_zero]
   rw [limrw2]
-  apply tendsto_finset_sum
+  apply tendsto_finsetSum
   intro ξ mem
   simp only [Finset.mem_erase, ne_eq] at mem
   rcases mem with ⟨ne, mem⟩

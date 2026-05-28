@@ -175,7 +175,7 @@ Continuous (fun x ↦ ∑' (pq : ℕ × ℕ), Jₚ pq * smStep μ (x - (pq.1 * s
     simp only [cond, ↓reduceIte]
   refine ContinuousOn.congr ?_ funcongr
   apply Continuous.continuousOn
-  apply continuous_finset_sum
+  apply continuous_finsetSum
   intro pq pqmem
   apply Continuous.mul
   · exact continuous_const

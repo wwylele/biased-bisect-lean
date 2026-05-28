@@ -52,9 +52,9 @@ theorem Fin.coe_sub_one' {n : ℕ+} {a : ℕ+}:
         obtain what := lt_of_le_of_ne h (by simpa using hn)
         simp at what
       rw [this]
-      rw [← Nat.sub_add_comm (by apply PNat.one_le)]
+      rw [← Nat.sub_add_comm (by norm_cast; exact one_le)]
       rw [add_comm]
-      rw [Nat.sub_add_comm (by apply PNat.one_le)]
+      rw [Nat.sub_add_comm (by norm_cast; exact one_le)]
   · refine eq_of_val_eq ?_
     rw [ofNat_eq_cast, ofNat_eq_cast, val_natCast, val_natCast]
     apply Nat.add_mod_right
@@ -62,7 +62,7 @@ theorem Fin.coe_sub_one' {n : ℕ+} {a : ℕ+}:
 
 theorem Fin.coe_neg_one' {n : ℕ+}:
     ((-1 : Fin n): ℕ) = n - 1 := by
-  obtain n1|n1 := eq_or_lt_of_le (PNat.one_le n)
+  obtain n1|n1 := eq_or_lt_of_le (one_le (a := n))
   · rw [← n1]
     simp
   · rw [Fin.val_neg', val_one']
@@ -138,7 +138,7 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
           simp
         have t1: 1 < t := by
           contrapose! i0 with t1
-          simp only [PNat.le_one_iff] at t1
+          simp only [le_one_iff_eq_one] at t1
           apply subsingleton_iff.mp
           convert Fin.subsingleton_one
           simpa using t1

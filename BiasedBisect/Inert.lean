@@ -1960,8 +1960,8 @@ wₘᵢₙ s t n = 1 := by
     have max_left: (wₖ s t (N + 1) : ℝ) ⊔ ((wₖ s t ((N + 1) + 1)) + (nₖ s t (N + 1)) - (nₖ s t ((N + 1) + 1))) = wₖ s t (N + 1) := by
       apply max_eq_left
       apply sub_left_le_of_le_add
-      have k1ge1 : (N + 1) ≥ 1 := by exact PNat.one_le (N + 1)
-      have k11ge1 : (N + 1) + 1 ≥ 1 := by exact PNat.one_le (N + 1 + 1)
+      have k1ge1 : (N + 1) ≥ 1 := one_le
+      have k11ge1 : (N + 1) + 1 ≥ 1 := one_le
       rw [← wₖ_rec s t (N + 1) k1ge1]
       rw [← wₖ_rec s t ((N + 1) + 1) k11ge1]
       push_cast
