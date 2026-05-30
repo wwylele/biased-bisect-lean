@@ -637,8 +637,7 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
     unfold underThis at empty
     have single: Δceiled s t this = {this} := by
       refine (Set.Nonempty.subset_singleton_iff ?_).mp (Set.diff_eq_empty.mp empty)
-      apply Set.nonempty_of_mem
-      show this ∈ Δceiled s t this
+      refine Set.nonempty_of_mem (?_ : this ∈ Δceiled s t this)
       unfold Δceiled
       constructor
       · exact thismem

@@ -66,7 +66,7 @@ theorem Fin.coe_neg_one' {n : ℕ+}:
   · rw [← n1]
     simp
   · rw [Fin.val_neg', val_one']
-    nth_rw 2 [Nat.mod_eq_of_lt (by simpa using n1)]
+    nth_rw 2 [Nat.mod_eq_of_lt (by norm_cast)]
     rw [Nat.mod_eq_of_lt (by simp)]
 
 
@@ -145,7 +145,7 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
         have onet: ((1: Fin t):ℕ) = (1:ℕ) := by
           simp only [Fin.val_one']
           apply Nat.mod_eq_of_lt
-          simpa using t1
+          norm_cast
 
         simp only [Nat.cast_add, Nat.cast_one, add_sub_cancel_right]
 
