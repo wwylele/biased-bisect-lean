@@ -63,7 +63,7 @@ Jₚ (p, q) * p.factorial = ∏ n ∈ Finset.range p, (q + n + 1) := by
 lemma J_asymptotic (p: ℕ):
 (fun q ↦ (Jₚ (p, q): ℝ)) ~[atTop] (fun q ↦ q ^ p / p.factorial) := by
   suffices (fun q ↦ (Jₚ (p, q): ℝ) * p.factorial) ~[atTop] (fun q ↦ q ^ p) by
-    convert this.div (IsEquivalent.refl (u := fun q ↦ (p.factorial: ℝ))) using 2
+    convert! this.div (IsEquivalent.refl (u := fun q ↦ (p.factorial: ℝ))) using 2
     simp only [Pi.div_apply]
     rw [mul_div_cancel_right₀ _ (by norm_cast; exact Nat.factorial_ne_zero p)]
   norm_cast

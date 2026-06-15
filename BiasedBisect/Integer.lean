@@ -1903,7 +1903,7 @@ Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds limit) :=
 
     use (max nLeft nRight)
     intro k kbound
-    simp only [ge_iff_le, sup_le_iff] at kbound
+    simp only [sup_le_iff] at kbound
     obtain ⟨leftBound, rightBound⟩ := kbound
     obtain leftLt := nLeftSpec k leftBound
     obtain rightLt := nRightSpec k rightBound

@@ -588,12 +588,12 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
     have maxmem: max ∈ Δ s t := by
       apply Set.mem_of_mem_of_subset maxmem'
       unfold underThis
-      apply subset_trans (Set.diff_subset)
+      apply subset_trans (Set.sdiff_subset)
       unfold Δceiled
       exact Set.inter_subset_left
     have maxlt: max < this := by
       unfold underThis at maxmem'
-      apply (Set.mem_diff max).mp at maxmem'
+      apply (Set.mem_sdiff max).mp at maxmem'
       rcases maxmem' with ⟨maxInCeil, maxNe⟩
       simp only [Set.mem_singleton_iff] at maxNe
       unfold Δceiled at maxInCeil
@@ -620,7 +620,7 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
       simp only [not_lt]
       have bMemUnder: b ∈ underThis := by
         unfold underThis
-        apply (Set.mem_diff b).mpr
+        apply (Set.mem_sdiff b).mpr
         constructor
         · unfold Δceiled
           constructor
@@ -636,7 +636,7 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
     have empty: underThis = ∅ := by exact Set.not_nonempty_iff_eq_empty.mp nonEmpty
     unfold underThis at empty
     have single: Δceiled s t this = {this} := by
-      refine (Set.Nonempty.subset_singleton_iff ?_).mp (Set.diff_eq_empty.mp empty)
+      refine (Set.Nonempty.subset_singleton_iff ?_).mp (Set.sdiff_eq_empty.mp empty)
       refine Set.nonempty_of_mem (?_ : this ∈ Δceiled s t this)
       unfold Δceiled
       constructor

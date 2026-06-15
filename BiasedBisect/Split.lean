@@ -832,7 +832,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
           apply (Nat.sub_lt_iff_lt_add xleft).mpr
           rw [Nat.add_succ]
           apply Nat.lt_succ_iff.mpr
-          convert xright
+          convert! xright
           exact Nat.sub_add_cancel (Nat.le_of_succ_le k'left)
         · exact Nat.add_sub_of_le xleft
       · rintro ⟨a, ⟨amem, aeq⟩⟩
@@ -925,7 +925,7 @@ wₖ s (t + ε) (k' + 1) < wₗᵢ s t (nₖ s (t + ε) (k' + 1)) := by
           apply (Nat.sub_lt_iff_lt_add xleft).mpr
           rw [Nat.add_succ]
           apply Nat.lt_succ_iff.mpr
-          convert xright
+          convert! xright
           exact Nat.sub_add_cancel (Nat.le_of_succ_le k'right)
         · exact Nat.add_sub_of_le xleft
       · rintro ⟨a, ⟨amem, aeq⟩⟩

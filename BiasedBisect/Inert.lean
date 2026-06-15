@@ -1048,7 +1048,7 @@ lemma pqOfδₖ_bound (s t: ℕ+) (k: ℕ) (coprime: PNat.Coprime s t)
       rw [pqEq] at pqBound
       apply lt_of_lt_of_le pqBound
       rify at oob
-      convert oob
+      convert! oob
       obtain kspec := Exists.choose_spec (pqOfδₖ_exist s t k)
       unfold δₚ at kspec
       simp only at kspec

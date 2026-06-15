@@ -85,7 +85,7 @@ theorem Asymptotics.IsBigOWith.atTop_integral_Iic_of_nonneg_of_tendsto_integral
     have hx' : m_fg ≤ x := by
       refine le_of_lt <| lt_of_le_of_lt ?_ hx
       exact le_sup_of_le_right <| le_sup_right
-    convert hfg' x hx'
+    convert! hfg' x hx'
     refine (abs_eq_self.mpr ?_).symm
     apply h_nonneg'
     refine le_of_lt <| lt_of_le_of_lt ?_ hx
