@@ -539,7 +539,7 @@ a ≤ b := by match list with
 /-!
 Two `SetsCover` lists can be glued together.
 -/
-def SetsCoverAppend {l1 l2: List (Set ℝ)} {a b c: ℝ}
+theorem SetsCoverAppend {l1 l2: List (Set ℝ)} {a b c: ℝ}
 (h1: SetsCover l1 a b) (h2: SetsCover l2 b c):
 SetsCover (l1 ++ l2) a c := by
   have l2long: ¬ l2 = [] := by

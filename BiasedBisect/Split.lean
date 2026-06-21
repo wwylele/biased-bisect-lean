@@ -322,7 +322,7 @@ noncomputable
 def kSplitMax (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε] :=
 (δₖ_surjΔ _ _ _ (δₚSplitMaxInΔ s t ε k)).choose
 
-def kSplitMaxSpec (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε]:
+theorem kSplitMaxSpec (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε]:
 ∀ pq ∈ (Λₖ s t k), δₚ s (t + ε) pq ≤ δₖ s (t + ε) (kSplitMax s t ε k) := by
   obtain spec := (δₖ_surjΔ _ _ _ (δₚSplitMaxInΔ s t ε k)).choose_spec
   unfold kSplitMax

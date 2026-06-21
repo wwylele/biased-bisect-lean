@@ -1183,7 +1183,7 @@ def Jtₖ (s t: ℝ) [PosReal s] [PosReal t]: ℕ → ℕ :=
 /-!
 `Jsₖ` and `Jtₖ` are symmetric to each other.
 -/
-def Jstₖ_symm (s t: ℝ) (k: ℕ)[PosReal s] [PosReal t]:
+theorem Jstₖ_symm (s t: ℝ) (k: ℕ)[PosReal s] [PosReal t]:
 Jsₖ s t k = Jtₖ t s k := by
   unfold Jsₖ
   unfold Jtₖ
@@ -2524,7 +2524,7 @@ def wₘₐₓ (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
 `wₘᵢₙ` and `wₘₐₓ` agree with `wₖ` at `n = nₖ`.
 -/
 
-def wₘᵢₙnₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
+theorem wₘᵢₙnₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 wₘᵢₙ s t (nₖ s t k) = wₖ s t k := by
   unfold wₘᵢₙ
   rw [kₙ_inv]
@@ -2541,7 +2541,7 @@ wₘᵢₙ s t (nₖ s t k) = wₖ s t k := by
     norm_cast
     linarith
 
-def wₘₐₓnₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
+theorem wₘₐₓnₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 wₘₐₓ s t (nₖ s t k) = wₖ s t k := by
   unfold wₘₐₓ
   rw [kₙ_inv]
@@ -2664,7 +2664,7 @@ def wₗᵢ' (s t: ℝ) [PosReal s] [PosReal t] (n: ℝ): ℝ :=
 With this, we have the complete ordering:
 `1 ≤ wₘᵢₙ ≤ wₗᵢ ≤ wₘₐₓ ≤ n - 1`
 -/
-def wₗᵢ_range (s t n: ℝ) [PosReal s] [PosReal t]:
+theorem wₗᵢ_range (s t n: ℝ) [PosReal s] [PosReal t]:
 wₘᵢₙ s t n ≤ wₗᵢ s t n ∧ wₗᵢ s t n ≤ wₘₐₓ s t n := by
   unfold wₘᵢₙ wₗᵢ wₘₐₓ
   by_cases n1: n ≥ 1

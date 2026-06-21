@@ -705,7 +705,7 @@ instance ΛtriangleDecidable (s t: ℕ+): DecidablePred fun x ↦ x ∈ Λtriang
 
 def ΛtriangleUpper (s t: ℕ+) := {pq: ℕ × ℕ | pq.1 * s + pq.2 * t > s * t} ∩ (Λrectangle s t)
 
-def ΛtriangleUpperSubset (s t: ℕ+): ΛtriangleUpper s t ⊆ Λrectangle s t := by
+theorem ΛtriangleUpperSubset (s t: ℕ+): ΛtriangleUpper s t ⊆ Λrectangle s t := by
   unfold ΛtriangleUpper
   exact Set.inter_subset_right
 
@@ -717,7 +717,7 @@ noncomputable
 instance ΛtriangleUpperFintype (s t: ℕ+): Fintype (ΛtriangleUpper s t) := by
   refine Set.fintypeSubset _ (ΛtriangleUpperSubset s t)
 
-def BoundDecomposite (p q: ℕ) {s t: ℕ+} (h: p * s + q * t < s * t):
+theorem BoundDecomposite (p q: ℕ) {s t: ℕ+} (h: p * s + q * t < s * t):
     p < t ∧ q < s := by
     constructor
     · obtain h' := lt_of_add_lt_of_nonneg_left h (Nat.zero_le _)
