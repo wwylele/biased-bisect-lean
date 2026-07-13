@@ -147,9 +147,7 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
       simp only [Set.toFinset_eq_empty]
       unfold Λline
       refine Set.preimage_eq_empty ?_
-      apply Set.disjoint_of_subset
-      · show {(δ:ℝ) + 1} ⊆ {(δ:ℝ) + 1}
-        simp only [subset_refl]
+      apply Set.disjoint_of_subset (subset_refl {(δ:ℝ) + 1})
       · show Set.range (δₚ s t) ⊆ Δ s t
         refine Set.range_subset_iff.mpr ?_
         intro ⟨p, q⟩

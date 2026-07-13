@@ -720,7 +720,7 @@ but we won't expand on it here.
 -/
 
 def Λline (s t δ: ℝ): Set (ℕ × ℕ) :=
-  ((δₚ s t) ⁻¹' Set.singleton δ)
+  ((δₚ s t) ⁻¹' {δ})
 
 /-!
 This subset is again symmetric with lattice coordinates swapped.
@@ -1627,11 +1627,8 @@ wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
             simp only [Set.toFinset_eq_empty]
             unfold Λline
             refine Set.preimage_eq_empty ?_
-            apply Set.disjoint_of_subset
-            · show {(δₖ s t k - t)} ⊆ {(δₖ s t k - t)}
-              apply subset_refl
-            · show Set.range (δₚ s t) ⊆ Δ s t
-              refine Set.range_subset_iff.mpr ?_
+            refine Set.disjoint_of_subset (subset_refl {(δₖ s t k - t)}) (?_ : Set.range (δₚ s t) ⊆ Δ s t) ?_
+            · refine Set.range_subset_iff.mpr ?_
               intro ⟨p, q⟩
               unfold δₚ; unfold Δ
               simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
@@ -3204,9 +3201,9 @@ Here is a more useful version with the correction term $s + t$
 lemma dE_integrable' (s t m n: ℝ) [PosReal s] [PosReal t]:
 IntervalIntegrable (fun x ↦ (dE s t x) + s + t) MeasureTheory.volume m n := by
   have ti: IntervalIntegrable (fun x ↦ t) MeasureTheory.volume m n := by
-    apply intervalIntegrable_const (by simp)
+    apply intervalIntegrable_const
   have si: IntervalIntegrable (fun x ↦ s) MeasureTheory.volume m n := by
-    apply intervalIntegrable_const (by simp)
+    apply intervalIntegrable_const
 
   refine IntervalIntegrable.add ?_ ti
   refine IntervalIntegrable.add ?_ si
@@ -3477,7 +3474,7 @@ D s t n w2 - D s t n w1 = ∫ w in w1..w2, dD s t n w := by
   have integ1: IntervalIntegrable (fun w ↦ (dE s t w + s + t) - (dE s t (n - w) + s + t)) MeasureTheory.volume w1 w2 := by
     apply IntervalIntegrable.sub (dE_integrable' s t w1 w2) integ0
   have integ2: IntervalIntegrable (fun w ↦ (t - s)) MeasureTheory.volume w1 w2 := by
-    apply intervalIntegrable_const (by simp)
+    apply intervalIntegrable_const
   rw [intervalIntegral.integral_add integ1 integ2]
   rw [intervalIntegral.integral_sub (dE_integrable' s t w1 w2) integ0]
   rw [intervalIntegral.integral_const]
