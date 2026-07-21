@@ -35,6 +35,7 @@ in the strict sense, but we can describe its relation ship with `dE` by the foll
 noncomputable
 def δceiledByφ (s t n: ℝ) [PosReal s] [PosReal t] := {δ | φ s t δ ≤ n}
 
+set_option backward.isDefEq.respectTransparency false in
 lemma φ_inv (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
 δceiledByφ s t n = Set.Iio (dE s t n) := by
   unfold δceiledByφ
@@ -47,7 +48,7 @@ lemma φ_inv (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
   unfold φ
   ext δ
   constructor
-  · simp only [Nat.cast_add, Nat.cast_one, Set.mem_setOf_eq]
+  · simp only [Nat.cast_add, Nat.cast_one, Set.mem_ofPred_eq]
     intro JceiledLe
     contrapose JceiledLe with δGe
     simp only [not_le]
@@ -69,11 +70,11 @@ lemma φ_inv (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
     simp only [gt_iff_lt, not_lt] at nle
     have kp1mem: k + 1 ∈ (kceiled s t n).toFinset := by
       unfold kceiled
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
       exact nle
     have what: k + 1 ≤ k := by exact Finset.le_max_of_eq kp1mem keq
     simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
-  · simp only [Set.mem_setOf_eq, Nat.cast_add, Nat.cast_one]
+  · simp only [Set.mem_ofPred_eq, Nat.cast_add, Nat.cast_one]
     intro δlt
     by_cases k0: k = 0
     · rw [k0] at δlt
@@ -83,7 +84,7 @@ lemma φ_inv (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
       exact n1
     · have kmem: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
       unfold kceiled at kmem
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
       rw [nₖ_accum] at kmem
       simp only [k0, ↓reduceIte, Nat.cast_add, Nat.cast_one] at kmem
       apply le_trans ?_ kmem
@@ -108,6 +109,7 @@ lemma φδₖ(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 /-!
 Analog to `w_eq`/`w_lt`/`w_gt` lemmas, `φ` maps `δₖ - t` back to `wₖ` (again with shifted `k`).
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma φδₖt(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 φ s t (δₖ s t k - t) = wₖ s t (k + 1) := by
   by_cases k0: k = 0
@@ -120,7 +122,7 @@ lemma φδₖt(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
     simp only [Set.toFinset_eq_empty]
     refine Set.eq_empty_of_forall_notMem ?_
     intro pq
-    simp only [Set.mem_setOf_eq, not_le]
+    simp only [Set.mem_ofPred_eq, not_le]
     apply lt_of_lt_of_le (neg_neg_of_pos PosReal.pos)
     apply add_nonneg
     all_goals exact mul_nonneg (by simp) (le_of_lt PosReal.pos)
@@ -146,7 +148,7 @@ lemma φδₖt(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 
     have equiv3 (w: ℝ): δₖ s t k - t ∈ δceiledByφ s t w ↔ φ s t (δₖ s t k - t) ≤ w := by
       unfold δceiledByφ
-      simp only [Set.mem_setOf_eq]
+      simp only [Set.mem_ofPred_eq]
 
     have equiv4 (w: ℝ) (h: w ≥ 1): wₖ s t (k + 1) ≤ w ↔ φ s t (δₖ s t k - t) ≤ w := by
       rw [← equiv w h, equiv2 w h, equiv3]
@@ -176,6 +178,7 @@ lemma φδₖt(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 /-!
 Two lemmas similar to `Jline_s` and `Jline_t`
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma Jceiled_s (s t δ: ℝ) [PosReal s] [PosReal t]:
 Jceiled s t (δ - s) = ∑⟨p, q⟩ ∈ (Λceiled s t δ).toFinset, shut p (Jₚ (p - 1, q)) := by
   unfold Jceiled
@@ -188,13 +191,13 @@ Jceiled s t (δ - s) = ∑⟨p, q⟩ ∈ (Λceiled s t δ).toFinset, shut p (J�
   · simp only [Set.coe_toFinset]
     unfold Λceiled Set.MapsTo
     intro ⟨p, q⟩  pqmem
-    simp only [Set.mem_setOf_eq] at pqmem ⊢
+    simp only [Set.mem_ofPred_eq] at pqmem ⊢
     simp only [Nat.cast_add, Nat.cast_one]
     linarith
   · intro ⟨p, q⟩ pqmem pqnmem
     have p0: p = 0 := by
       unfold Λceiled at pqmem
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq] at pqmem
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at pqmem
       unfold Λceiled at pqnmem
       simp only [Set.coe_toFinset, Set.mem_image, Prod.exists, not_exists,
         not_and] at pqnmem
@@ -205,7 +208,7 @@ Jceiled s t (δ - s) = ∑⟨p, q⟩ ∈ (Λceiled s t δ).toFinset, shut p (J�
       use q
       simp only [Classical.not_imp, Decidable.not_not]
       constructor
-      · simp only [Set.mem_setOf_eq]
+      · simp only [Set.mem_ofPred_eq]
         have p1: p ≥ 1 := by exact Nat.one_le_iff_ne_zero.mpr pqnmem
         push_cast [p1]
         linarith
@@ -253,6 +256,7 @@ lemma φ_neg (s t δ: ℝ) (dneg: δ < 0) [PosReal s] [PosReal t]:
   unfold φ
   rw [Jceiled_neg _ _ _ dneg]
 
+set_option backward.isDefEq.respectTransparency false in
 lemma φ_rec (s t δ: ℝ) (dpos: δ ≥ 0) [PosReal s] [PosReal t]:
 φ s t δ = φ s t (δ - s) + φ s t (δ - t) := by
   unfold φ
@@ -290,7 +294,7 @@ lemma φ_rec (s t δ: ℝ) (dpos: δ ≥ 0) [PosReal s] [PosReal t]:
   · intro h
     absurd h
     unfold Λceiled
-    simp only [Prod.mk_zero_zero, Set.mem_toFinset, Set.mem_setOf_eq, Prod.fst_zero,
+    simp only [Prod.mk_zero_zero, Set.mem_toFinset, Set.mem_ofPred_eq, Prod.fst_zero,
       CharP.cast_eq_zero, zero_mul, Prod.snd_zero, add_zero]
     exact dpos
 

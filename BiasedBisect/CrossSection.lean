@@ -99,6 +99,7 @@ lemma genSegDet (n: ℕ+) (input: List InertSeg) (h: input.Forall InertSeg.det1)
 /-!
 If the input list is inert for $n$, then the output is inert for $n + 1$.
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.inert n)):
   (genSeg (n + 1) input).Forall (InertSeg.inert (n + 1)) := by
   unfold genSeg
@@ -120,7 +121,7 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
         simp only [add_lt_add_iff_left]
         refine Finset.sum_lt_sum_of_subset ?_ (i := (0, (head.a + (head.a + head.c) - 1))) ?_ ?_ (by apply Jₚ_nonzero) ?_
         · unfold Λtriangle
-          simp only [PNat.add_coe, Set.subset_toFinset, Set.coe_toFinset, Set.setOf_subset_setOf,
+          simp only [PNat.add_coe, Set.subset_toFinset, Set.coe_toFinset, Set.ofPred_subset_ofPred,
             Prod.forall]
           intro p q pqmem
           obtain pqmemp := Nat.lt_of_add_right_lt pqmem
@@ -140,11 +141,11 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
           · simp only [PNat.pos, mul_lt_mul_iff_left₀]
             exact pqmemq
         · unfold Λtriangle
-          simp only [PNat.add_coe, Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, zero_add,
+          simp only [PNat.add_coe, Set.mem_toFinset, Set.mem_ofPred_eq, zero_mul, zero_add,
             add_pos_iff, PNat.pos, or_self, mul_lt_mul_iff_left₀, tsub_lt_self_iff, Nat.lt_one_iff,
             pos_of_gt, and_self]
         · unfold Λtriangle
-          simp only [Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, zero_add, PNat.pos,
+          simp only [Set.mem_toFinset, Set.mem_ofPred_eq, zero_mul, zero_add, PNat.pos,
             mul_lt_mul_iff_left₀, not_lt]
           rw [(by ring_nf: (head.a + (head.a + head.c) - 1:ℕ) = head.a + head.c + head.a - 1)]
           apply Nat.le_sub_of_add_le
@@ -160,7 +161,7 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
           simp only [add_lt_add_iff_left]
           refine Finset.sum_lt_sum_of_subset ?_ (i := ((head.b + head.d +head.d - 1), 0)) ?_ ?_ (by apply Jₚ_nonzero) ?_
           · unfold Λtriangle
-            simp only [PNat.add_coe, Set.subset_toFinset, Set.coe_toFinset, Set.setOf_subset_setOf,
+            simp only [PNat.add_coe, Set.subset_toFinset, Set.coe_toFinset, Set.ofPred_subset_ofPred,
               Prod.forall]
             intro p q pqmem
             obtain pqmemp := Nat.lt_of_add_right_lt pqmem
@@ -179,12 +180,12 @@ lemma genSegInert (n: ℕ+) (input: List InertSeg) (h: input.Forall (InertSeg.in
             · simp only [PNat.pos, mul_lt_mul_iff_left₀]
               exact pqmemq
           · unfold Λtriangle
-            simp only [PNat.add_coe, Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, add_zero]
+            simp only [PNat.add_coe, Set.mem_toFinset, Set.mem_ofPred_eq, zero_mul, add_zero]
             rw [mul_comm]
             simp only [add_pos_iff, PNat.pos, or_self, mul_lt_mul_iff_right₀, tsub_lt_self_iff,
               Nat.lt_one_iff, pos_of_gt, and_self]
           · unfold Λtriangle
-            simp only [Set.mem_toFinset, Set.mem_setOf_eq, zero_mul, add_zero, not_lt]
+            simp only [Set.mem_toFinset, Set.mem_ofPred_eq, zero_mul, add_zero, not_lt]
             rw [mul_comm]
             simp only [PNat.pos, mul_le_mul_iff_left₀]
             apply Nat.le_sub_of_add_le
@@ -271,6 +272,7 @@ lemma segListDet (n: ℕ+): (segList n).Forall InertSeg.det1 := by
 /-!
 `segList`'s elements are all inert.
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
   induction n with
   | one =>
@@ -309,11 +311,11 @@ lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
             unfold Λtriangle
             simp only [Finset.singleton_product, PNat.add_coe, PNat.val_ofNat, Nat.reduceAdd,
               Set.subset_toFinset, Finset.coe_map, Function.Embedding.coeFn_mk, Finset.coe_range,
-              Set.image_subset_iff, Set.preimage_setOf_eq, zero_mul, zero_add, Nat.ofNat_pos,
+              Set.image_subset_iff, Set.preimage_ofPred_eq, zero_mul, zero_add, Nat.ofNat_pos,
               mul_lt_mul_iff_left₀]
             intro p pmem
             simp only [Set.mem_Iio] at pmem
-            simp only [Set.mem_setOf_eq]
+            simp only [Set.mem_ofPred_eq]
             rw [(by ring: (a + 1 + a: ℕ) = 2 * a + 1)]
             exact pmem
         · exact prev
@@ -335,10 +337,10 @@ lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
           unfold Λtriangle
           simp only [Finset.product_singleton, PNat.val_ofNat, Nat.reduceAdd, PNat.add_coe,
             Set.subset_toFinset, Finset.coe_map, Function.Embedding.coeFn_mk, Finset.coe_range,
-            Set.image_subset_iff, Set.preimage_setOf_eq, zero_mul, add_zero]
+            Set.image_subset_iff, Set.preimage_ofPred_eq, zero_mul, add_zero]
           intro p pmem
           simp only [Set.mem_Iio] at pmem
-          simp only [Set.mem_setOf_eq]
+          simp only [Set.mem_ofPred_eq]
           rw [(by ring: 2 * (a + (a + 1): ℕ) = (2 * a + 1) * 2)]
           simp only [Nat.ofNat_pos, mul_lt_mul_iff_left₀]
           exact pmem

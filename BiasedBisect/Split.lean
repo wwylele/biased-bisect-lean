@@ -144,7 +144,7 @@ lemma ΛflooredIsolated (s t ε: ℝ) (K: ℕ)  [PosReal s] [PosReal t]
   unfold Λₖ Λline at pqmem
   unfold Λfloored at pq'mem
   simp only [Set.mem_preimage] at pqmem
-  simp only [gt_iff_lt, Set.mem_setOf_eq] at pq'mem
+  simp only [gt_iff_lt, Set.mem_ofPred_eq] at pq'mem
   obtain pqeq := Set.eq_of_mem_singleton pqmem
   unfold δₚ at pqeq
   simp only at pqeq
@@ -153,8 +153,8 @@ lemma ΛflooredIsolated (s t ε: ℝ) (K: ℕ)  [PosReal s] [PosReal t]
     unfold Δfloored
     constructor
     · unfold δₚ Δ
-      simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
-    · simp only [gt_iff_lt, Set.mem_setOf_eq]
+      simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
+    · simp only [gt_iff_lt, Set.mem_ofPred_eq]
       exact pq'mem
   have nextle: δₖ s t (K + 1) ≤ δₚ s t pq' := by
     unfold δₖ δnext
@@ -208,7 +208,7 @@ lemma ΛₖMono (s t ε: ℝ) (k1 k2 K: ℕ) (kh: k1 < k2) (kbound: k1 ≤ K) [P
       simp only [Set.mem_preimage] at pq2mem
       obtain pq2eq := Set.eq_of_mem_singleton pq2mem
       unfold Λfloored
-      simp only [gt_iff_lt, Set.mem_setOf_eq]
+      simp only [gt_iff_lt, Set.mem_ofPred_eq]
       rw [pq2eq]
       exact δₖ_mono _ _ k2gtK
     revert pq1
@@ -265,7 +265,7 @@ lemma ΛₖSplit' (s t ε: ℝ) (k K: ℕ) (kbound: k ≤ K) [PosReal s] [PosRea
   · intro pqeq
     rw [pqeq]
   · intro pqeq
-    obtain ⟨k', k'eq⟩ := δₖ_surjΔ s t (δₚ s t pq') (by unfold Δ δₚ; simp only [Set.mem_setOf_eq,
+    obtain ⟨k', k'eq⟩ := δₖ_surjΔ s t (δₚ s t pq') (by unfold Δ δₚ; simp only [Set.mem_ofPred_eq,
       exists_apply_eq_apply2])
     have pq'mem: pq' ∈ Λₖ s t k' := Eq.symm k'eq
     refine (ΛₖSplit s t ε k pq pqmem pq' ?_).mpr pqeq
@@ -304,7 +304,7 @@ lemma δₚSplitMaxInΔ (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal 
   obtain ⟨max, ⟨maxmem, maxspec⟩⟩ := Finset.mem_image.mp (Finset.max'_mem _ (ΛₖtoδNonempty s t ε k))
   rw [← maxspec]
   unfold δₚ Δ
-  simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+  simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
 
 lemma δₚSplitMaxSpec (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] [PosReal ε]:
 ∀ pq ∈ (Λₖ s t k), δₚ s (t + ε) pq ≤ δₚSplitMax s t ε k := by
@@ -341,8 +341,8 @@ lemma ΛceiledSplit (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε
 Λceiled s t (δₖ s t k) = Λceiled s (t + ε) (δₖ s (t + ε) (kSplitMax s t ε k)) := by
   unfold Λceiled
   ext pq
-  simp only [Set.mem_setOf_eq]
-  have pqmem: pq.1 * s + pq.2 * t ∈ Δ s t := by unfold Δ; simp only [Set.mem_setOf_eq,
+  simp only [Set.mem_ofPred_eq]
+  have pqmem: pq.1 * s + pq.2 * t ∈ Δ s t := by unfold Δ; simp only [Set.mem_ofPred_eq,
     exists_apply_eq_apply2]
   obtain ⟨k', k'eq⟩ := δₖ_surjΔ _ _ _ pqmem
   rw [← k'eq]
@@ -392,7 +392,7 @@ lemma ΛceiledSplit_s (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal 
 Λceiled s t (δₖ s t k - s) = Λceiled s (t + ε) (δₖ s (t + ε) (kSplitMax s t ε k) - s) := by
   unfold Λceiled
   ext pq
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   have left: pq.1 * s + pq.2 * t ≤ δₖ s t k - s ↔
         (pq.1 + 1: ℕ) * s + pq.2 * t ≤ δₖ s t k := by
     push_cast
@@ -409,7 +409,7 @@ lemma ΛceiledSplit_s (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal 
   have ΛsplitExt : ∀ (pq: ℕ × ℕ), pq ∈ Λceiled s t (δₖ s t k) ↔ pq ∈ Λceiled s (t + ε) (δₖ s (t + ε) (kSplitMax s t ε k)) := by
     exact fun pq ↦ Eq.to_iff (congrFun Λsplit pq)
   unfold Λceiled at ΛsplitExt
-  simp only [Set.mem_setOf_eq] at ΛsplitExt
+  simp only [Set.mem_ofPred_eq] at ΛsplitExt
   exact ΛsplitExt (pq.1 + 1, pq.2)
 
 /-
@@ -541,7 +541,7 @@ lemma δₖSplitBetween (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [Pos
       use pqk
     have stpqmem: δₚ s t (p, q) ∈ Δ s t := by
       unfold δₚ Δ
-      simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+      simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
     obtain ⟨k1, k1eq⟩ := δₖ_surjΔ s t _ stpqmem
     unfold Λₖ Λline
     simp only [Set.mem_preimage]
@@ -608,6 +608,7 @@ lemma Jslope (pq: ℕ × ℕ) (h: pq.2 ≠ 0):
     convert Nat.choose_mul_succ_eq (pq.1 + (pq.2 - 1)) pq.1
     omega
 
+set_option backward.isDefEq.respectTransparency false in
 lemma wslope (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k < K) (εbound: ε < t * εBound s t K)
 (k'left: kSplitMax s t ε k < k') (k'right: k' ≤ kSplitMax s t ε (k + 1)):
@@ -1193,7 +1194,7 @@ lemma generalizeSplit
     have mem: 1 ∈ (kceiled s t n).toFinset := by
       simp only [Set.mem_toFinset]
       unfold kceiled
-      simp only [Set.mem_setOf_eq]
+      simp only [Set.mem_ofPred_eq]
       rw [n₁]
       exact n2
     apply Finset.le_max_of_eq mem keq

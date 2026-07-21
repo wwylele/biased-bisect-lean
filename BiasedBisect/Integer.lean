@@ -33,9 +33,9 @@ theorem Δ_int (s t: ℕ+):
   simp only [PNat.gcd_coe]
   intro δ mem
   unfold Δ at mem
-  simp only [Set.mem_setOf_eq] at mem
+  simp only [Set.mem_ofPred_eq] at mem
   rcases mem with ⟨p, ⟨q, pq⟩⟩
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   use p * (s / (PNat.gcd s t)) + q * (t / (PNat.gcd s t))
   push_cast
   rw [add_mul]
@@ -65,7 +65,7 @@ starting with `δnext_int`.
 -/
 theorem δlift (s t: ℕ+) (δ: ℝ) (mem: δ ∈ Δ s t): ∃d: ℤ, d = δ := by
   unfold Δ at mem
-  simp only [Set.mem_setOf_eq] at mem
+  simp only [Set.mem_ofPred_eq] at mem
   rcases mem with ⟨p, ⟨q, pq⟩⟩
   use p * s + q * t
   push_cast
@@ -152,7 +152,7 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
         refine Set.range_subset_iff.mpr ?_
         intro ⟨p, q⟩
         unfold δₚ; unfold Δ
-        simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+        simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
       · simp only [Set.disjoint_singleton_left]
         contrapose lt with isOnΛ
         simp only [not_lt]
@@ -162,7 +162,7 @@ Jceiled_int s t δ + Jline_int s t (δ + 1) = Jceiled_int s t (δ + 1) := by
         unfold Δfloored
         constructor
         · exact isOnΛ
-        · simp only [gt_iff_lt, Set.mem_setOf_eq, lt_add_iff_pos_right, zero_lt_one]
+        · simp only [gt_iff_lt, Set.mem_ofPred_eq, lt_add_iff_pos_right, zero_lt_one]
     have line_empty': Jline s t (δ + 1) = 0 := by
       unfold Jline
       rw [line_empty]
@@ -241,7 +241,7 @@ theorem Φ_neg (s t: ℕ+) (δ: ℤ) (dpos: δ < 0): Φ s t δ = 1 := by
     simp only
     apply Set.eq_empty_iff_forall_notMem.mpr
     rintro ⟨p, q⟩
-    simp only [Set.mem_setOf_eq, not_le]
+    simp only [Set.mem_ofPred_eq, not_le]
     apply lt_of_lt_of_le
     · show (δ:ℝ) < 0
       exact Int.cast_lt_zero.mpr dpos
@@ -299,7 +299,7 @@ lemma ΔceiledByΦ_agree (s t: ℕ+) (n: ℝ):
 Int.cast '' (ΔceiledByΦ s t n) = δceiledByφ s t n ∩ (Int.cast '' Set.univ) := by
   ext δ
   unfold ΔceiledByΦ δceiledByφ
-  simp only [Set.mem_image, Set.mem_setOf_eq, Set.image_univ, Set.mem_inter_iff, Set.mem_range]
+  simp only [Set.mem_image, Set.mem_ofPred_eq, Set.image_univ, Set.mem_inter_iff, Set.mem_range]
   constructor
   · rintro ⟨d, ⟨h1, h2⟩⟩
     constructor
@@ -388,12 +388,12 @@ lemma Φjump (s t: ℕ+) (δ: ℤ) (k: ℕ) (h: Φ s t δ = nₖ s t k) (hlt: Φ
       unfold δnext
       apply Set.IsWF.min_eq_of_le
       · unfold Δfloored Δ
-        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, Int.cast_lt_zero]
+        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_ofPred_eq, Int.cast_lt_zero]
         refine ⟨?_, δneg⟩
         use 0, 0
         simp
       · unfold Δfloored Δ
-        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, and_imp, forall_exists_index]
+        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_ofPred_eq, and_imp, forall_exists_index]
         intro d p q pqeq _
         rw [← pqeq]
         norm_cast
@@ -428,12 +428,14 @@ and show that it converges to a nice function.
 /-
 Λexchange: the bijection between (i, (p, q) ∈ (Λceiled i)) ↔ ((p, q), (i - δₚ(p, q)))
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma ΛexchangeMem (s t: ℕ+) (pq :(ℕ × ℕ)) (i: ℕ):
 pq ∈ (Λceiled s t (i + pq.1 * s + pq.2 * t: ℕ)).toFinset := by
   unfold Λceiled
-  simp only [Nat.cast_add, Nat.cast_mul, Set.mem_toFinset, Set.mem_setOf_eq, add_le_add_iff_right,
+  simp only [Nat.cast_add, Nat.cast_mul, Set.mem_toFinset, Set.mem_ofPred_eq, add_le_add_iff_right,
     le_add_iff_nonneg_left, Nat.cast_nonneg]
 
+set_option backward.isDefEq.respectTransparency false in
 def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t i).toFinset) where
   toFun | ⟨pq, i⟩ => ⟨i + pq.1 * s + pq.2 * t, ⟨pq, ΛexchangeMem s t pq i⟩⟩
   invFun | ⟨i, ⟨pq, le⟩ ⟩ => ⟨pq, i - (pq.1 * s + pq.2 * t)⟩
@@ -450,7 +452,7 @@ def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t
     rintro ⟨i, ⟨pq, le⟩⟩
     simp only [Sigma.mk.injEq]
     unfold Λceiled at le
-    simp only [Set.mem_toFinset, Set.mem_setOf_eq] at le
+    simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at le
     constructor
     · rw [add_assoc]
       refine Nat.sub_add_cancel ?_
@@ -459,7 +461,7 @@ def Λexchange (s t: ℕ+): ((ℕ × ℕ) × ℕ) ≃ ((i: ℕ) × (Λceiled s t
     · refine (Subtype.heq_iff_coe_eq ?_).mpr rfl
       rintro ⟨p, q⟩
       unfold Λceiled
-      simp only [Nat.cast_add, Nat.cast_mul, Set.mem_toFinset, Set.mem_setOf_eq]
+      simp only [Nat.cast_add, Nat.cast_mul, Set.mem_toFinset, Set.mem_ofPred_eq]
       have cast: ((i - (pq.1 * ↑s + pq.2 * ↑t)): ℕ) = ((i:ℝ) - (pq.1 * ↑s + pq.2 * ↑t:ℕ)) := by
         refine Nat.cast_sub ?_
         rify
@@ -1000,7 +1002,7 @@ theorem ΦFormula (s t: ℕ+) (i: ℕ):
     unfold Filter.Eventually
     apply mem_nhds_iff.mpr
     use {x:ℂ | ‖x‖ <2⁻¹}
-    simp only [Set.setOf_subset_setOf, Set.mem_setOf_eq, norm_zero, inv_pos, Nat.ofNat_pos,
+    simp only [Set.ofPred_subset_ofPred, Set.mem_ofPred_eq, norm_zero, inv_pos, Nat.ofNat_pos,
       and_true]
     constructor
     · apply ZΦ_sum
@@ -1015,7 +1017,7 @@ theorem ΦFormula (s t: ℕ+) (i: ℕ):
     unfold Filter.Eventually
     apply mem_nhds_iff.mpr
     use {x:ℂ | ‖x‖ <2⁻¹}
-    simp only [Set.setOf_subset_setOf, Set.mem_setOf_eq, norm_zero, inv_pos, Nat.ofNat_pos,
+    simp only [Set.ofPred_subset_ofPred, Set.mem_ofPred_eq, norm_zero, inv_pos, Nat.ofNat_pos,
       and_true]
     constructor
     · obtain ZΦ_sum2 := ZΦ_sum2
@@ -1490,14 +1492,14 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
     have mem: dE_int s t n - 1 ∈ Set.Iic (dE_int s t n - 1) := by simp only [Set.mem_Iic, le_refl]
     rw [← Φ_inv s t n (le_of_lt n1)] at mem
     unfold ΔceiledByΦ at mem
-    simp only [Set.mem_setOf_eq] at mem
+    simp only [Set.mem_ofPred_eq] at mem
     exact mem
   have rightSide (n: ℝ) (n1: n > 1): n < Φ s t (dE_int s t n) := by
     have mem: dE_int s t n ∉ Set.Iic (dE_int s t n - 1) := by simp only [Set.mem_Iic,
       le_sub_self_iff, Int.reduceLE, not_false_eq_true]
     rw [← Φ_inv s t n (le_of_lt n1)] at mem
     unfold ΔceiledByΦ at mem
-    simp only [Set.mem_setOf_eq, not_le] at mem
+    simp only [Set.mem_ofPred_eq, not_le] at mem
     exact mem
   have Φ0 {d: ℤ}: Φ s t d > (0:ℝ) := by
     norm_cast
@@ -1573,7 +1575,7 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
     apply le_of_lt
     have mem: d ∈ ΔceiledByΦ s t (Φ s t d) := by
       unfold ΔceiledByΦ
-      simp only [Nat.cast_le, Set.mem_setOf_eq, le_refl]
+      simp only [Nat.cast_le, Set.mem_ofPred_eq, le_refl]
     have g1: Φ s t d ≥ (1:ℝ) := by
       norm_cast
       unfold Φ
@@ -1615,7 +1617,7 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
       use 2
       intro n n2
       have n1 : n > 1 := lt_of_lt_of_le (by norm_num) n2
-      simp only [Set.mem_setOf_eq]
+      simp only [Set.mem_ofPred_eq]
     · apply leftSide' n n1
     · apply le_of_lt
       apply rightSide' n n1
@@ -1814,7 +1816,7 @@ Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds limit) :=
 
       have mem: k ∈ (kceiled s t (max n 1)).toFinset := by
         unfold kceiled
-        simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_setOf_eq]
+        simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_ofPred_eq]
         left
         exact le
 
@@ -1846,7 +1848,7 @@ Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds limit) :=
           · exact nₖpos
           · obtain nₖmem := Finset.mem_of_max k'
             unfold kceiled at nₖmem
-            simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_setOf_eq] at nₖmem
+            simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_ofPred_eq] at nₖmem
             obtain l|r := nₖmem
             · exact l
             · rify at r
@@ -1871,7 +1873,7 @@ Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds limit) :=
             simp only [not_le] at lt
             have mem: (kₙ' n).choose + 1 ∈ (kceiled (↑↑s) (↑↑t) (max n 1)).toFinset := by
               unfold kceiled
-              simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_setOf_eq]
+              simp only [le_sup_iff, Nat.cast_le_one, Set.mem_toFinset, Set.mem_ofPred_eq]
               left
               exact le_of_lt lt
             obtain le_max := Finset.le_max mem

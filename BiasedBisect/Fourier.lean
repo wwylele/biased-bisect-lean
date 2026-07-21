@@ -77,6 +77,7 @@ lemma smStepNonneg (μ x: ℝ) [PosReal μ]: 0 ≤ smStep μ x := by
 noncomputable
 def φReg (s t μ σ x: ℝ) := rexp (- σ * x) * (Set.indicator (Set.Ici 0) (fun _ ↦ 1) x + ∑' pq,  Jₚ pq * (smStep μ (x - (pq.1 * s + pq.2 * t))))
 
+set_option backward.isDefEq.respectTransparency false in
 lemma φRegLe (s t μ σ x: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
 φReg s t μ σ x ≤ rexp (- σ * x) * φ s t x := by
   unfold φReg
@@ -89,7 +90,7 @@ lemma φRegLe (s t μ σ x: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
   · have shut: ∀pq ∉ ((Λceiled s t x).toFinset), ((Jₚ pq) * smStep μ (x - (↑pq.1 * s + ↑pq.2 * t)): ℝ) = 0 := by
       intro pq pqnotmem
       unfold Λceiled at pqnotmem
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq, not_le] at pqnotmem
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq, not_le] at pqnotmem
       obtain range := sub_nonpos_of_le (le_of_lt pqnotmem)
       apply mul_eq_zero_of_right
       unfold smStep
@@ -146,6 +147,7 @@ lemma φRegNonneg (s t μ σ x: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
     apply mul_nonneg (by apply Nat.cast_nonneg')
     apply smStepNonneg
 
+set_option backward.isDefEq.respectTransparency false in
 lemma JceiledContinuous (s t μ : ℝ) [PosReal s] [PosReal t] [PosReal μ]:
 Continuous (fun x ↦ ∑' (pq : ℕ × ℕ), Jₚ pq * smStep μ (x - (pq.1 * s + pq.2 * t)))  := by
   let coverSet := fun (x:ℝ) ↦ Set.Iio (x + 1)
@@ -168,7 +170,7 @@ Continuous (fun x ↦ ∑' (pq : ℕ × ℕ), Jₚ pq * smStep μ (x - (pq.1 * s
     apply tsum_eq_sum
     intro pq pqnotmem
     unfold Λceiled at pqnotmem
-    simp only [Set.mem_toFinset, Set.mem_setOf_eq, not_le] at pqnotmem
+    simp only [Set.mem_toFinset, Set.mem_ofPred_eq, not_le] at pqnotmem
     apply mul_eq_zero_of_right
     unfold smStep
     have cond: x - (pq.1 * s + pq.2 * t) ≤ 0 := sub_nonpos_of_le (le_of_lt (lt_trans xmem pqnotmem))

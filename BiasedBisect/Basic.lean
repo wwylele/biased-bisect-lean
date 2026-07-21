@@ -138,7 +138,7 @@ and the associated objects is either the same, or scaled by $l$.
 theorem Δ_homo(s t l: ℝ) [lpos: PosReal l]: ∀δ, δ ∈ Δ s t ↔ l * δ ∈ Δ (l * s) (l * t) := by
   intro d
   unfold Δ
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   constructor
   · rintro ⟨p, ⟨q, mem⟩⟩
     use p, q
@@ -187,7 +187,7 @@ def Λceiled(s t ceil: ℝ) :=
 lemma Λceiled_symm (s t δ: ℝ) (p q: ℕ) (h: (p, q) ∈ Λceiled s t δ):
 (q, p) ∈ Λceiled t s δ := by
   unfold Λceiled at h ⊢
-  simp only [Set.mem_setOf_eq] at h ⊢
+  simp only [Set.mem_ofPred_eq] at h ⊢
   rw [add_comm]
   exact h
 
@@ -195,7 +195,7 @@ lemma Λceiled_homo (s t δ l: ℝ) [PosReal l]:
 Λceiled s t δ = Λceiled (l * s) (l * t) (l * δ) := by
   unfold Λceiled
   ext x
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   rw [← mul_assoc, ← mul_assoc, mul_comm _ l, mul_comm _ l]
   rw [mul_assoc, mul_assoc, ← mul_add]
   rw [mul_le_mul_iff_right₀ PosReal.pos]
@@ -206,7 +206,7 @@ As an important example, the subset ceiled by $0$ only includes the point $(0, 0
 lemma Λceiled₀ (s t: ℝ) [PosReal s] [PosReal t]: Λceiled s t 0 = {(0, 0)} := by
   unfold Λceiled
   ext ⟨p,q⟩
-  simp only [Set.mem_setOf_eq, Prod.mk_zero_zero, Set.mem_singleton_iff, Prod.mk_eq_zero]
+  simp only [Set.mem_ofPred_eq, Prod.mk_zero_zero, Set.mem_singleton_iff, Prod.mk_eq_zero]
   constructor
   · intro sum_le_zero
     apply sum_to_zero at sum_le_zero
@@ -231,7 +231,7 @@ lemma Λceiled_neg (s t δ: ℝ) (neg: δ < 0) [PosReal s] [PosReal t]:
 Λceiled s t δ = ∅ := by
   unfold Λceiled
   ext pq
-  simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_le]
+  simp only [Set.mem_ofPred_eq, Set.mem_empty_iff_false, iff_false, not_le]
   apply lt_of_lt_of_le neg
   apply add_nonneg
   all_goals exact mul_nonneg (Nat.cast_nonneg _) (le_of_lt PosReal.pos)
@@ -251,7 +251,7 @@ lemma Λ_map_ceiled (s t ceil: ℝ): δₚ s t '' (Λceiled s t ceil) = Δceiled
     use (p, q)
     constructor
     · unfold Λceiled
-      simp only [Set.mem_setOf_eq] at bounded
+      simp only [Set.mem_ofPred_eq] at bounded
       rw [← deltaEFromDot] at bounded
       exact bounded
     · exact deltaEFromDot
@@ -270,14 +270,14 @@ instance ℕceiled_finite (ceil: ℝ): Finite (ℕceiled ceil) := by
       apply Set.eq_empty_of_forall_notMem
       intro s
       unfold ℕceiled
-      simp only [Set.mem_setOf_eq, not_le]
+      simp only [Set.mem_ofPred_eq, not_le]
       apply lt_of_lt_of_le h
       exact Nat.cast_nonneg' s
     rw [empty]
     exact Finite.of_subsingleton
   · unfold ℕceiled
     apply Set.Finite.subset (Set.finite_le_nat (Nat.floor ceil))
-    simp only [Set.setOf_subset_setOf]
+    simp only [Set.ofPred_subset_ofPred]
     intro s hs
     exact (Nat.le_floor_iff (le_of_not_gt h)).mpr hs
 
@@ -296,10 +296,10 @@ lemma Λceiled_in_rec (s t ceil: ℝ) [PosReal s] [PosReal t]:
   rintro ⟨p, q⟩ pqInBound
   unfold ΛRec ℕceiled
   unfold Λceiled at pqInBound
-  simp only [Set.mem_setOf_eq] at pqInBound
+  simp only [Set.mem_ofPred_eq] at pqInBound
   constructor
   all_goals
-  · simp only [Set.mem_setOf_eq]
+  · simp only [Set.mem_ofPred_eq]
     apply (le_div_iff₀' PosReal.pos).mpr
     rw [mul_comm]
     try apply le_of_add_le_of_nonneg_left pqInBound
@@ -345,7 +345,7 @@ lemma Δ_WF (s t: ℝ) [PosReal s] [PosReal t]: Set.IsWF (Δ s t) := by
       rw [Δceiled]
       constructor
       · exact assume_Δ_has_chain n
-      · simp only [Set.mem_setOf_eq]
+      · simp only [Set.mem_ofPred_eq]
         apply fStrictAnti.le_iff_ge.mpr
         simp only [zero_le]
   exact Δceiled_has_no_chain (f 0) f fStrictAnti Δ_chain_is_in_Δceiled
@@ -396,7 +396,7 @@ lemma Δfloored_homo (s t floor l: ℝ) [PosReal l]:
 ∀δ, δ ∈ Δfloored s t floor ↔ l * δ ∈ Δfloored (l * s) (l * t) (l * floor) := by
   unfold Δfloored
   intro d
-  simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq]
+  simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_ofPred_eq]
   constructor
   · rintro ⟨dgrid, dfloor⟩
     constructor
@@ -426,7 +426,7 @@ lemma Δfloored_nonempty (s t floor: ℝ) [PosReal s] [PosReal t]:
   constructor
   · use (Nat.ceil (floor / s) + 1), 1
     norm_num
-  · simp only [gt_iff_lt, Set.mem_setOf_eq]
+  · simp only [gt_iff_lt, Set.mem_ofPred_eq]
     nth_rewrite 1 [← add_zero floor]
     apply add_lt_add
     · apply (div_lt_iff₀ PosReal.pos).mp
@@ -484,7 +484,7 @@ lemma δnext_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (δnext s t) := b
   apply Set.IsWF.min_le_min_of_subset
   unfold Δfloored
   apply Set.inter_subset_inter_right
-  simp only [gt_iff_lt, Set.setOf_subset_setOf]
+  simp only [gt_iff_lt, Set.ofPred_subset_ofPred]
   intro c bc
   exact lt_of_le_of_lt le bc
 
@@ -504,7 +504,7 @@ lemma δnext_larger (s t floor: ℝ) [PosReal s] [PosReal t]: δnext s t floor >
   have h (δ: ℝ) (mem: δ ∈ Δfloored s t floor): δ > floor := by
     unfold Δfloored at mem
     apply Set.mem_of_mem_inter_right at mem
-    simp only [Set.mem_setOf_eq] at mem
+    simp only [Set.mem_ofPred_eq] at mem
     exact mem
   apply h (δnext s t floor) (Set.IsWF.min_mem _ _)
 
@@ -517,7 +517,7 @@ lemma Λceiled_gap (s t δ β: ℝ) [PosReal s] [PosReal t] (leftBound: δ ≤ �
 Λceiled s t δ = Λceiled s t β := by
   unfold Λceiled
   ext ⟨p, q⟩
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   constructor
   · intro ltδ
     apply le_trans ltδ leftBound
@@ -526,10 +526,10 @@ lemma Λceiled_gap (s t δ β: ℝ) [PosReal s] [PosReal t] (leftBound: δ ≤ �
     simp only [not_le] at gtδ ⊢
     have inFloored: p * s + q * t ∈ Δfloored s t δ := by
       unfold Δfloored
-      simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq]
+      simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_ofPred_eq]
       constructor
       · unfold Δ
-        simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+        simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
       · exact gtδ
     apply Set.IsWF.not_lt_min _ _ at inFloored
     simp only [not_lt] at inFloored
@@ -598,7 +598,7 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
       simp only [Set.mem_singleton_iff] at maxNe
       unfold Δceiled at maxInCeil
       rcases maxInCeil with ⟨maxOnGrid, maxLe⟩
-      simp only [Set.mem_setOf_eq] at maxLe
+      simp only [Set.mem_ofPred_eq] at maxLe
       exact lt_of_le_of_ne maxLe maxNe
     rcases (prev max maxmem maxlt) with ⟨prevk, preveq⟩
     use prevk + 1
@@ -614,7 +614,7 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
       rintro b bmem
       unfold Δfloored at bmem
       rcases bmem with ⟨bOnGrid, bLtMax⟩
-      simp only [gt_iff_lt, Set.mem_setOf_eq] at bLtMax
+      simp only [gt_iff_lt, Set.mem_ofPred_eq] at bLtMax
       contrapose bLtMax with bLeThis
       simp only [not_le] at bLeThis
       simp only [not_lt]
@@ -625,7 +625,7 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
         · unfold Δceiled
           constructor
           · exact bOnGrid
-          · simp only [Set.mem_setOf_eq]
+          · simp only [Set.mem_ofPred_eq]
             exact le_of_lt bLeThis
         · simp only [Set.mem_singleton_iff]
           exact ne_of_lt bLeThis
@@ -641,7 +641,7 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
       unfold Δceiled
       constructor
       · exact thismem
-      · simp only [Set.mem_setOf_eq, le_refl]
+      · simp only [Set.mem_ofPred_eq, le_refl]
     have this_is_0: this = 0 := by
       have subsingle: (Δceiled s t this).Subsingleton := by
         rw [single]
@@ -652,11 +652,11 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
       constructor
       · unfold Δceiled
         constructor
-        · unfold Δ; simp only [Set.mem_setOf_eq]
+        · unfold Δ; simp only [Set.mem_ofPred_eq]
           use 0, 0; simp only [CharP.cast_eq_zero, zero_mul, add_zero]
-        · simp only [Set.mem_setOf_eq]
+        · simp only [Set.mem_ofPred_eq]
           unfold Δ at thismem;
-          simp only [Set.mem_setOf_eq] at thismem
+          simp only [Set.mem_ofPred_eq] at thismem
           rcases thismem with ⟨p, ⟨q, pqmem⟩⟩
           rw [← pqmem]
           apply add_nonneg
@@ -666,7 +666,7 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
         · unfold Δceiled
           constructor
           · exact thismem
-          · simp only [Set.mem_setOf_eq, le_refl]
+          · simp only [Set.mem_ofPred_eq, le_refl]
         · exact fun a ↦ notZero (id (Eq.symm a))
     rw [this_is_0]
     exact rfl
@@ -845,7 +845,7 @@ lemma Λline_nonempty (s t δ: ℝ) (δinΩ: δ ∈ Δ s t): (Λline s t δ).Non
 lemma Λline_in_Λceiled (s t δ: ℝ): Λline s t δ ⊆ Λceiled s t δ := by
   rintro ⟨p, q⟩ pqOnLine
   unfold Λceiled
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   apply le_of_eq
   exact pqOnLine
 
@@ -976,6 +976,7 @@ def shut(p: ℕ) (value: ℕ) := match p with
 `Jline` can be shifted by $s$. The sum will however be affected by the potential point
 on the $p = 0$ boundary, hence the equality needs to remove such point.
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma Jline_s (s t δ: ℝ) [PosReal s] [PosReal t]:
 Jline s t (δ - s) = ∑⟨p, q⟩ ∈ (Λline s t δ).toFinset, shut p (Jₚ (p - 1, q)) := by
   unfold Jline
@@ -1062,6 +1063,7 @@ Jline s t (δ - t) = ∑⟨p, q⟩ ∈ (Λline s t δ).toFinset, shut q (Jₚ (p
 Derived from the recurrence of binomial coefficents,
 `Jline` is also recurrent, except for at $δ = 0$.
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma Jline_rec (s t δ: ℝ) (δ0: δ ≠ 0) [PosReal s] [PosReal t]:
 Jline s t δ = Jline s t (δ - s) + Jline s t (δ - t) := by
   rw [Jline_s, Jline_t]
@@ -1261,7 +1263,7 @@ lemma Jceiled_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (Jceiled s t) :=
   apply Finset.sum_le_sum_of_subset_of_nonneg
   · simp only [Set.subset_toFinset, Set.coe_toFinset]
     unfold Λceiled
-    simp only [Set.setOf_subset_setOf, Prod.forall]
+    simp only [Set.ofPred_subset_ofPred, Prod.forall]
     intro p q pq
     exact le_trans pq ab
   · intro _ _ _
@@ -1271,6 +1273,7 @@ lemma Jceiled_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (Jceiled s t) :=
 While `Jceiled` is only weakly increasing, and one can't deduce the relation of two $δ$ from their `Jceiled`,
 it is possible give a relation between $δ$ if one of them is `δₖ`
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma Jceiled_mono' (s t δ: ℝ) (k: ℕ) [PosReal s] [PosReal t] (h: Jceiled s t δ = Jceiled s t (δₖ s t k)):
 δₖ s t k ≤ δ := by
   contrapose! h with below
@@ -1282,11 +1285,11 @@ lemma Jceiled_mono' (s t δ: ℝ) (k: ℕ) [PosReal s] [PosReal t] (h: Jceiled s
     Set.mem_toFinset.mpr extramem'
   refine Finset.sum_lt_sum_of_subset ?_ extramem'' ?_ ?_ ?_
   · unfold Λceiled
-    simp only [Set.subset_toFinset, Set.coe_toFinset, Set.setOf_subset_setOf, Prod.forall]
+    simp only [Set.subset_toFinset, Set.coe_toFinset, Set.ofPred_subset_ofPred, Prod.forall]
     intro a b le
     exact le_of_lt (lt_of_le_of_lt le below)
   · unfold Λceiled
-    simp only [Set.mem_toFinset, Set.mem_setOf_eq, not_le]
+    simp only [Set.mem_toFinset, Set.mem_ofPred_eq, not_le]
     unfold Λline δₚ at extramem
     simp only [Set.mem_preimage] at extramem
     obtain extraeq := Set.eq_of_mem_singleton extramem
@@ -1309,7 +1312,7 @@ Jceiled s t δ + Jline s t (δnext s t δ) = Jceiled s t (δnext s t δ) := by
     apply Set.disjoint_iff_forall_ne.mpr
     rintro ⟨p, q⟩ peCeiled ⟨p2, q2⟩ pqLine
     unfold Λceiled at peCeiled
-    simp only [Set.mem_setOf_eq] at peCeiled
+    simp only [Set.mem_ofPred_eq] at peCeiled
     unfold Λline at pqLine
     apply Set.mem_preimage.mp at pqLine
     apply Set.eq_of_mem_singleton at pqLine
@@ -1331,12 +1334,12 @@ Jceiled s t δ + Jline s t (δnext s t δ) = Jceiled s t (δnext s t δ) := by
     constructor
     · rintro pqIn
       rcases pqIn with pqCeiled | pqLine
-      · unfold Λceiled at pqCeiled; simp only [Set.mem_setOf_eq] at pqCeiled
-        unfold Λceiled; simp only [Set.mem_setOf_eq]
+      · unfold Λceiled at pqCeiled; simp only [Set.mem_ofPred_eq] at pqCeiled
+        unfold Λceiled; simp only [Set.mem_ofPred_eq]
         exact le_trans pqCeiled (le_of_lt (δnext_larger s t δ))
       · unfold Λline at pqLine
         apply Set.eq_of_mem_singleton at pqLine
-        unfold Λceiled; simp only [Set.mem_setOf_eq]
+        unfold Λceiled; simp only [Set.mem_ofPred_eq]
         rw [← pqLine]
         unfold δₚ
         simp only [le_refl]
@@ -1344,16 +1347,16 @@ Jceiled s t δ + Jline s t (δnext s t δ) = Jceiled s t (δnext s t δ) := by
       by_cases pqCeiledSmaller: (p, q) ∈ Λceiled s t δ
       · left; exact pqCeiledSmaller
       · right
-        unfold Λceiled at pqCeiled; simp only [Set.mem_setOf_eq] at pqCeiled
-        unfold Λceiled at pqCeiledSmaller; simp only [Set.mem_setOf_eq, not_le] at pqCeiledSmaller
+        unfold Λceiled at pqCeiled; simp only [Set.mem_ofPred_eq] at pqCeiled
+        unfold Λceiled at pqCeiledSmaller; simp only [Set.mem_ofPred_eq, not_le] at pqCeiledSmaller
         unfold Λline
         apply Set.mem_singleton_of_eq
         unfold δₚ; simp only
         have pqFloored: p * s + q * t ∈ Δfloored s t δ := by
           unfold Δfloored
           constructor
-          · unfold Δ; simp only [Set.mem_setOf_eq]; use p, q;
-          · simp only [gt_iff_lt, Set.mem_setOf_eq]; exact pqCeiledSmaller
+          · unfold Δ; simp only [Set.mem_ofPred_eq]; use p, q;
+          · simp only [gt_iff_lt, Set.mem_ofPred_eq]; exact pqCeiledSmaller
         have pqUp: p * s + q * t ≥ δnext s t δ := by
           unfold δnext
           exact Set.IsWF.min_le _ _ pqFloored
@@ -1399,6 +1402,7 @@ Jceiled s t δ = 0 := by
   rw [empty]
   exact rfl
 
+set_option backward.isDefEq.respectTransparency false in
 lemma Jceiled_pos (s t δ: ℝ) (neg: 0 ≤ δ) [PosReal s] [PosReal t]:
 0 < Jceiled s t δ := by
   unfold Jceiled
@@ -1631,7 +1635,7 @@ wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
             · refine Set.range_subset_iff.mpr ?_
               intro ⟨p, q⟩
               unfold δₚ; unfold Δ
-              simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+              simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
             · simp only [Set.disjoint_singleton_left]
               contrapose lt with isOnΛ
               simp only [not_lt]
@@ -1641,7 +1645,7 @@ wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
               unfold Δfloored
               constructor
               · exact isOnΛ
-              · simp only [gt_iff_lt, Set.mem_setOf_eq, sub_lt_sub_iff_right]
+              · simp only [gt_iff_lt, Set.mem_ofPred_eq, sub_lt_sub_iff_right]
                 apply δₖ_mono
                 simp only [tsub_lt_self_iff, Nat.lt_one_iff, pos_of_gt, and_true]
                 exact Nat.zero_lt_of_ne_zero k0
@@ -1671,15 +1675,15 @@ wₖ s t k = if k = 0 then 1 else 1 + Jceiled s t (δₖ s t (k - 1) - t) := by
         constructor
         · have mem: δnext s t (δₖ s t kprev - t) ∈ Δ s t := by apply δnext_in_Δ
           unfold Δ at mem
-          simp only [Set.mem_setOf_eq] at mem
+          simp only [Set.mem_ofPred_eq] at mem
           rcases mem with ⟨p, ⟨q, pq⟩⟩
           rw [← pq]
           unfold Δ
-          simp only [Set.mem_setOf_eq]
+          simp only [Set.mem_ofPred_eq]
           use p, q + 1
           push_cast
           ring
-        · simp only [gt_iff_lt, Set.mem_setOf_eq]
+        · simp only [gt_iff_lt, Set.mem_ofPred_eq]
           apply lt_add_of_sub_right_lt
           apply δnext_larger
 
@@ -1848,22 +1852,22 @@ lemma wₖ_is_nₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: ∃k', wₖ s t 
       apply subset_antisymm_iff.mpr
       constructor
       · unfold Λceiled
-        simp only [Set.setOf_subset_setOf, Prod.forall]
+        simp only [Set.ofPred_subset_ofPred, Prod.forall]
         intro p q mem
         apply Finset.le_max_of_eq ?_ maxEq
         simp only [Set.mem_toFinset]
         unfold Δceiled
         constructor
         · unfold Δ
-          simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
-        · simp only [Set.mem_setOf_eq]
+          simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
+        · simp only [Set.mem_ofPred_eq]
           exact mem
       · unfold Λceiled
-        simp only [Set.setOf_subset_setOf, Prod.forall]
+        simp only [Set.ofPred_subset_ofPred, Prod.forall]
         intro p q mem
         unfold Δceiled at mem'
         have memle: max ∈ {δ | δ ≤ δₖ s t K - t} := by exact Set.mem_of_mem_inter_right mem'
-        simp only [Set.mem_setOf_eq] at memle
+        simp only [Set.mem_ofPred_eq] at memle
         apply le_trans mem memle
     · use 0
       unfold nₖ
@@ -1968,10 +1972,10 @@ lemma kceiled_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: kceiled s
 instance kceiled_finite (s t n: ℝ) [PosReal s] [PosReal t]: Finite (kceiled s t n) := by
   by_cases npos: n ≥ 0
   · have sub: kceiled s t n ⊆ ℕceiled (Nat.ceil n) := by
-      apply Set.subset_setOf.mpr
+      apply Set.subset_ofPred.mpr
       rintro k kmem
       unfold kceiled at kmem
-      simp only [Set.mem_setOf_eq] at kmem
+      simp only [Set.mem_ofPred_eq] at kmem
       contrapose kmem
       simp only [Nat.cast_le, not_le] at kmem
       simp only [not_le]
@@ -1987,7 +1991,7 @@ instance kceiled_finite (s t n: ℝ) [PosReal s] [PosReal t]: Finite (kceiled s 
       apply Set.eq_empty_of_forall_notMem
       intro x
       unfold kceiled
-      simp only [Set.mem_setOf_eq, not_le]
+      simp only [Set.mem_ofPred_eq, not_le]
       apply lt_of_lt_of_le npos
       apply Nat.cast_nonneg'
     rw [empty]
@@ -2026,12 +2030,13 @@ lemma kₙ_homo (s t n l: ℝ) [PosReal s] [PosReal t] [PosReal l]: kₙ s t n =
 One can recover the $k$ by composing `kₙ` and `nₖ`.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 lemma kₙ_inv (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 kₙ s t (nₖ s t k) = some k := by
   unfold kₙ kceiled
   apply finset_max_eq
-  · simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_setOf_eq, le_refl]
-  · simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_setOf_eq]
+  · simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_ofPred_eq, le_refl]
+  · simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_ofPred_eq]
     intro k'
     exact (nₖ_mono s t).le_iff_le.mp
 
@@ -2048,19 +2053,20 @@ kₙ s t n = some k := by
     apply Nat.le_of_lt_add_one
     exact (nₖ_mono s t).lt_iff_lt.mp nlt
 
+set_option backward.isDefEq.respectTransparency false in
 lemma nₖ_inv (s t n: ℝ) (k: ℕ) [PosReal s] [PosReal t] (keq: kₙ s t n = some k):
 nₖ s t k ≤ n ∧ n < nₖ s t (k + 1) := by
   constructor
   · unfold kₙ at keq
     have maxle: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
     unfold kceiled at maxle
-    simp only [Set.mem_toFinset, Set.mem_setOf_eq] at maxle
+    simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at maxle
     exact maxle
   · by_contra le
     simp only [not_lt] at le
     have mem: k + 1 ∈ (kceiled s t n).toFinset := by
       unfold kceiled
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
       exact le
     unfold kₙ at keq
     have what: k + 1 ≤ k := by apply Finset.le_max_of_eq mem keq
@@ -2087,7 +2093,7 @@ lemma kₙ_exist (s t n: ℝ) (np: n ≥ 1) [PosReal s] [PosReal t]:
   apply Set.Aesop.toFinset_nonempty_of_nonempty
   use 0
   unfold kceiled
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   unfold nₖ
   rify
   exact np
@@ -2095,6 +2101,7 @@ lemma kₙ_exist (s t n: ℝ) (np: n ≥ 1) [PosReal s] [PosReal t]:
 /-!
 Mean while, $n < 1$ never gives a valid $k$.
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma kₙ_not_exist (s t n: ℝ) (np: n < 1) [PosReal s] [PosReal t]: kₙ s t n = none := by
   unfold kₙ
   have empty: (kceiled s t n).toFinset = ∅ := by
@@ -2102,7 +2109,7 @@ lemma kₙ_not_exist (s t n: ℝ) (np: n < 1) [PosReal s] [PosReal t]: kₙ s t 
     simp only [Set.toFinset_eq_empty]
     apply Set.eq_empty_of_forall_notMem
     intro k
-    simp only [Set.mem_setOf_eq, not_le]
+    simp only [Set.mem_ofPred_eq, not_le]
     apply lt_of_lt_of_le np
     simp only [Nat.one_le_cast]
     rw [← n₀ s t]
@@ -2146,6 +2153,7 @@ l * dE s t n = dE (l * s) (l * t) n := by
 /-!
 ... and weakly increasing.
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma dE_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (dE s t) := by
   unfold Monotone
   intro m n mnle
@@ -2181,13 +2189,13 @@ lemma dE_mono (s t: ℝ) [PosReal s] [PosReal t]: Monotone (dE s t) := by
       exact Finset.mem_of_max k'eq
     rw [← Finset.coe_max' kne] at keq
     rw [← Finset.coe_max' k'ne] at k'eq
-    have keq: (kceiled s t m).toFinset.max' kne = k := by exact ENat.coe_inj.mp keq
-    have k'eq: (kceiled s t n).toFinset.max' k'ne = k' := by exact ENat.coe_inj.mp k'eq
+    have keq: (kceiled s t m).toFinset.max' kne = k := by exact ENat.natCast_inj.mp keq
+    have k'eq: (kceiled s t n).toFinset.max' k'ne = k' := by exact ENat.natCast_inj.mp k'eq
     rw [← keq]
     rw [← k'eq]
     apply Finset.max'_subset
     unfold kceiled
-    simp only [Set.subset_toFinset, Set.coe_toFinset, Set.setOf_subset_setOf]
+    simp only [Set.subset_toFinset, Set.coe_toFinset, Set.ofPred_subset_ofPred]
     intro k km
     apply le_trans km mnle
 
@@ -2214,6 +2222,7 @@ the intervals listed above can degenerate.
 There are similar properties with `wₖ'` and `δₖ - s`, but the proof is omitted.
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 lemma w_eq (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
 (low: w ≥ wₖ s t k) (r: w < wₖ s t (k + 1)):
 dE s t w = δₖ s t k - t := by
@@ -2221,7 +2230,7 @@ dE s t w = δₖ s t k - t := by
   δ ∉ Δ s t := by
     by_contra mem
     have δtmem: δ + t ∈ Δ s t := by
-      unfold Δ at mem ⊢; simp only [Set.mem_setOf_eq] at mem ⊢
+      unfold Δ at mem ⊢; simp only [Set.mem_ofPred_eq] at mem ⊢
       rcases mem with ⟨p, ⟨q, pq⟩⟩
       use p, q + 1
       rw [← pq]
@@ -2230,7 +2239,7 @@ dE s t w = δₖ s t k - t := by
     have δtmemfloor: δ + t ∈ Δfloored s t (δₖ s t k') := by
       unfold Δfloored; constructor
       · exact δtmem
-      · simp only [gt_iff_lt, Set.mem_setOf_eq]
+      · simp only [gt_iff_lt, Set.mem_ofPred_eq]
         exact lt_add_of_tsub_lt_right lower
     have δnext_smaller: δₖ s t (k' + 1) ≤ δ + t := by
       unfold δₖ δnext
@@ -2254,7 +2263,7 @@ dE s t w = δₖ s t k - t := by
       have bmm: b ∈ Δ s t := by
         rw [← pqm]
         unfold δₚ Δ
-        simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+        simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
       exact Ne.symm (ne_of_mem_of_not_mem bmm notmem)
     have zero: Jtₖ s t k = 0 := by
       unfold Jtₖ Jline
@@ -2313,14 +2322,14 @@ dE s t w = δₖ s t k - t := by
           unfold Δ at Lmem
           rcases Lmem with ⟨p, ⟨q, pq⟩⟩
           rw [← pq]
-          unfold Δ; simp only [Set.mem_setOf_eq]
+          unfold Δ; simp only [Set.mem_ofPred_eq]
           use p, q+1
           simp only [Nat.cast_add, Nat.cast_one]
           ring
         have LtinFloor: δₖ s t L + t ∈ Δfloored s t (δₖ s t K) := by
           unfold Δfloored; constructor
           · exact Ltmem
-          · simp only [gt_iff_lt, Set.mem_setOf_eq]; exact h
+          · simp only [gt_iff_lt, Set.mem_ofPred_eq]; exact h
         have Ltltnext: δₖ s t L + t ≥ δnext s t (δₖ s t K) := by
           unfold δnext
           exact Set.IsWF.min_le _ _ LtinFloor
@@ -2338,9 +2347,9 @@ dE s t w = δₖ s t k - t := by
     unfold kₙ
     unfold kceiled
     apply finset_max_eq
-    · simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+    · simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
       exact low
-    · simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+    · simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
       intro n n_le
       have nlt: nₖ s t n < nₖ s t (l + 1) := by
         rify
@@ -2355,6 +2364,7 @@ dE s t w = δₖ s t k - t := by
   simp only
   exact Leq
 
+set_option backward.isDefEq.respectTransparency false in
 lemma w_lt (s t w: ℝ) (k: ℕ) (kh: k ≥ 1) [PosReal s] [PosReal t]
 (low: w ≥ 1) (high: w < wₖ s t k):
 dE s t w < δₖ s t k - t := by
@@ -2372,7 +2382,7 @@ dE s t w < δₖ s t k - t := by
   unfold kₙ at leq
   unfold kceiled at leq
   apply Finset.mem_of_max at leq
-  simp only [Set.mem_toFinset, Set.mem_setOf_eq] at leq
+  simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at leq
   by_cases Leq0: l = 0
   · rw [Leq0, δ₀]
     have Jceiled_lt: 1 + (Jceiled s t (δₖ s t K - t)) > (1:ℝ) := lt_of_lt_of_le' high low
@@ -2403,6 +2413,7 @@ dE s t w < δₖ s t k - t := by
     exact δnext_larger s t (δₖ s t K)
 
 
+set_option backward.isDefEq.respectTransparency false in
 lemma w_gt (s t w: ℝ) (k: ℕ) [PosReal s] [PosReal t]
 (low: w ≥ wₖ s t (k + 1)):
 dE s t w > δₖ s t k - t := by
@@ -2422,7 +2433,7 @@ dE s t w > δₖ s t k - t := by
     simp only [gt_iff_lt, not_lt] at le
     have what: l + 1 ≤ l := by
       refine Finset.le_max_of_eq ?_ leq
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
       exact le
     simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
 
@@ -2558,7 +2569,7 @@ wₘᵢₙ s t n + wₘₐₓ t s n = n := by
     have mem: 1 ∈ (kceiled s t n).toFinset := by
       simp only [Set.mem_toFinset]
       unfold kceiled
-      simp only [Set.mem_setOf_eq]
+      simp only [Set.mem_ofPred_eq]
       rw [n₁]
       exact n2
     apply Finset.le_max_of_eq mem keq
@@ -2594,7 +2605,7 @@ lemma wₘᵢₙ_min (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘᵢ�
   have mem: 1 ∈ (kceiled s t n).toFinset := by
     simp only [Set.mem_toFinset]
     unfold kceiled
-    simp only [Set.mem_setOf_eq]
+    simp only [Set.mem_ofPred_eq]
     rw [n₁]
     exact h
   apply Finset.le_max_of_eq mem kexist
@@ -2607,7 +2618,7 @@ lemma wₘₐₓ_max (s t n: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]: wₘₐ�
     have mem: 1 ∈ (kceiled s t n).toFinset := by
       simp only [Set.mem_toFinset]
       unfold kceiled
-      simp only [Set.mem_setOf_eq]
+      simp only [Set.mem_ofPred_eq]
       rw [n₁]
       exact h
     apply Finset.le_max_of_eq mem kexist
@@ -2749,7 +2760,7 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
     have mem: 1 ∈ (kceiled s t n).toFinset := by
       simp only [Set.mem_toFinset]
       unfold kceiled
-      simp only [Set.mem_setOf_eq]
+      simp only [Set.mem_ofPred_eq]
       rw [n₁]
       exact n2
     apply Finset.le_max_of_eq mem keq
@@ -3066,7 +3077,7 @@ dD s t n w = 0 := by
     refine Finset.le_max_of_eq ?_ kltop
     simp only [Set.mem_toFinset]
     unfold kceiled
-    simp only [Set.mem_setOf_eq]
+    simp only [Set.mem_ofPred_eq]
     rw [n₁]
     exact h
   have k1rel: dE s t w = δₖ s t kl - t := w_eq s t w kl kl1 (le_of_lt lw) rw
@@ -3084,6 +3095,7 @@ dD s t n w = 0 := by
   rw [k1rel, k2rel]
   simp only [sub_sub_sub_cancel_left, sub_add_cancel, sub_self]
 
+set_option backward.isDefEq.respectTransparency false in
 lemma dD_neg (s t n w: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w > 1) (rightBound: w < wₘᵢₙ s t n):
 dD s t n w < 0 := by
@@ -3096,7 +3108,7 @@ dD s t n w < 0 := by
     refine Finset.le_max_of_eq ?_ keq
     simp only [Set.mem_toFinset]
     unfold kceiled
-    simp only [Set.mem_setOf_eq]
+    simp only [Set.mem_ofPred_eq]
     rw [n₁]
     exact h
 
@@ -3109,7 +3121,7 @@ dD s t n w < 0 := by
   have kmem: k ∈ (kceiled s t n).toFinset := by
     exact Finset.mem_of_max keq
   unfold kceiled at kmem
-  simp only [Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+  simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
 
   have symm: nₖ s t k - wₖ s t k = (wₖ t s k: ℝ) := by
     apply sub_eq_of_eq_add
@@ -3163,7 +3175,7 @@ dD s t n w < 0 := by
           simp only [not_lt] at ge
           have h: (k + 1) ∈ kceiled s t n := by
             unfold kceiled
-            simp only [Set.mem_setOf_eq]; exact ge
+            simp only [Set.mem_ofPred_eq]; exact ge
           have h': (k + 1) ∈ (kceiled s t n).toFinset := by
             simp only [Set.mem_toFinset]
             exact h
@@ -3336,6 +3348,7 @@ lemma E_symm (s t n: ℝ) [PosReal s] [PosReal t]: E s t n = E t s n := by
 /-!
 ... and can be expressed as an integral.
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma E_integral (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
 E s t n = ∫ x in (1: ℝ)..n, dE s t x + s + t := by
   rcases kₙ_exist s t n n1 with ⟨k, keq⟩
@@ -3359,7 +3372,7 @@ E s t n = ∫ x in (1: ℝ)..n, dE s t x + s + t := by
   unfold kₙ at keq
   have kmem: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
   unfold kceiled at kmem
-  simp only [Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+  simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
   rw [Set.uIcc_of_le kmem] at xmem
   rcases xmem with ⟨low, high⟩
   simp only [add_left_inj]
@@ -3512,6 +3525,7 @@ Eₖ s t k = E s t (wₖ s t k) + E s t (wₖ' s t k) +
     push_cast
     ring
 
+set_option backward.isDefEq.respectTransparency false in
 lemma Eₖ_lerp (s t: ℝ) (k: ℕ) (a: ℝ) (low: a ≥ 0) (high: a ≤ 1) [PosReal s] [PosReal t]:
 E s t ((1 - a) * (nₖ s t k) + a * (nₖ s t (k + 1))) = (1 - a) * (Eₖ s t k) + a * (Eₖ s t (k + 1)) := by
   by_cases a1: a = 1
@@ -3523,7 +3537,7 @@ E s t ((1 - a) * (nₖ s t k) + a * (nₖ s t (k + 1))) = (1 - a) * (Eₖ s t k)
   · have keq: kₙ s t ((1 - a) * (nₖ s t k) + a * (nₖ s t (k + 1))) = some k := by
       unfold kₙ kceiled
       apply finset_max_eq
-      · simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+      · simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
         apply le_add_of_sub_left_le
         have onem: nₖ s t k = (1:ℝ) * nₖ s t k := by exact Eq.symm (one_mul ((nₖ s t k):ℝ))
         nth_rw 1 [onem]
@@ -3533,7 +3547,7 @@ E s t ((1 - a) * (nₖ s t k) + a * (nₖ s t (k + 1))) = (1 - a) * (Eₖ s t k)
         norm_cast
         exact Nat.le.intro rfl
       · intro n mem
-        simp only [Set.mem_toFinset, Set.mem_setOf_eq] at mem
+        simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at mem
         rw [sub_mul, sub_add, ← mul_sub] at mem
         have lt: nₖ s t n < 1 * (nₖ s t k) - (((nₖ s t k): ℝ) - (nₖ s t (k + 1))) := by
           apply lt_of_le_of_lt mem
@@ -3592,6 +3606,7 @@ t *   ((1 - a) * (wₖ s t k) + a * (wₖ s t (k + 1))) + s *   ((1 - a) * (wₖ
 Eventually, we reached the major conclusion:
 The cost equals the strategy evaluation at the optimal strategy `wₗᵢ`
 -/
+set_option backward.isDefEq.respectTransparency false in
 lemma E_wₗᵢ (s t n: ℝ) (n2: n ≥ 2) [PosReal s] [PosReal t]:
 E s t n = D s t n (wₗᵢ s t n) := by
   have r: n - wₗᵢ s t n = wₗᵢ' s t n := by
@@ -3628,14 +3643,14 @@ E s t n = D s t n (wₗᵢ s t n) := by
     refine Finset.le_max_of_eq ?_ keq
     simp only [Set.mem_toFinset]
     unfold kceiled
-    simp only [Set.mem_setOf_eq]
+    simp only [Set.mem_ofPred_eq]
     rw [n₁]
     exact n2
   · apply div_nonneg ?_ (le_of_lt denogt)
     simp only [sub_nonneg]
     rcases Finset.mem_of_max keq with mem
     unfold kceiled at mem
-    simp only [Set.mem_toFinset, Set.mem_setOf_eq] at mem
+    simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at mem
     exact mem
   · apply (div_le_one denogt).mpr
     simp only [tsub_le_iff_right, sub_add_cancel]

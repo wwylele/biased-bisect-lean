@@ -107,7 +107,7 @@ Tendsto (fun k ↦ δₖ s t (k + 1) / δₖ s t k) atTop (nhds 1) := by
     rw [δₖ]
     apply Set.IsWF.min_le
     unfold Δfloored
-    simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, lt_add_iff_pos_right]
+    simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_ofPred_eq, lt_add_iff_pos_right]
     constructor
     · obtain ⟨p, q, pqeq⟩ := δₖ_in_Δ s t k
       use p + 1, q
@@ -203,7 +203,7 @@ Tendsto (fun n ↦ (dE s t n) * (ρ s t) / Real.log n) atTop (nhds 1) := by
       have mem: 1 ∈ (kceiled s t (max n 1)).toFinset := by
         simp only [Set.mem_toFinset]
         unfold kceiled
-        simp only [Set.mem_setOf_eq]
+        simp only [Set.mem_ofPred_eq]
         rw [n₁]
         simp only [Nat.cast_ofNat, le_sup_iff, Nat.not_ofNat_le_one, or_false]
         exact n2

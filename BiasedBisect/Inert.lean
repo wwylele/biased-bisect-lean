@@ -189,7 +189,7 @@ lemma Λceiled_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p q: ℕ)
 Λceiled s1 t1 (p * s1 + q * t1) = Λceiled s2 t2 (p * s2 + q * t2) := by
   unfold Λceiled
   ext ⟨p', q'⟩
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   by_cases pless: p' ≤ p
   · by_cases qless: q' ≤ q
     · apply iff_of_true
@@ -283,12 +283,12 @@ lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
   rcases rel with ⟨r1, r2⟩
   have c1: Λceiled s1 t1 (δₚ s1 t1 (p1, q1)) ⊆ Λceiled s1 t1 (δₚ s1 t1 (p2, q2)) := by
     unfold Λceiled
-    simp only [Set.setOf_subset_setOf, Prod.forall]
+    simp only [Set.ofPred_subset_ofPred, Prod.forall]
     intro p q mem
     exact le_of_lt (lt_of_le_of_lt mem r1)
   have c2: Λceiled s2 t2 (δₚ s2 t2 (p1, q1)) ⊇ Λceiled s2 t2 (δₚ s2 t2 (p2, q2)) := by
     unfold Λceiled
-    simp only [Set.setOf_subset_setOf, Prod.forall]
+    simp only [Set.ofPred_subset_ofPred, Prod.forall]
     intro p q mem
     exact le_trans mem r2
   have left: Λceiled s1 t1 (δₚ s1 t1 (p1, q1)) = Λceiled s2 t2 (δₚ s2 t2 (p1, q1)) := by
@@ -300,10 +300,10 @@ lemma Δceiled_lt_inert(a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p1 q1 p2 q2: ℕ)
     exact Set.Subset.antisymm c1 c2
   have pq2: (p2, q2) ∈ Λceiled s1 t1 (δₚ s1 t1 (p2, q2)) := by
     unfold Λceiled δₚ
-    simp only [Set.mem_setOf_eq, le_refl]
+    simp only [Set.mem_ofPred_eq, le_refl]
   rw [← eq] at pq2
   unfold Λceiled at pq2
-  simp only [Set.mem_setOf_eq] at pq2
+  simp only [Set.mem_ofPred_eq] at pq2
   rw [← δₚ] at pq2
   obtain what := lt_of_le_of_lt pq2 r1
   simp only [lt_self_iff_false] at what
@@ -321,7 +321,7 @@ lemma Λceiled_inert_t (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (p: ℕ)
 Λceiled s1 t1 (p * s1 - t1) = Λceiled s2 t2 (p * s2 - t2) := by
   unfold Λceiled
   ext ⟨p', q'⟩
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   by_cases pless: p' < p
   · have rewr (s t: ℝ): p' * s + q' * t ≤ p * s - t ↔ (q' + 1: ℕ) * t ≤ (p - p': ℕ) * s := by
       rw [Nat.cast_sub (le_of_lt pless)]
@@ -522,13 +522,13 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       simp only [not_lt] at ge
       have mem: ((b + d: ℕ), 0) ∈ Λceiled s2 t2 ((pqₖ (k + 1)).1 * s2 + (pqₖ (k + 1)).2 * t2) := by
         unfold Λceiled
-        simp only [Set.mem_setOf_eq, Nat.cast_add, CharP.cast_eq_zero, zero_mul, add_zero]
+        simp only [Set.mem_ofPred_eq, Nat.cast_add, CharP.cast_eq_zero, zero_mul, add_zero]
         rw [mul_comm]
         exact ge
       rw [Λceiled_inert' a b c d s2 t2 (a + c) (b + d) (pqₖ (k + 1)).1 (pqₖ (k + 1)).2
         det left2 right2 abcd1 abcd2 pBound' qBound' ] at mem
       unfold Λceiled at mem
-      simp only [Set.mem_setOf_eq, Nat.cast_add, CharP.cast_eq_zero, zero_mul, add_zero] at mem
+      simp only [Set.mem_ofPred_eq, Nat.cast_add, CharP.cast_eq_zero, zero_mul, add_zero] at mem
       obtain another := pqBound (k + 1) kle
       rify at another
       obtain what := lt_of_le_of_lt mem another
@@ -539,13 +539,13 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       simp only [not_lt] at ge
       have mem: (0, (a + c: ℕ)) ∈ Λceiled s2 t2 ((pqₖ (k + 1)).1 * s2 + (pqₖ (k + 1)).2 * t2) := by
         unfold Λceiled
-        simp only [Set.mem_setOf_eq, CharP.cast_eq_zero, zero_mul, Nat.cast_add, zero_add]
+        simp only [Set.mem_ofPred_eq, CharP.cast_eq_zero, zero_mul, Nat.cast_add, zero_add]
         rw [mul_comm]
         exact ge
       rw [Λceiled_inert' a b c d s2 t2 (a + c) (b + d) (pqₖ (k + 1)).1 (pqₖ (k + 1)).2
         det left2 right2 abcd1 abcd2 pBound' qBound' ] at mem
       unfold Λceiled at mem
-      simp only [Set.mem_setOf_eq, CharP.cast_eq_zero, zero_mul, Nat.cast_add, zero_add] at mem
+      simp only [Set.mem_ofPred_eq, CharP.cast_eq_zero, zero_mul, Nat.cast_add, zero_add] at mem
       obtain another := pqBound (k + 1) kle
       rify at another
       obtain what := lt_of_le_of_lt mem another
@@ -563,10 +563,10 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       have preserveNext': δₚ s2 t2 (pqₖ (k + 1)) ∈ Δfloored s2 t2 (δₖ s2 t2 k) := by
         rw [prev]
         unfold Δfloored
-        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq]
+        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_ofPred_eq]
         constructor
         · unfold δₚ Δ
-          simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+          simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
         · exact preserveNext
       unfold δₖ δnext
       exact
@@ -576,7 +576,7 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       simp only [not_le] at lt
       obtain δₖ2FromPq := δₖ_in_Δ s2 t2 (k + 1)
       unfold Δ at δₖ2FromPq
-      simp only [Set.mem_setOf_eq] at δₖ2FromPq
+      simp only [Set.mem_ofPred_eq] at δₖ2FromPq
       rcases δₖ2FromPq with ⟨p', ⟨q', δₖ2eq⟩⟩
       rw [← δₖ2eq] at lt
       obtain gt := δnext_larger s2 t2 (δₖ s2 t2 k)
@@ -618,7 +618,7 @@ lemma δₖ_inert (a b c d: ℕ+) (s1 t1 s2 t2: ℝ) (kbound: ℕ) (pqₖ: ℕ �
       rw [← pqMatch1 k kleprev] at preserveGt
       have inFloor: p' * s1 + q' * t1 ∈ Δfloored s1 t1 (δₖ s1 t1 k) := by
         unfold Δfloored Δ
-        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, exists_apply_eq_apply2, true_and]
+        simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_ofPred_eq, exists_apply_eq_apply2, true_and]
         exact preserveGt
       have inFloor': p' * s1 + q' * t1 ≥ δnext s1 t1 (δₖ s1 t1 k) := by
         unfold δnext
@@ -642,6 +642,7 @@ instance Λrectangle_fintype (s t: ℕ+): Fintype (Λrectangle s t) := by
   unfold Λrectangle
   apply Finset.fintypeCoeSort
 
+set_option backward.isDefEq.respectTransparency false in
 lemma Λrectangle_card (s t: ℕ+): Fintype.card (Λrectangle s t) = (t + 1) * (s + 1) := by
   unfold Λrectangle
   simp only [Finset.mem_product, Finset.mem_range, Fintype.card_coe, Finset.card_product,
@@ -656,7 +657,7 @@ lemma Λtriangle_is_Finset (s t: ℕ+) (pq: ℕ × ℕ):
 pq ∈ ΛtriangleFinset s t ↔ pq ∈ Λtriangle s t := by
   unfold Λtriangle ΛtriangleFinset
   simp only [Finset.singleton_product, Finset.mem_biUnion, Finset.mem_range, Finset.mem_map,
-    Function.Embedding.coeFn_mk, Set.mem_setOf_eq]
+    Function.Embedding.coeFn_mk, Set.mem_ofPred_eq]
   constructor
   · rintro ⟨p', p'b, q', ⟨q'b, eq⟩⟩
     rw [← eq]
@@ -726,6 +727,7 @@ theorem BoundDecomposite (p q: ℕ) {s t: ℕ+} (h: p * s + q * t < s * t):
     · obtain h' := lt_of_add_lt_of_nonneg_right h (Nat.zero_le _)
       exact lt_of_mul_lt_mul_right h' (Nat.zero_le _)
 
+set_option backward.isDefEq.respectTransparency false in
 lemma ΛtriangleCardEq (s t: ℕ+): (Λtriangle s t).toFinset.card = (ΛtriangleUpper s t).toFinset.card := by
   apply Finset.card_nbij (fun ⟨p, q⟩ ↦ ⟨t - p, s - q⟩ )
   · unfold Λtriangle ΛtriangleUpper Λrectangle
@@ -752,7 +754,7 @@ lemma ΛtriangleCardEq (s t: ℕ+): (Λtriangle s t).toFinset.card = (Λtriangle
       · exact lt_of_le_of_lt (Nat.sub_le t p) (Nat.lt_add_one t)
       · exact lt_of_le_of_lt (Nat.sub_le s q) (Nat.lt_add_one s)
   · unfold Set.InjOn Λtriangle
-    simp only [Set.coe_toFinset, Set.mem_setOf_eq, Prod.mk.injEq, and_imp, Prod.forall]
+    simp only [Set.coe_toFinset, Set.mem_ofPred_eq, Prod.mk.injEq, and_imp, Prod.forall]
     intro p q mem p2 q2 mem2 pp qq
     obtain ⟨pb, qb⟩ := BoundDecomposite p q mem
     obtain ⟨p2b, q2b⟩ := BoundDecomposite p2 q2 mem2
@@ -770,7 +772,7 @@ lemma ΛtriangleCardEq (s t: ℕ+): (Λtriangle s t).toFinset.card = (Λtriangle
   · unfold Set.SurjOn Λtriangle ΛtriangleUpper Λrectangle
     rintro ⟨p, q⟩
     simp only [gt_iff_lt, Finset.coe_product, Finset.coe_range, Set.coe_toFinset, Set.mem_inter_iff,
-      Set.mem_setOf_eq, Set.mem_prod, Set.mem_Iio, Set.mem_image, Prod.mk.injEq, Prod.exists,
+      Set.mem_ofPred_eq, Set.mem_prod, Set.mem_Iio, Set.mem_image, Prod.mk.injEq, Prod.exists,
       and_imp]
     intro mem pb qb
     use (t - p), (s - q)
@@ -806,6 +808,7 @@ instance ΛrectangleCutFintype (s t: ℕ+): Fintype (ΛrectangleCut s t) := by
   unfold ΛrectangleCut
   apply Finset.fintypeCoeSort
 
+set_option backward.isDefEq.respectTransparency false in
 lemma ΛrectangleCutCard (s t: ℕ+): Fintype.card (ΛrectangleCut s t) = (t + 1) * (s + 1) - 2 := by
   have two: 2 = 1 + 1 := by simp only [Nat.reduceAdd]
   rw [two]
@@ -824,13 +827,14 @@ lemma ΛrectangleCutCard (s t: ℕ+): Fintype.card (ΛrectangleCut s t) = (t + 1
   · unfold Λrectangle
     simp
 
+set_option backward.isDefEq.respectTransparency false in
 lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
 ΛrectangleCut s t = (Λtriangle s t).toFinset ∪ (ΛtriangleUpper s t).toFinset := by
   unfold ΛrectangleCut Λtriangle ΛtriangleUpper Λrectangle
   ext ⟨p, q⟩
   simp only [Finset.mem_sdiff, Finset.mem_product, Finset.mem_range, Finset.mem_singleton,
     Prod.mk.injEq, not_and, gt_iff_lt, Finset.coe_product, Finset.coe_range, Finset.mem_union,
-    Set.mem_toFinset, Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_prod, Set.mem_Iio]
+    Set.mem_toFinset, Set.mem_ofPred_eq, Set.mem_inter_iff, Set.mem_prod, Set.mem_Iio]
   constructor
   · rintro ⟨⟨⟨pbound,qbound⟩, pcut⟩, qcut⟩
     rw [or_iff_not_imp_left]
@@ -931,10 +935,11 @@ lemma ΛrectangleDecompose (s t: ℕ+) (coprime: PNat.Coprime s t):
         rw [qcut, p0] at upper
         simp only [zero_mul, zero_add, lt_self_iff_false] at upper
 
+set_option backward.isDefEq.respectTransparency false in
 lemma ΛrectangleDisjoint (s t: ℕ+): (Λtriangle s t).toFinset ∩ (ΛtriangleUpper s t).toFinset = ∅ := by
   unfold Λtriangle ΛtriangleUpper
   ext pq
-  simp only [gt_iff_lt, Finset.mem_inter, Set.mem_toFinset, Set.mem_setOf_eq, Set.mem_inter_iff,
+  simp only [gt_iff_lt, Finset.mem_inter, Set.mem_toFinset, Set.mem_ofPred_eq, Set.mem_inter_iff,
     Finset.mem_coe, Finset.notMem_empty, iff_false, not_and]
   intro mem
   rw [imp_iff_not_or]
@@ -964,7 +969,7 @@ lemma pqOfδₖ_exist(s t: ℕ+) (k: ℕ):
 ∃ (pq: ℕ × ℕ), δₚ s t pq = δₖ s t k := by
   obtain h := δₖ_in_Δ s t k
   unfold Δ at h
-  simp only [Set.mem_setOf_eq] at h
+  simp only [Set.mem_ofPred_eq] at h
   unfold δₚ
   simp only [Prod.exists]
   exact h
@@ -990,7 +995,7 @@ lemma pqOfδₖ_bound (s t: ℕ+) (k: ℕ) (coprime: PNat.Coprime s t)
     simp only [Set.coe_toFinset, Prod.forall, Prod.mk.injEq]
     intro p q mem p2 q2 mem2 eq
     unfold Λtriangle at mem
-    simp only [Set.mem_setOf_eq] at mem
+    simp only [Set.mem_ofPred_eq] at mem
     have mem': δₚ s t (p, q) < s * t := by
       unfold δₚ
       simp only
@@ -1025,7 +1030,7 @@ lemma pqOfδₖ_bound (s t: ℕ+) (k: ℕ) (coprime: PNat.Coprime s t)
         simp only [Set.mem_image, Prod.exists] at mem
         rcases mem with ⟨p, q, mem, mem2⟩
         unfold Δ
-        simp only [Set.mem_setOf_eq]
+        simp only [Set.mem_ofPred_eq]
         use p, q
         unfold δₚ at mem2
         simp only at mem2
@@ -1040,7 +1045,7 @@ lemma pqOfδₖ_bound (s t: ℕ+) (k: ℕ) (coprime: PNat.Coprime s t)
   have kTriangleBound (kt: ℕ) (mem: kt ∈ kTriangle): kt < k := by
     have δrel: δₖ s t kt < δₖ s t k := by
       unfold kTriangle Δtriangle Λtriangle at mem
-      simp only [Set.mem_preimage, Set.mem_image, Set.mem_setOf_eq, Prod.exists] at mem
+      simp only [Set.mem_preimage, Set.mem_image, Set.mem_ofPred_eq, Prod.exists] at mem
       obtain ⟨p, q, pqBound, pqEq⟩ := mem
       unfold δₚ at pqEq
       simp only at pqEq
@@ -1289,10 +1294,10 @@ nBranching s t = nₖ s t (((s + 1) * (t + 1)) / 2 - 1) := by
   apply subset_antisymm
   · unfold Λceiled
     intro pq mem
-    simp only [Set.mem_setOf_eq] at mem
+    simp only [Set.mem_ofPred_eq] at mem
     have inΔ: (pq.1: ℝ) * s + pq.2 * t ∈ Δ s t := by
       unfold Δ
-      simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+      simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
     obtain ⟨k, keq⟩ := δₖ_surjΔ s t  _ inΔ
     rw [← keq] at mem
     obtain kmono := (StrictMono.le_iff_le (δₖ_mono s t)).mp mem
@@ -1314,7 +1319,7 @@ nBranching s t = nₖ s t (((s + 1) * (t + 1)) / 2 - 1) := by
     rw [pq'eq] at bound
     rw [keq] at bound
     unfold Λtriangle
-    simp only [Set.mem_setOf_eq, gt_iff_lt]
+    simp only [Set.mem_ofPred_eq, gt_iff_lt]
     rify
     exact bound
   · let Δtriangle := δₚ s t '' Λtriangle s t
@@ -1325,10 +1330,10 @@ nBranching s t = nₖ s t (((s + 1) * (t + 1)) / 2 - 1) := by
     by_contra exception
     obtain ⟨pq, inTriangle, outCeiled⟩ := Set.not_subset_iff_exists_mem_notMem.mp exception
     unfold Λceiled at outCeiled
-    simp only [Set.mem_setOf_eq, not_le] at outCeiled
+    simp only [Set.mem_ofPred_eq, not_le] at outCeiled
     have inΔ: (pq.1: ℝ) * s + pq.2 * t ∈ Δ s t := by
       unfold Δ
-      simp only [Set.mem_setOf_eq, exists_apply_eq_apply2]
+      simp only [Set.mem_ofPred_eq, exists_apply_eq_apply2]
     obtain ⟨k', keq⟩ := δₖ_surjΔ s t _ inΔ
     rw [← keq] at outCeiled
     rw [Nat.sub_sub] at outCeiled
@@ -1388,13 +1393,13 @@ nBranching s t = nₖ s t (((s + 1) * (t + 1)) / 2 - 1) := by
     rw [← lpqeq] at lkrel
     rw [← lpqeq] at lnotmem
     unfold Δtriangle Λtriangle at lnotmem
-    simp only [Set.mem_image, Set.mem_setOf_eq, Prod.exists, not_exists, not_and] at lnotmem
+    simp only [Set.mem_image, Set.mem_ofPred_eq, Prod.exists, not_exists, not_and] at lnotmem
     obtain lnotmem := lnotmem lp lq
     rw [imp_not_comm] at lnotmem
     unfold δₚ at lnotmem
     simp only [not_lt, forall_const] at lnotmem
     unfold Δtriangle Λtriangle at k'mem
-    simp only [Set.mem_image, Set.mem_setOf_eq, Prod.exists] at k'mem
+    simp only [Set.mem_image, Set.mem_ofPred_eq, Prod.exists] at k'mem
     rcases k'mem with ⟨kp, kq, kb, keq⟩
     unfold δₚ at keq
     simp only at keq
@@ -1420,7 +1425,7 @@ kceiled s1 t1 n = kceiled s2 t2 n := by
   push_cast at nbound
   unfold kceiled
   ext k
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   let nbound1 := nbound
   let nbound2 := nbound
   let kbound := ((a + c + 1) * (b + d + 1): ℕ) / 2 - 1
@@ -1475,6 +1480,7 @@ kₙ s1 t1 n = kₙ s2 t2 n := by
 /-!
 Here come our main theorems: `wₘᵢₙ`, `wₘₐₓ`, and `wₗᵢ` are all inert.
 -/
+set_option backward.isDefEq.respectTransparency false in
 theorem wₘᵢₙ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -1495,7 +1501,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
   have keq': k1 = k2 := by
     rw [← keq] at k2eq
     rw [k1eq] at k2eq
-    exact ENat.coe_inj.mp k2eq
+    exact ENat.natCast_inj.mp k2eq
   rw [← keq']
   have boundlt: ((a + c + 1: ℕ) * (b + d + 1)) / 2 - 1 < ((a + c + 1) * (b + d + 1)) / 2 := by
     refine Nat.sub_one_lt ?_
@@ -1511,7 +1517,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
       unfold kₙ at k1eq
       have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
       unfold kceiled at kmem
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
       obtain klt := lt_of_le_of_lt kmem nlt
       simp only [Nat.cast_lt] at klt
       rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
@@ -1545,7 +1551,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
       have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
       unfold kceiled at kmem
       rw [neq] at kmem
-      simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+      simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
       have k11: k1 + 1 ∉ (kceiled s1 t1 n).toFinset := by
         by_contra k11mem
         obtain k11le := Finset.le_max k11mem
@@ -1554,7 +1560,7 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
         simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
       unfold kceiled at k11
       rw [neq] at k11
-      simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_setOf_eq, not_le] at k11
+      simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_ofPred_eq, not_le] at k11
       apply (StrictMono.le_iff_le (nₖ_mono s1 t1)).mp at kmem
       apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at k11
       exact Eq.symm (Nat.eq_of_le_of_lt_succ kmem k11)
@@ -1623,6 +1629,7 @@ wₘₐₓ s1 t1 n = wₘₐₓ s2 t2 n := by
   rw [← nBranchingFormula (d + b) (c + a) coprime] at nbound
   apply wₘᵢₙ_inert d c b a t1 s1 t2 s2 n det right1 left1 right2 left2 h nbound
 
+set_option backward.isDefEq.respectTransparency false in
 theorem wₗᵢ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -1643,7 +1650,7 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
     have keq': k1 = k2 := by
       rw [← keq] at k2eq
       rw [k1eq] at k2eq
-      exact ENat.coe_inj.mp k2eq
+      exact ENat.natCast_inj.mp k2eq
     rw [← keq']
     have boundlt: ((a + c + 1: ℕ) * (b + d + 1)) / 2 - 1 < ((a + c + 1) * (b + d + 1)) / 2 := by
       refine Nat.sub_one_lt ?_
@@ -1660,7 +1667,7 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
         unfold kₙ at k1eq
         have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
         unfold kceiled at kmem
-        simp only [Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+        simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
         obtain klt := lt_of_le_of_lt kmem nlt
         simp only [Nat.cast_lt] at klt
         rw [← nₖ_inert a b c d s1 t1 (a + c) (b + d) ((a + c + 1) * (b + d + 1) / 2 - 1)
@@ -1692,7 +1699,7 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
         have kmem: k1 ∈ (kceiled s1 t1 n).toFinset := by exact Finset.mem_of_max k1eq
         unfold kceiled at kmem
         rw [neq] at kmem
-        simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+        simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
         have k11: k1 + 1 ∉ (kceiled s1 t1 n).toFinset := by
           by_contra k11mem
           obtain k11le := Finset.le_max k11mem
@@ -1701,7 +1708,7 @@ wₗᵢ s1 t1 n = wₗᵢ s2 t2 n := by
           simp only [add_le_iff_nonpos_right, nonpos_iff_eq_zero, one_ne_zero] at what
         unfold kceiled at k11
         rw [neq] at k11
-        simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_setOf_eq, not_le] at k11
+        simp only [Nat.cast_le, Set.mem_toFinset, Set.mem_ofPred_eq, not_le] at k11
         apply (StrictMono.le_iff_le (nₖ_mono s1 t1)).mp at kmem
         apply (StrictMono.lt_iff_lt (nₖ_mono s1 t1)).mp at k11
         exact Eq.symm (Nat.eq_of_le_of_lt_succ kmem k11)
@@ -1743,14 +1750,14 @@ lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
     · unfold Δfloored
       constructor
       · unfold Δ
-        simp only [Nat.cast_add, Nat.cast_one, Set.mem_setOf_eq]
+        simp only [Nat.cast_add, Nat.cast_one, Set.mem_ofPred_eq]
         use k + 1, 0
         simp only [Nat.cast_add, Nat.cast_one, CharP.cast_eq_zero, zero_mul, add_zero]
-      · simp only [gt_iff_lt, Nat.cast_add, Nat.cast_one, Set.mem_setOf_eq]
+      · simp only [gt_iff_lt, Nat.cast_add, Nat.cast_one, Set.mem_ofPred_eq]
         apply (mul_lt_mul_iff_left₀ PosReal.pos).mpr ?_
         · apply lt_add_one
     · unfold Δfloored Δ
-      simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_setOf_eq, Nat.cast_add, Nat.cast_one,
+      simp only [gt_iff_lt, Set.mem_inter_iff, Set.mem_ofPred_eq, Nat.cast_add, Nat.cast_one,
         and_imp, forall_exists_index]
       intro δ p q eq mem
       rw [← eq]
@@ -1781,6 +1788,8 @@ lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
         · simp only [Nat.cast_nonneg]
         · apply le_of_lt PosReal.pos
 
+
+set_option backward.isDefEq.respectTransparency false in
 lemma nₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
 [PosReal s] [PosReal t]
 (left: t > N * s)
@@ -1802,7 +1811,7 @@ nₖ s t k = k + 1 := by
     have Λeq: (Λceiled s t (↑(k - 1) * s)).toFinset = (Finset.Icc 0 (k - 1)).product {0} := by
       ext pq
       unfold Λceiled
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq, Finset.product_eq_sprod,
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq, Finset.product_eq_sprod,
         Finset.product_singleton, Finset.mem_map, Finset.mem_Icc, zero_le, true_and,
         Function.Embedding.coeFn_mk]
       constructor
@@ -1844,6 +1853,7 @@ nₖ s t k = k + 1 := by
       tsub_zero, smul_eq_mul, mul_one]
     exact Nat.succ_pred_eq_of_ne_zero k0
 
+set_option backward.isDefEq.respectTransparency false in
 lemma wₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
 [PosReal s] [PosReal t]
 (left: t > N * s)
@@ -1864,7 +1874,7 @@ wₖ s t k = 1 := by
     unfold Λceiled
     simp only [Set.toFinset_eq_empty]
     ext pq
-    simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, not_le]
+    simp only [Set.mem_ofPred_eq, Set.mem_empty_iff_false, iff_false, not_le]
     have right: 0 ≤ pq.1 * s + pq.2 * t := by
       apply add_nonneg
       repeat
@@ -1879,6 +1889,7 @@ wₖ s t k = 1 := by
       exact Nat.le_of_lt_succ k1
     · exact le_of_lt PosReal.pos
 
+set_option backward.isDefEq.respectTransparency false in
 theorem wₘᵢₙ_inert_edge (N: ℕ+) (s t n: ℝ)
 [PosReal s] [PosReal t]
 (left: t > N * s)
@@ -1894,7 +1905,7 @@ wₘᵢₙ s t n = 1 := by
   · unfold kₙ at keq
     have kmem: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
     unfold kceiled at kmem
-    simp only [Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+    simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
     obtain nₖrel := lt_of_le_of_lt kmem nbound'
     norm_cast at nₖrel
     push_cast at nₖrel
@@ -1917,7 +1928,7 @@ wₘᵢₙ s t n = 1 := by
     simp only [not_lt] at ntoolarge
     have anothermem: k + 1 ∈ (kceiled s t n).toFinset := by
       unfold kceiled
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
       rw [nₖ_inert_edge N s t (k + 1) left kbound]
       push_cast
       exact ntoolarge
@@ -1932,7 +1943,7 @@ wₘᵢₙ s t n = 1 := by
       apply le_antisymm
       · obtain memmax := Finset.mem_of_max keq
         unfold kceiled at memmax
-        simp only [Set.mem_toFinset, Set.mem_setOf_eq] at memmax
+        simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at memmax
         norm_cast at memmax
         push_cast at memmax
         rw [hN] at memmax
@@ -1942,7 +1953,7 @@ wₘᵢₙ s t n = 1 := by
         simp only [not_le] at ntoolarge
         have anothermem: k + 1 ∈ (kceiled s t (N + 2)).toFinset := by
           unfold kceiled
-          simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+          simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
           norm_cast
           push_cast
           rw [hN]
@@ -1974,6 +1985,7 @@ wₘᵢₙ s t n = 1 := by
     rw [wₖ_inert_edge N s t (N + 1) left bound]
     simp only [Nat.cast_one]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem wₘₐₓ_inert_edge (N: ℕ+) (s t n: ℝ)
 [PosReal s] [PosReal t]
 (left: t > N * s)
@@ -1989,7 +2001,7 @@ wₘₐₓ s t n = 1 := by
   · unfold kₙ at keq
     have kmem: k ∈ (kceiled s t n).toFinset := by exact Finset.mem_of_max keq
     unfold kceiled at kmem
-    simp only [Set.mem_toFinset, Set.mem_setOf_eq] at kmem
+    simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at kmem
     obtain nₖrel := lt_of_le_of_lt kmem nbound'
     norm_cast at nₖrel
     push_cast at nₖrel
@@ -2012,7 +2024,7 @@ wₘₐₓ s t n = 1 := by
     simp only [not_le] at ntoosmall
     have notmem: k ∉ (kceiled s t n).toFinset := by
       unfold kceiled
-      simp only [Set.mem_toFinset, Set.mem_setOf_eq, not_le]
+      simp only [Set.mem_toFinset, Set.mem_ofPred_eq, not_le]
       rw [nₖ_inert_edge N s t k left kbound']
       push_cast
       exact ntoosmall
@@ -2027,7 +2039,7 @@ wₘₐₓ s t n = 1 := by
       apply le_antisymm
       · obtain memmax := Finset.mem_of_max keq
         unfold kceiled at memmax
-        simp only [Set.mem_toFinset, Set.mem_setOf_eq] at memmax
+        simp only [Set.mem_toFinset, Set.mem_ofPred_eq] at memmax
         norm_cast at memmax
         push_cast at memmax
         rw [hN] at memmax
@@ -2037,7 +2049,7 @@ wₘₐₓ s t n = 1 := by
         simp only [not_le] at ntoolarge
         have anothermem: k + 1 ∈ (kceiled s t (N + 2)).toFinset := by
           unfold kceiled
-          simp only [Set.mem_toFinset, Set.mem_setOf_eq]
+          simp only [Set.mem_toFinset, Set.mem_ofPred_eq]
           norm_cast
           push_cast
           rw [hN]
