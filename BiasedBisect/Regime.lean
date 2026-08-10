@@ -166,7 +166,7 @@ lemma nBranchingAsymptotic (t: ℕ+) :
       refine (tendsto_rpow_atTop (by simp)).comp ?_
       apply Tendsto.atTop_div_const (by simp)
       exact tendsto_natCast_atTop_atTop.comp PNat_val_tendsto
-    · apply IsLittleO.sum
+    · apply IsLittleO.fun_sum
       intro n hn
       have hn': 1 ≤ t - n := by
         refine Nat.le_sub_of_add_le' (le_of_lt ?_)
