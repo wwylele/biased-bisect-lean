@@ -45,7 +45,7 @@ theorem Fin.coe_sub_one' {n : ℕ+} {a : ℕ+}:
       simp
     · congr 1
       have : ((1 : Fin n) : ℕ) = 1 := by
-        rw [val_one', Nat.mod_eq]
+        rw [val_one', Nat.mod_eq_ite]
         simp only [PNat.pos, true_and, ite_eq_right_iff]
         intro h
         exfalso

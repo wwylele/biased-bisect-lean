@@ -29,7 +29,6 @@ nBranching s t = 1 + ∑ p ∈ Finset.range t, Jₚ (p + 1, (s * (t - p) - 1) / 
     apply Finset.disjoint_left.mpr
     aesop
   )]
-  simp only [Finset.singleton_product, Finset.sum_map, Function.Embedding.coeFn_mk]
   have : ∀ p ∈ Finset.range t, ∑ q ∈ Finset.range ((s * (t - p) + (t - 1)) / t), Jₚ (p, q) =
     Jₚ (p + 1, (s * (t - p) - 1) / t) := by
     intro p hp
@@ -41,8 +40,7 @@ nBranching s t = 1 + ∑ p ∈ Finset.range t, Jₚ (p + 1, (s * (t - p) - 1) / 
     rw [← Nat.sub_add_comm (one_le_mul_of_one_le_of_one_le
       (by norm_cast; exact one_le)
       (Nat.le_sub_of_add_le' hp))]
-
-  rw [Finset.sum_congr rfl this]
+  simp [Finset.sum_congr rfl this]
 
 lemma J_asProd (p q: ℕ) :
 Jₚ (p, q) * p.factorial = ∏ n ∈ Finset.range p, (q + n + 1) := by
@@ -109,7 +107,7 @@ lemma nBranchingBound (s t: ℕ+) :
   have : (s / t: ℝ) ^ (t:ℕ) = ∏ _ ∈ Finset.range t, (s / t: ℝ) := by
     simp only [Finset.prod_const, Finset.card_range]
   rw [this]
-  apply Finset.prod_le_prod
+  apply Finset.prod_le_prod₀
   · intro _ _
     apply div_nonneg
     all_goals simp

@@ -421,8 +421,8 @@ lemma nₖSplit (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k ≤ K) (εbound: ε < t * εBound s t K):
 nₖ s t (k + 1) = nₖ s (t + ε) (kSplitMax s t ε k + 1) := by
   rw [nₖ_accum, nₖ_accum]
-  simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
-    add_tsub_cancel_right, add_right_inj]
+  simp only [Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right,
+    Nat.add_left_cancel_iff]
   unfold Jceiled
   refine Finset.sum_congr ?_ (by simp only [Set.mem_toFinset, implies_true])
   simp only [Set.toFinset_inj]
@@ -435,8 +435,8 @@ lemma wₖ'Split (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal ε]
 (kBound: k ≤ K) (εbound: ε < t * εBound s t K):
 wₖ' s t (k + 1) = wₖ' s (t + ε) (kSplitMax s t ε k + 1) := by
   rw [wₖ'_accum, wₖ'_accum]
-  simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
-    add_tsub_cancel_right, add_right_inj]
+  simp only [Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right,
+    Nat.add_left_cancel_iff]
   unfold Jceiled
   refine Finset.sum_congr ?_ (by simp only [Set.mem_toFinset, implies_true])
   simp only [Set.toFinset_inj]
@@ -658,7 +658,7 @@ lemma wslope (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
       simp only [Finset.mem_singleton] at what
       obtain ⟨peq, qeq⟩ := Prod.eq_iff_fst_eq_snd_eq.mp what
       rw [q0] at qeq
-      simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false] at qeq
+      simp at qeq
     rw [rwJt]
     simp only [Finset.sum_empty, CharP.cast_eq_zero, Finset.sum_singleton, zero_div]
     unfold pqslope

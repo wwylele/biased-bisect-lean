@@ -381,7 +381,7 @@ E s t ~[atTop] Eℝ s t := by
     apply Eventually.of_forall
     unfold Set.uIoc
     intro y
-    congr
+    congr!
     · exact left_eq_inf.mpr hn
     · exact Eq.symm (max_eq_right hn)
   · intro n hn

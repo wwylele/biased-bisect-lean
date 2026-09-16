@@ -657,7 +657,7 @@ lemma Λtriangle_is_Finset (s t: ℕ+) (pq: ℕ × ℕ):
 pq ∈ ΛtriangleFinset s t ↔ pq ∈ Λtriangle s t := by
   unfold Λtriangle ΛtriangleFinset
   simp only [Finset.singleton_product, Finset.mem_biUnion, Finset.mem_range, Finset.mem_map,
-    Function.Embedding.coeFn_mk, Set.mem_ofPred_eq]
+    Function.Embedding.sectR_apply, Set.mem_ofPred_eq]
   constructor
   · rintro ⟨p', p'b, q', ⟨q'b, eq⟩⟩
     rw [← eq]
@@ -1812,8 +1812,7 @@ nₖ s t k = k + 1 := by
       ext pq
       unfold Λceiled
       simp only [Set.mem_toFinset, Set.mem_ofPred_eq, Finset.product_eq_sprod,
-        Finset.product_singleton, Finset.mem_map, Finset.mem_Icc, zero_le, true_and,
-        Function.Embedding.coeFn_mk]
+        Finset.product_singleton, Finset.mem_map, Finset.mem_Icc, zero_le, true_and]
       constructor
       · intro mem
         use pq.1
@@ -1840,6 +1839,7 @@ nₖ s t k = k + 1 := by
         · rify
           exact le_of_mul_le_mul_of_pos_right mem PosReal.pos
         · rw [← q0]
+          simp
       · simp only [forall_exists_index, and_imp]
         intro p pb eq
         rw [← eq]
@@ -1848,10 +1848,7 @@ nₖ s t k = k + 1 := by
         exact mul_le_mul_of_nonneg_right pb (le_of_lt PosReal.pos)
     rw [Λeq]
     unfold Jₚ
-    simp only [Finset.product_eq_sprod, Finset.product_singleton, Finset.sum_map,
-      Function.Embedding.coeFn_mk, add_zero, Nat.choose_self, Finset.sum_const, Nat.card_Icc,
-      tsub_zero, smul_eq_mul, mul_one]
-    exact Nat.succ_pred_eq_of_ne_zero k0
+    simpa using Nat.succ_pred_eq_of_ne_zero k0
 
 set_option backward.isDefEq.respectTransparency false in
 lemma wₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)

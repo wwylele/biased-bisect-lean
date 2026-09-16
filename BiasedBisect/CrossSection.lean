@@ -304,15 +304,13 @@ lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
           apply le_trans
           · show a + 1 ≤ ∑ pq ∈ {0} ×ˢ (Finset.range (2 * a + 1)) , Jₚ pq
             unfold Jₚ
-            simp only [Finset.singleton_product, Finset.sum_map, Function.Embedding.coeFn_mk,
-              zero_add, Nat.choose_zero_right, Finset.sum_const, Finset.card_range, smul_eq_mul,
-              mul_one, add_le_add_iff_right, PNat.pos, le_mul_iff_one_le_left, Nat.one_le_ofNat]
+            simp
           · gcongr
             unfold Λtriangle
             simp only [Finset.singleton_product, PNat.add_coe, PNat.val_ofNat, Nat.reduceAdd,
-              Set.subset_toFinset, Finset.coe_map, Function.Embedding.coeFn_mk, Finset.coe_range,
-              Set.image_subset_iff, Set.preimage_ofPred_eq, zero_mul, zero_add, Nat.ofNat_pos,
-              mul_lt_mul_iff_left₀]
+              Set.subset_toFinset, Finset.coe_map, Function.Embedding.sectR_apply, Finset.coe_range,
+              Set.image_subset_iff, Set.preimage_ofPred_eq, zero_mul, zero_add, Order.lt_two_iff,
+              zero_le, mul_lt_mul_iff_left₀]
             intro p pmem
             simp only [Set.mem_Iio] at pmem
             simp only [Set.mem_ofPred_eq]
@@ -330,20 +328,17 @@ lemma segListInert (n: ℕ+): (segList n).Forall (InertSeg.inert n) := by
         apply le_trans
         · show a + 1 ≤ ∑ pq ∈ (Finset.range (2 * a + 1)) ×ˢ {0} , Jₚ pq
           unfold Jₚ
-          simp only [Finset.product_singleton, Finset.sum_map, Function.Embedding.coeFn_mk,
-            add_zero, Nat.choose_self, Finset.sum_const, Finset.card_range, smul_eq_mul, mul_one,
-            add_le_add_iff_right, PNat.pos, le_mul_iff_one_le_left, Nat.one_le_ofNat]
+          simp
         · gcongr
           unfold Λtriangle
           simp only [Finset.product_singleton, PNat.val_ofNat, Nat.reduceAdd, PNat.add_coe,
-            Set.subset_toFinset, Finset.coe_map, Function.Embedding.coeFn_mk, Finset.coe_range,
-            Set.image_subset_iff, Set.preimage_ofPred_eq, zero_mul, add_zero]
+            Set.subset_toFinset, Finset.coe_map, Finset.coe_range,
+            Set.image_subset_iff, Set.preimage_ofPred_eq]
           intro p pmem
           simp only [Set.mem_Iio] at pmem
           simp only [Set.mem_ofPred_eq]
           rw [(by ring: 2 * (a + (a + 1): ℕ) = (2 * a + 1) * 2)]
-          simp only [Nat.ofNat_pos, mul_lt_mul_iff_left₀]
-          exact pmem
+          simpa using pmem
 
 /-!
 We will specialize $w$ function with $s = 1$ and varying $t$.

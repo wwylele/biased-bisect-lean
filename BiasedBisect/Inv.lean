@@ -62,8 +62,7 @@ lemma φ_inv (s t n: ℝ) (n1: n ≥ 1) [PosReal s] [PosReal t]:
       simp only [Nat.cast_add, Nat.cast_one]
     have n_accum: 1 + Jceiled s t (δₖ s t k) = nₖ s t (k + 1) := by
       rw [nₖ_accum]
-      simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
-        add_tsub_cancel_right]
+      simp
     rw [pull_cast]
     rw [n_accum]
     by_contra nle
@@ -103,8 +102,7 @@ lemma φδₖ(s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]:
 φ s t (δₖ s t k) = nₖ s t (k + 1) := by
   unfold φ
   rw [nₖ_accum]
-  simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
-    add_tsub_cancel_right]
+  simp
 
 /-!
 Analog to `w_eq`/`w_lt`/`w_gt` lemmas, `φ` maps `δₖ - t` back to `wₖ` (again with shifted `k`).

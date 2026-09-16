@@ -2792,8 +2792,8 @@ wₗᵢ s t n + wₗᵢ t s n = n := by
   have cast2: ((nₖ s t (k + 1) - wₖ s t (k + 1): ℕ) : ℝ) = (nₖ s t (k + 1): ℝ) - wₖ s t (k + 1) := by
     refine Nat.cast_sub ?_
     rw [wₖ_accum, nₖ_accum]
-    simp only [AddLeftCancelMonoid.add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
-      add_tsub_cancel_right, add_le_add_iff_left]
+    simp only [Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right,
+      add_le_add_iff_left]
     apply Jceiled_mono
     simp only [tsub_le_iff_right, le_add_iff_nonneg_right]
     apply le_of_lt
