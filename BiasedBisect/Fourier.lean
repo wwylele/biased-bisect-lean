@@ -295,9 +295,7 @@ def φRegFourierIntegrantRight (s t μ σ f x: ℝ) :=
 
 lemma indicator_cast {s: Set α} {f : α → ℝ} {x: α}:
   ((s.indicator f x: ℝ): ℂ) = s.indicator (fun a ↦ ((f a): ℂ)) x := by
-  obtain k := map_indicator Complex.ofRealHom.toAddMonoidHom s f x
-  simp only [RingHom.toAddMonoidHom_eq_coe, AddMonoidHom.coe_coe, ofRealHom_eq_coe] at k
-  exact k
+  simpa using! map_indicator Complex.ofRealHom.toAddMonoidHom s f x
 
 
 lemma φRegFourierIntegrantRw1 (s t μ σ f x: ℝ):
