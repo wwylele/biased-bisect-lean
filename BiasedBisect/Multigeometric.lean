@@ -1,5 +1,8 @@
-import BiasedBisect.Basic
+module
 
+public import BiasedBisect.Basic
+
+@[expose] public section
 
 lemma ΛDecompMem (p q: ℕ): p ∈ Finset.range (p + q + 1) := by
   simp only [Finset.mem_range]
@@ -73,6 +76,5 @@ HasSum (fun pq ↦ Jₚ pq * x ^ pq.1 * y ^ pq.2) (1 - (x + y))⁻¹ := by
         norm_norm]
       apply (lt_inv_mul_iff₀ ?_).mp
       · simp only [mul_one]
-        try apply xbound
-        try apply ybound
+        first | exact xbound | exact ybound
       · norm_num

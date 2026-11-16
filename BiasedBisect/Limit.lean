@@ -1,8 +1,10 @@
-import BiasedBisect.CrossSection
-import BiasedBisect.Integer
-import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
+module
 
-import Mathlib.Topology.Instances.Real.Lemmas
+public import BiasedBisect.CrossSection
+public import BiasedBisect.Integer
+public import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
+
+public import Mathlib.Topology.Instances.Real.Lemmas
 
 /-!
 # Asymptotics
@@ -14,6 +16,8 @@ are asymptotically equivalent to `Eℝ` and `wℝ`, the solution to the continuo
  - `E_Asymptotic` states the asymptotic behavior of `E`.
  - `w_Asymtotic` states the asymptotic behavior of `wₗᵢ`.
 -/
+
+@[expose] public section
 
 open Asymptotics Filter
 
@@ -412,7 +416,6 @@ lemma g_eq (s t: ℕ+): (ξ₀ s t ^ (t: ℕ)) = g s t := by
     rw [← val']
     simp only [Real.rpow_natCast]
     rw [← pow_mul, ← pow_mul, mul_comm]
-
 
 /-!
 A corollary of `w_Asymtotic_int`: the limit holds for rational $s / t$.

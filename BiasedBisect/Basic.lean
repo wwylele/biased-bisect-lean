@@ -1,5 +1,7 @@
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
-import Mathlib.Tactic.Rify
+module
+
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+public import Mathlib.Tactic.Rify
 
 /-!
 # Basic definition and solution to the biased bisect problem
@@ -58,7 +60,7 @@ $$
 
 -/
 
-
+@[expose] public section
 
 /- some random util theorems -/
 theorem sum_to_zero (a b : ℝ) (ha : a ≥ 0) (hb : b ≥ 0) (h : a + b ≤ 0) : a = 0 ∧ b = 0 := by
@@ -182,7 +184,6 @@ def Δceiled(s t ceil: ℝ) :=
 
 def Λceiled(s t ceil: ℝ) :=
   {(p, q): ℕ × ℕ | p * s + q * t ≤ ceil}
-
 
 lemma Λceiled_symm (s t δ: ℝ) (p q: ℕ) (h: (p, q) ∈ Λceiled s t δ):
 (q, p) ∈ Λceiled t s δ := by
@@ -406,7 +407,6 @@ lemma Δfloored_homo (s t floor l: ℝ) [PosReal l]:
     constructor
     · exact (Δ_homo s t l d).mpr dgrid
     · exact (mul_lt_mul_iff_right₀ PosReal.pos).mp dfloor
-
 
 /-!
 Floored sets are still infinite, but are well-ordered as subsets.
@@ -671,8 +671,6 @@ lemma δₖ_surjΔ (s t δ: ℝ) (mem: δ ∈ Δ s t) [PosReal s] [PosReal t]: �
     rw [this_is_0]
     exact rfl
 
-
-
 /-!
 `δₖ` is also symmetric.
 -/
@@ -719,6 +717,7 @@ As one can notice, this subset is a sub-singleton when $s/t$ is irrational,
 but we won't expand on it here.
 -/
 
+noncomputable
 def Λline (s t δ: ℝ): Set (ℕ × ℕ) :=
   ((δₚ s t) ⁻¹' {δ})
 
@@ -1057,7 +1056,6 @@ Jline s t (δ - t) = ∑⟨p, q⟩ ∈ (Λline s t δ).toFinset, shut q (Jₚ (p
   · simp only [Set.mem_toFinset, Prod.forall]
     intro p q mem
     rw [Jₚ_symm]
-
 
 /-!
 Derived from the recurrence of binomial coefficents,
@@ -2412,7 +2410,6 @@ dE s t w < δₖ s t k - t := by
     rw [δₖ]
     exact δnext_larger s t (δₖ s t K)
 
-
 set_option backward.isDefEq.respectTransparency false in
 lemma w_gt (s t w: ℝ) (k: ℕ) [PosReal s] [PosReal t]
 (low: w ≥ wₖ s t (k + 1)):
@@ -2509,7 +2506,6 @@ lemma wₖ'_is_nₖ_p1 (s t: ℝ) (k k': ℕ) [PosReal s] [PosReal t]
   rw [← wₖ_symm, ← wₖ_symm] at wne
   rw [nₖ_symm] at keq ⊢
   exact wₖ_is_nₖ_p1 t s k k' keq wne
-
 
 /-!
 The strategy function $w$ is defined by finding `wₖ` after clamping to the nearest $k$
@@ -3184,7 +3180,6 @@ dD s t n w < 0 := by
         linarith
     linarith
 
-
 lemma dD_pos (s t n w: ℝ) (h: n ≥ 2) [PosReal s] [PosReal t]
 (leftBound: w > wₘₐₓ s t n) (rightBound: w < n - 1):
 dD s t n w > 0 := by
@@ -3198,7 +3193,6 @@ dD s t n w > 0 := by
       simp only [add_sub_cancel_left]
     rw [wrec] at leftBound
     exact sub_lt_comm.mp leftBound
-
 
 /-!
 Let's also show that `dE` and `dD` are integrable, which will be soon used
@@ -3590,7 +3584,6 @@ E s t ((1 - a) * (wₖ' s t k) + a * (wₖ' s t (k + 1))) = (1 - a) * (E s t (w�
   rw [E_symm]; nth_rw 2 [E_symm]; nth_rw 3 [E_symm]
   exact Ewₖ_lerp t s k a low high
 
-
 lemma Eₖ_rec_lerp (s t: ℝ) (k: ℕ) (a: ℝ) (k1: k ≥ 1) (low: a ≥ 0) (high: a ≤ 1) [PosReal s] [PosReal t]:
 E s t ((1 - a) * (nₖ s t k) + a * (nₖ s t (k + 1))) =
 E s t ((1 - a) * (wₖ s t k) + a * (wₖ s t (k + 1))) + E s t ((1 - a) * (wₖ' s t k) + a * (wₖ' s t (k + 1))) +
@@ -3747,6 +3740,7 @@ E s t n < D s t n w := by
 Therefore, the interval bounded by `wₘᵢₙ` and `wₘₐₓ` idicates where `E = D`.
 Let's make it its own function
 -/
+noncomputable
 def wₛₑₜ (s t: ℝ) [PosReal s] [PosReal t]: ℝ → Set ℝ :=
   fun n ↦ Set.Icc (wₘᵢₙ s t n) (wₘₐₓ s t n)
 

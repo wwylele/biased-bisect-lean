@@ -1,9 +1,11 @@
-import BiasedBisect.Basic
-import Mathlib.Analysis.Calculus.Deriv.Basic
-import Mathlib.Analysis.Calculus.Deriv.Add
-import Mathlib.Analysis.Calculus.Deriv.Mul
-import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+module
+
+public import BiasedBisect.Basic
+public import Mathlib.Analysis.Calculus.Deriv.Basic
+public import Mathlib.Analysis.Calculus.Deriv.Add
+public import Mathlib.Analysis.Calculus.Deriv.Mul
+public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 
 /-!
 
@@ -26,6 +28,8 @@ for all positive $n$. We will see that $E(n) = n \log n/ρ$, and the optimal str
    - `g` is the coefficient in `wℝ`.
 
 -/
+
+@[expose] public section
 
 /-!
 `ρ` is the unique real solution to the equation $ρf(ρ) = 1$, where $ρf(ρ) = e^{-s ρ} + e^{-t ρ}$.
@@ -73,7 +77,7 @@ lemma ρ_exist (s t: ℝ) [PosReal s] [PosReal t]:
   use ρ
   constructor
   · constructor
-    · refine Set.mem_of_mem_of_subset ρrange (ρssubset.trans ?_)
+    · refine Set.mem_Ici.mp (Set.mem_of_mem_of_subset ρrange (ρssubset.trans ?_))
       exact (Set.Icc_subset_Ici_iff (le_of_lt ρ0)).mpr (le_refl _)
     · exact ρspec
   · intro q ⟨qrange, qeq⟩

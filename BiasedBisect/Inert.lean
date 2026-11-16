@@ -1,5 +1,7 @@
-import BiasedBisect.Basic
-import Mathlib.Data.PNat.Prime
+module
+
+public import BiasedBisect.Basic
+public import Mathlib.Data.PNat.Prime
 
 /-!
 # Inert behavior when changing $s,t$
@@ -24,6 +26,8 @@ When such rotation doesn't hit any lattice points, a lot of functions we have co
  - `wₘᵢₙ_inert_edge`, `wₘₐₓ_inert_edge` and `wₗᵢ_inert_edge` explicitly calculates $w$ when $t$ is very large.
  - `wₘᵢₙ_inert_edge'`, `wₘₐₓ_inert_edge'` and `wₗᵢ_inert_edge'` explicitly calculates $w$ when $s$ is very large.
 -/
+
+@[expose] public section
 
 /-!
 We start with a simple lemma: for rational $s/t$, the scanning line can pass multiple points,
@@ -702,7 +706,6 @@ instance ΛtriangleFintype (s t: ℕ+): Fintype (Λtriangle s t) :=
 noncomputable
 instance ΛtriangleDecidable (s t: ℕ+): DecidablePred fun x ↦ x ∈ Λtriangle s t := by
   apply Classical.decPred
-
 
 def ΛtriangleUpper (s t: ℕ+) := {pq: ℕ × ℕ | pq.1 * s + pq.2 * t > s * t} ∩ (Λrectangle s t)
 
@@ -1597,7 +1600,6 @@ wₘᵢₙ s1 t1 n = wₘᵢₙ s2 t2 n := by
     simp only [Nat.cast_inj]
     apply wₖ_inert a b c d s1 t1 s2 t2 k1 det left1 right1 left2 right2 kbound
 
-
 theorem wₘₐₓ_inert (a b c d: ℕ+) (s1 t1 s2 t2 n: ℝ)
 [PosReal s1] [PosReal t1] [PosReal s2] [PosReal t2]
 (det: a * d = b * c + 1)
@@ -1787,7 +1789,6 @@ lemma δₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)
         apply mul_nonneg
         · simp only [Nat.cast_nonneg]
         · apply le_of_lt PosReal.pos
-
 
 set_option backward.isDefEq.respectTransparency false in
 lemma nₖ_inert_edge (N: ℕ+) (s t: ℝ) (k: ℕ)

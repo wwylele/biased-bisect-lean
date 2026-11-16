@@ -1,6 +1,8 @@
-import BiasedBisect.Inert
-import BiasedBisect.Split
-import Mathlib.Order.Monotone.Union
+module
+
+public import BiasedBisect.Inert
+public import BiasedBisect.Split
+public import Mathlib.Order.Monotone.Union
 
 /-!
 # Behavior of $E_{s,t}(n)$ and $w_{s,t}(n)$ for fixed $n$ and varying $s,t$
@@ -12,6 +14,8 @@ where each block is represented by inert tuples $(a, b, c, d)$.
 ## Main statements
  - `wₗᵢMono`: `wₗᵢ` is weakly monotone w.r.t. $s/t$.
 -/
+
+@[expose] public section
 
 /-!
 This encodes an inert tuple $(a, b, c, d)$, though on its own it is not necessarily one.
@@ -345,8 +349,10 @@ We will specialize $w$ function with $s = 1$ and varying $t$.
 
 `segToInterval` converts inert tuple to intervals of $t$.
 -/
+noncomputable
 def segToInterval (seg: InertSeg) := Set.Icc (seg.b / seg.a: ℝ) (seg.d / seg.c)
 
+noncomputable
 def intervalList (n: ℕ+) := (segList n).map segToInterval
 
 /-!
@@ -594,20 +600,6 @@ AntitoneOn f (Set.Icc a b) := by match list with
   obtain least: IsLeast (Set.Icc c b) c := isLeast_Icc cleb
   exact AntitoneOn.union_right headanti tailanti' greatest least
 
-lemma IccEq {a b a' b': ℝ} (h: Set.Icc a b = Set.Icc a' b') (le: a ≤ b):
-a = a' ∧ b = b' := by
-  obtain nonempty := Set.nonempty_Icc.mpr le
-  rw [h] at nonempty
-  obtain le' := Set.nonempty_Icc.mp nonempty
-  obtain least := isLeast_Icc le
-  obtain least' := isLeast_Icc le'
-  obtain greatest := isGreatest_Icc le
-  obtain greatest' := isGreatest_Icc le'
-  rw [h] at least greatest
-  constructor
-  · exact IsLeast.unique least least'
-  · exact IsGreatest.unique greatest greatest'
-
 /-!
 `genSeg` preserves the `SetsCover` property.
 -/
@@ -628,7 +620,7 @@ SetsCover ((genSeg n list).map segToInterval) a b := by match list with
     unfold SetsCover segToInterval
     simp only [List.cons_append, List.nil_append, List.map_cons, PNat.add_coe, Nat.cast_add]
     use ((head.b + head.d) / (head.a + head.c))
-    obtain ⟨aeq, beq⟩ := IccEq abeq.symm aleb
+    obtain ⟨aeq, beq⟩ := (Set.Icc_eq_Icc_iff aleb).mp abeq.symm
     rw [aeq, beq]
     simp only [true_and]
     constructor
@@ -669,7 +661,7 @@ SetsCover ((genSeg n list).map segToInterval) a b := by match list with
     unfold SetsCover
     use ((head.b + head.d) / (head.a + head.c))
     unfold segToInterval at headIsIcc
-    obtain ⟨aeq, ceq⟩ := IccEq headIsIcc.symm alec
+    obtain ⟨aeq, ceq⟩ := (Set.Icc_eq_Icc_iff alec).mp headIsIcc.symm
     rw [aeq]
     constructor
     · unfold segToInterval

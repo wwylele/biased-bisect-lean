@@ -1,5 +1,7 @@
-import BiasedBisect.Basic
-import BiasedBisect.Continuous
+module
+
+public import BiasedBisect.Basic
+public import BiasedBisect.Continuous
 
 /-!
 # Inverse function `φ`
@@ -13,6 +15,7 @@ which is the "inverse function" of `dE`.
 - `φ_bound` shows `φ` grows exponentially and gives a bound on the coefficient.
 -/
 
+@[expose] public section
 
 /-!
 `φ` is simply defined as `Jceiled` shifted by 1.

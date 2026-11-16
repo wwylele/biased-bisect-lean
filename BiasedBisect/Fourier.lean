@@ -1,17 +1,19 @@
-import BiasedBisect.Inv
-import BiasedBisect.Multigeometric
-import Mathlib.Analysis.Fourier.FourierTransform
-import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
-import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
-import Mathlib.MeasureTheory.Integral.ExpDecay
-import Mathlib.MeasureTheory.Integral.IntegrableOn
+module
 
+public import BiasedBisect.Inv
+public import BiasedBisect.Multigeometric
+public import Mathlib.Analysis.Fourier.FourierTransform
+public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
+public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+public import Mathlib.MeasureTheory.Integral.ExpDecay
+public import Mathlib.MeasureTheory.Integral.IntegrableOn
+
+@[expose] public section
 
 open Real
 open FourierTransform
 open Complex
 open MeasureTheory
-
 
 lemma ne_zero_of_re_neg {s : ℂ} (hs : 0 > s.re) : s ≠ 0 :=
   fun h ↦ (Complex.zero_re ▸ h ▸ hs).false
@@ -101,7 +103,6 @@ lemma φRegLe (s t μ σ x: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
     · norm_cast
       apply Jₚ_nonzero
 
-
 lemma φReg_neg (s t μ σ x: ℝ) (h: x < 0) [PosReal s] [PosReal t] : φReg s t μ σ x = 0 := by
   unfold φReg
   apply mul_eq_zero_of_right
@@ -119,7 +120,6 @@ lemma φReg_neg (s t μ σ x: ℝ) (h: x < 0) [PosReal s] [PosReal t] : φReg s 
       · simp only [Nat.cast_nonneg]
       · exact le_of_lt PosReal.pos
   simp only [cond, ↓reduceIte]
-
 
 lemma φRegBound (s t μ σ x: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
 φReg s t μ σ x ≤ rexp ((Real.log 2 / (min s t) - σ) * x) * rexp (Real.log 2 / (min s t) * max s t) := by
@@ -210,7 +210,6 @@ ContinuousAt (φReg s t μ σ) x := by
       apply Continuous.continuousOn
       apply JceiledContinuous
 
-
 lemma φRegMeasurable (s t μ σ: ℝ) [PosReal s] [PosReal t] [PosReal μ]:
 Measurable (φReg s t μ σ) := by
   apply Measurable.mul
@@ -297,7 +296,6 @@ lemma indicator_cast {s: Set α} {f : α → ℝ} {x: α}:
   ((s.indicator f x: ℝ): ℂ) = s.indicator (fun a ↦ ((f a): ℂ)) x := by
   simpa using! map_indicator Complex.ofRealHom.toAddMonoidHom s f x
 
-
 lemma φRegFourierIntegrantRw1 (s t μ σ f x: ℝ):
 φRegFourierIntegrant s t μ σ f x =
 φRegFourierIntegrantLeft σ f x + φRegFourierIntegrantRight s t μ σ f x := by
@@ -317,19 +315,6 @@ lemma φRegFourierIntegrantRw1 (s t μ σ f x: ℝ):
     congr
     ext pq
     ring
-
-lemma integrable_exp_mul_complex_Ioi {a: ℝ} {c : ℂ} (hc : c.re < 0):
-IntegrableOn (fun (x: ℝ) ↦ Complex.exp (c * x)) (Set.Ioi a) := by
-  refine (integrable_norm_iff ?_).mp ?_
-  · apply Continuous.aestronglyMeasurable
-    fun_prop
-  · simp_rw [Complex.norm_exp]
-    simp only [mul_re, ofReal_re, ofReal_im, mul_zero, sub_zero]
-    set b := -c.re
-    rw [(by unfold b; simp only [neg_neg]: c.re = -b)]
-    apply exp_neg_integrableOn_Ioi
-    unfold b
-    exact Left.neg_pos_iff.mpr hc
 
 lemma rexp_mul_n (x: ℝ) (n: ℕ): rexp (x * n) = (rexp x) ^ n := by
   rw [Real.exp_mul]
@@ -384,8 +369,6 @@ lemma φReg_Fourier2 (s t μ σ f: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) [
     Left.neg_neg_iff]
     exact σpos
 
-
-
 noncomputable
 def φRegFourierIntegrantRightSummand (δ μ: ℝ) (l: ℂ) :=
   ∫ (x:ℝ), cexp (l * x) * (smStep μ (x - δ))
@@ -414,7 +397,7 @@ lemma φRegFourierIntegrantRightExchange (s t μ σ f: ℝ) (σBound: Real.log 2
       rw [mul_assoc]
     apply Integrable.const_mul
     have cexpIntegrable: IntegrableOn (fun (x: ℝ) ↦ cexp (-(2 * π * f * I + σ) * x)) (Set.Ioi 0) := by
-      apply integrable_exp_mul_complex_Ioi
+      apply integrableOn_exp_mul_complex_Ioi
       simp only [neg_add_rev, add_re, neg_re, ofReal_re, mul_re, re_ofNat, im_ofNat, ofReal_im,
         mul_zero, sub_zero, mul_im, zero_mul, add_zero, I_re, I_im, mul_one, sub_self, neg_zero,
         Left.neg_neg_iff]
@@ -576,7 +559,6 @@ lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [
     simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff]
     exact l0
 
-
   have Leftfcongr: (fun (x: ℝ) ↦ (cexp (l * x) * smStep μ (x - δ): ℂ)) =ᵐ[volume.restrict (Set.Ioc δ (δ + μ))]
     (fun (x: ℝ) ↦ (cexp (l * x) * ((x - δ) / μ): ℂ)) := by
     apply (MeasureTheory.ae_restrict_iff' (by exact measurableSet_Ioc)).mpr
@@ -610,7 +592,6 @@ lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [
     push_cast
     ring
 
-
   have Rightfcongr: (fun (x: ℝ) ↦ (cexp (l * x) * smStep μ (x - δ): ℂ)) =ᵐ[volume.restrict (Set.Ioi (δ + μ))]
     (fun (x: ℝ) ↦ cexp (l * x)) := by
     apply (MeasureTheory.ae_restrict_iff' (by exact measurableSet_Ioi)).mpr
@@ -643,7 +624,7 @@ lemma φRegFourierIntegrantRightSummandEq (δ μ: ℝ) (l: ℂ) (hl: l.re < 0) [
     apply Continuous.integrableOn_Ioc
     fun_prop
   · refine MeasureTheory.IntegrableOn.congr_fun_ae ?_ Rightfcongr.symm
-    apply integrable_exp_mul_complex_Ioi
+    apply integrableOn_exp_mul_complex_Ioi
     exact hl
 
 noncomputable
@@ -692,8 +673,7 @@ lemma φReg_Fourier (s t μ σ: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) [Pos
     rw [Real.exp_neg]
     refine (inv_lt_inv₀ (by apply exp_pos) (by norm_num)).mpr ?_
     refine (log_lt_iff_lt_exp (by norm_num)).mp ?_
-    try exact sBound
-    try exact tBound
+    first | exact sBound | exact tBound
 
 /-
 lemma φReg_FourierInv (s t μ σ x: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ) (xBound: 0 < x)
@@ -715,7 +695,6 @@ lemma φReg_FourierInv (s t μ σ x: ℝ) (σBound: Real.log 2 / (s ⊓ t) < σ)
   · apply ContinuousAt.comp continuous_ofReal.continuousAt
     apply φRegContinuousAt
     exact ne_of_gt xBound
-
 
 def rootSet (s t: ℝ): Set ℂ := sorry
 

@@ -1,9 +1,13 @@
-import BiasedBisect.Inert
+module
 
-import Mathlib.Data.Nat.Factorial.Basic
-import Mathlib.Analysis.Asymptotics.AsymptoticEquivalent
-import Mathlib.Analysis.Asymptotics.SpecificAsymptotics
-import Mathlib.Algebra.Order.Floor.Semifield
+public import BiasedBisect.Inert
+
+public import Mathlib.Data.Nat.Factorial.Basic
+public import Mathlib.Analysis.Asymptotics.AsymptoticEquivalent
+public import Mathlib.Analysis.Asymptotics.SpecificAsymptotics
+public import Mathlib.Algebra.Order.Floor.Semifield
+
+@[expose] public section
 
 open Asymptotics Filter
 
@@ -14,8 +18,6 @@ lemma J_sum (p n: ℕ): ∑q ∈ Finset.range (n + 1), Jₚ (p, q) = Jₚ (p + 1
     simp
   | succ n prev =>
     rw [Finset.sum_range_add, prev, Finset.sum_range_one, Jₚ_rec]
-
-
 
 lemma nBranchingFormula' (s t: ℕ+) :
 nBranching s t = 1 + ∑ p ∈ Finset.range t, Jₚ (p + 1, (s * (t - p) - 1) / t) := by
@@ -86,7 +88,6 @@ lemma J_asymptotic (p: ℕ):
     rw [(by simp: nhds (1:ℝ) = nhds (1 + 0))]
     exact tendsto_const_nhds.add (tendsto_natCast_atTop_atTop.const_div_atTop _)
 
-
 lemma sub_natPred (t: ℕ+) : t - t.natPred = 1 := by
   apply Nat.sub_eq_of_eq_add'
   simp
@@ -125,13 +126,6 @@ lemma nBranchingBound (s t: ℕ+) :
       exact Int.lt_tdiv_add_one_mul_self _ (by simp)
     · simp
 
-lemma PNat_val_tendsto : Tendsto PNat.val atTop atTop := by
-  refine tendsto_atTop_atTop.mpr ?_
-  intro n
-  use n.toPNat'
-  intro m h
-  exact Nat.le_of_pred_lt h
-
 lemma divEquivalent (d:ℕ): (fun (n:ℕ) ↦ ((n / d:ℕ):ℝ)) ~[atTop] (fun (n:ℕ) ↦ (n / d:ℝ)) := by
   by_cases hd: d = 0
   · rw [hd]
@@ -146,7 +140,6 @@ lemma divEquivalent (d:ℕ): (fun (n:ℕ) ↦ ((n / d:ℕ):ℝ)) ~[atTop] (fun (
       apply (tendsto_nat_floor_div_atTop.comp this).congr
       intro n
       simp [Nat.floor_div_eq_div]
-
 
 lemma nBranchingAsymptotic (t: ℕ+) :
 (fun (s:ℕ+) ↦ (s / t: ℝ) ^ (t:ℕ) / (Nat.factorial t)) ~[atTop] (fun (s:ℕ+) ↦ nBranching s t) := by
@@ -163,7 +156,7 @@ lemma nBranchingAsymptotic (t: ℕ+) :
       simp_rw [← Real.rpow_natCast]
       refine (tendsto_rpow_atTop (by simp)).comp ?_
       apply Tendsto.atTop_div_const (by simp)
-      exact tendsto_natCast_atTop_atTop.comp PNat_val_tendsto
+      exact tendsto_natCast_atTop_atTop.comp tendsto_PNat_val_atTop_atTop
     · apply IsLittleO.fun_sum
       intro n hn
       have hn': 1 ≤ t - n := by
@@ -176,7 +169,7 @@ lemma nBranchingAsymptotic (t: ℕ+) :
         exact hn'
       refine IsLittleO.comp_tendsto (?_:
         (fun (s:ℕ) ↦ (Jₚ (n + 1, (s * (t - n) - 1) / ↑t): ℝ)) =o[atTop] fun (s:ℕ) ↦ ((s / t) ^ (t:ℕ) / Nat.factorial t: ℝ)
-        ) PNat_val_tendsto
+        ) tendsto_PNat_val_atTop_atTop
       refine ((J_asymptotic _).comp_tendsto ?_).trans_isLittleO ?_
       · apply (Nat.tendsto_div_const_atTop (by simp)).comp
         exact stn
@@ -230,7 +223,7 @@ lemma nBranchingAsymptotic (t: ℕ+) :
           exact Nat.add_lt_of_lt_sub (Finset.mem_range.mp hn)
   · refine IsEquivalent.comp_tendsto (?_:
       (fun (s:ℕ) ↦ (Jₚ (t, (s - 1) / t): ℝ)) ~[atTop] fun (s:ℕ) ↦ (↑s / ↑↑t) ^ (t:ℕ) / (Nat.factorial t)
-      ) PNat_val_tendsto
+      ) tendsto_PNat_val_atTop_atTop
     trans (fun s ↦ (((s - 1) / t: ℕ):ℝ) ^ (t:ℕ) / (Nat.factorial t))
     · apply (J_asymptotic _).comp_tendsto
       apply (Nat.tendsto_div_const_atTop (by simp)).comp (tendsto_sub_atTop_nat 1)

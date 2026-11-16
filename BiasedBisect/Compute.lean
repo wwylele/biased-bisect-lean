@@ -1,4 +1,8 @@
-import BiasedBisect.Integer
+module
+
+public import BiasedBisect.Integer
+
+@[expose] public section
 
 theorem Vector.get_eq_getElem (v : Vector α n) (i : Fin n) : v.get i = v[(i: ℕ)] := rfl
 
@@ -59,7 +63,6 @@ theorem Fin.coe_sub_one' {n : ℕ+} {a : ℕ+}:
     rw [ofNat_eq_cast, ofNat_eq_cast, val_natCast, val_natCast]
     apply Nat.add_mod_right
 
-
 theorem Fin.coe_neg_one' {n : ℕ+}:
     ((-1 : Fin n): ℕ) = n - 1 := by
   obtain n1|n1 := eq_or_lt_of_le (one_le (a := n))
@@ -68,7 +71,6 @@ theorem Fin.coe_neg_one' {n : ℕ+}:
   · rw [Fin.val_neg', val_one']
     nth_rw 2 [Nat.mod_eq_of_lt (by norm_cast)]
     rw [Nat.mod_eq_of_lt (by simp)]
-
 
 structure ΦOutput (s t: ℕ+) where
   δ : ℕ
@@ -133,7 +135,7 @@ def ΦComputer.next {s t: ℕ+} (input: ΦComputer s t): (ΦComputer s t) × ΦO
         rw [add_sub_right_comm, add_sub_right_comm]
         rfl
       · have i0: i ≠ 0 := by
-          contrapose! new with i0
+          contrapose new with i0
           rw [i0]
           simp
         have t1: 1 < t := by
@@ -595,7 +597,6 @@ def bbComputer.next {s t: ℕ+} (input: bbComputer s t): (bbComputer s t) × (bb
       wₘₐₓn_eq
       wₗᵢn_eq
     }⟩
-
 
 lemma bbComputer.next_succ {s t: ℕ+} (input: bbComputer s t):
 input.next.1.next.2.n = input.next.2.n + 1 := by

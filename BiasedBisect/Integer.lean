@@ -1,11 +1,13 @@
-import BiasedBisect.Inv
-import BiasedBisect.Multigeometric
-import Mathlib.Algebra.Group.NatPowAssoc
-import Mathlib.Analysis.Complex.Arg
-import Mathlib.Analysis.Complex.Polynomial.Basic
-import Mathlib.Data.PNat.Prime
-import Mathlib.LinearAlgebra.Lagrange
-import Mathlib.RingTheory.Int.Basic
+module
+
+public import BiasedBisect.Inv
+public import BiasedBisect.Multigeometric
+public import Mathlib.Algebra.Group.NatPowAssoc
+public import Mathlib.Analysis.Complex.Arg
+public import Mathlib.Analysis.Complex.Polynomial.Basic
+public import Mathlib.Data.PNat.Prime
+public import Mathlib.LinearAlgebra.Lagrange
+public import Mathlib.RingTheory.Int.Basic
 
 /-!
 # Integer $s, t$
@@ -24,6 +26,8 @@ but the generalization will be deferred to homogeneity.
    when $s$ and $t$ are coprime.
  - `w_Asymtotic_int` shows the asymptotic behavior of `wₗᵢ` for integer $s$ and $t$.
 -/
+
+@[expose] public section
 
 /-!
 When $s$ and $t$ are positive integers, `Δ` collaps to a subset of $l \cdot \gcd(s, t)$
@@ -111,7 +115,6 @@ lemma δₖ_int_agree (s t: ℕ+) (k: ℕ): δₖ_int s t k = δₖ s t k := by
     rw [← prev]
     exact Classical.choose_spec (δnext_int s t (δₖ_int s t k))
 
-
 /-
 ... and integer versions for `Jline` and `Jceiled`.
 -/
@@ -197,7 +200,6 @@ lemma dE_int_homo (s t l: ℕ+) (n: ℝ): l * (dE_int s t n) = dE_int (l * s) (l
   rw [dE_int_agree, dE_int_agree]
   push_cast
   apply dE_homo s t n l
-
 
 /-!
 Let's introduce a new sequence `Φ(δ)` that's simply `Jceiled_int` shifted by 1.
@@ -419,7 +421,6 @@ lemma Φjump (s t: ℕ+) (δ: ℤ) (k: ℕ) (h: Φ s t δ = nₖ s t k) (hlt: Φ
     · rw [← eq]
       exact δnext_mono _ _ hmono'
 
-
 /-!
 We will investigate the generator function $Z\{Φ\}(x) = \sum_{i\inℕ} Φ(i) x^i$ and
 and show that it converges to a nice function.
@@ -487,13 +488,12 @@ lemma ξPolynomialDerivative(s t: ℕ+):
   simp only [one_mul]
 
 lemma ξPolynomialNonzero(s t: ℕ+) : ξPolynomial s t ≠ 0 := by
-  by_contra!
+  intro this
   have : (ξPolynomial s t).eval 0 = 0 := by
     rw [this]
     simp
   unfold ξPolynomial at this
   simp at this
-
 
 lemma ξPolynomialFactorizeMulti(s t: ℕ+):
 ξPolynomial s t = Polynomial.C (ξPolynomial s t).leadingCoeff * ((ξPolynomial s t).roots.map (Polynomial.X - Polynomial.C ·)).prod :=
@@ -843,7 +843,6 @@ lemma PartialFractionDecompostion2 [Field F] [DecidableEq F]
   rw [Field.mul_inv_cancel _ r1]
   simp only [one_mul, neg_sub, mul_one, sub_sub_sub_cancel_left]
 
-
 lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
 (((ξPolynomial s t).eval 1)⁻¹ - ((ξPolynomial s t).eval x)⁻¹) * (1 - x)⁻¹ =
 ∑ ξ ∈ ξSet s t, (x - ξ)⁻¹ * (ξ - 1)⁻¹*(s * ξ^(s - 1:ℕ) + t * ξ^(t - 1:ℕ))⁻¹ := by
@@ -902,7 +901,6 @@ lemma ΦX_sum_eq(s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
   rw [← ξPolynomialFactorize]
   rw [ξPolynomialDerivative]
   simp only [Polynomial.eval_add, Polynomial.eval_monomial]
-
 
 lemma ZΦ_sum2 (s t: ℕ+) (x: ℂ) (bound: ‖x‖ < 2⁻¹):
     HasSum (fun i:ℕ ↦ x ^ i * (∑ξ ∈ ξSet s t, (ξ⁻¹)^i * (1 - ξ)⁻¹ * (s * ξ^(s:ℕ) + t * ξ^(t:ℕ))⁻¹ ))
@@ -1065,7 +1063,9 @@ lemma ξPolynomialℝ_mono(s t: ℕ+): StrictMonoOn ((ξPolynomialℝ s t).eval 
 lemma ξPolynomialℝUniqueRoot(s t: ℕ+):
 ∃!ξ > 0, (ξPolynomialℝ s t).eval ξ = 0 := by
   apply existsUnique_of_exists_of_unique
-  · apply (Set.mem_image _ _ _).mp
+  · suffices h : (0 : ℝ) ∈ ((ξPolynomialℝ s t).eval ·) '' Set.Ioi 0 by
+      obtain ⟨x, hx, hfx⟩ := (Set.mem_image _ _ _).mp h
+      exact ⟨x, Set.mem_Ioi.mp hx, hfx⟩
     set f := ((ξPolynomialℝ s t).eval ·)
     apply Set.mem_of_mem_of_subset
     · show 0 ∈ Set.Ioo (f 0) (f 1)
@@ -1083,12 +1083,11 @@ lemma ξPolynomialℝUniqueRoot(s t: ℕ+):
         apply Polynomial.continuousOn_aeval
       · apply Set.image_mono
         intro x xmem
-        rcases xmem with ⟨zero, one⟩
-        exact zero
+        exact Set.mem_Ioi.mpr (Set.mem_Ioo.mp xmem).1
   · rintro x y ⟨xmem, xzero⟩ ⟨ymem, yzero⟩
     refine ((ξPolynomialℝ_mono s t).eq_iff_eq ?_ ?_).mp ?_
-    · exact Set.mem_Ici_of_Ioi xmem
-    · exact Set.mem_Ici_of_Ioi ymem
+    · exact Set.mem_Ici.mpr xmem.le
+    · exact Set.mem_Ici.mpr ymem.le
     · rw [xzero, yzero]
 
 /-!
@@ -1583,7 +1582,6 @@ Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log
     rw [Φ_inv _ _ _ g1] at mem
     exact Int.lt_of_le_sub_one mem
 
-
   have leftLimit:
     Filter.Tendsto (fun n ↦ (Real.log (Φ s t (dE_int s t n - 1) * ((ξ₀ s t)^(dE_int s t n - 1) * Res₀ s t)) + Real.log (ξ₀ s t)) * (Real.log n)⁻¹) Filter.atTop (nhds 0) := by
     rw [(by norm_num: (0:ℝ) = (0 + Real.log (ξ₀ s t)) * 0)]
@@ -1643,7 +1641,6 @@ lemma reduce_coprime (s t: ℕ+): ∃ (l S T: ℕ+), s = l * S ∧ t = l * T ∧
     rw [← seq, ← teq] at gcd_left
     exact mul_eq_left.mp (id (Eq.symm gcd_left))
   use s.gcd t, S, T
-
 
 lemma dE_int_Asymptotic (s t: ℕ+):
 Filter.Tendsto (fun n ↦ (dE_int s t n:ℝ) * Real.log ((ξ₀ s t)) / Real.log n) Filter.atTop (nhds (-1:ℝ)) := by
@@ -1729,7 +1726,6 @@ Filter.Tendsto (fun k ↦ (wₖ s t k: ℝ) / nₖ s t k) Filter.atTop (nhds (ξ
         exact lt_add_one k
     exact δₖ_int_growth (k - 2 + 1)
 
-
   apply Filter.Tendsto.div _ _ (by norm_num)
   · apply Filter.Tendsto.mul
     · have inner': Filter.Tendsto (fun k ↦ δₖ_int S T (k - 2 + 1) - T) Filter.atTop Filter.atTop := by
@@ -1756,7 +1752,6 @@ dist ((1 - a) * u + a * v) g ≤ max (dist u g) (dist v g) := by
   gcongr
   · apply le_max_left
   · apply le_max_right
-
 
 set_option backward.isDefEq.respectTransparency false in
 lemma w_Asymtotic_of_wₖ (s t limit: ℝ) [PosReal s] [PosReal t]
@@ -1915,7 +1910,6 @@ Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds limit) :=
     apply lerp_dist _ _ _ _ arange
 
   exact Filter.Tendsto.comp glim flim
-
 
 theorem w_Asymtotic_int (s t: ℕ+):
 Filter.Tendsto (fun n ↦ (wₗᵢ s t n: ℝ) / n) Filter.atTop (nhds (ξ₀ s t ^ (t: ℕ))) :=

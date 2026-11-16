@@ -1,13 +1,15 @@
-import BiasedBisect.Basic
-import BiasedBisect.Compute
-import BiasedBisect.Continuous
-import BiasedBisect.CrossSection
-import BiasedBisect.Fourier
-import BiasedBisect.Inert
-import BiasedBisect.Integer
-import BiasedBisect.Inv
-import BiasedBisect.Limit
-import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
-import BiasedBisect.Multigeometric
-import BiasedBisect.Regime
-import BiasedBisect.Split
+module
+
+public import BiasedBisect.Basic
+public import BiasedBisect.Compute
+public import BiasedBisect.Continuous
+public import BiasedBisect.CrossSection
+public import BiasedBisect.Fourier
+public import BiasedBisect.Inert
+public import BiasedBisect.Integer
+public import BiasedBisect.Inv
+public import BiasedBisect.Limit
+public import BiasedBisect.MathlibMeasureTheoryIntegralAsymptotics
+public import BiasedBisect.Multigeometric
+public import BiasedBisect.Regime
+public import BiasedBisect.Split

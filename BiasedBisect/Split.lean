@@ -1,4 +1,6 @@
-import BiasedBisect.Basic
+module
+
+public import BiasedBisect.Basic
 
 /-!
 # Split behavior when changing $s,t$
@@ -31,9 +33,12 @@ For simplicity, we will mostly only consider a positive perturbation on t, and l
 to symmetry.
 -/
 
+@[expose] public section
+
 /-
 Λₖ is just Λline of δₖ, which will be a group of lattice points where splitting happens
 -/
+noncomputable
 def Λₖ (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t] := Λline s t (δₖ s t k)
 
 lemma ΛₖNonempty (s t: ℝ) (k: ℕ) [PosReal s] [PosReal t]: (Λₖ s t k).Nonempty := by
@@ -284,7 +289,6 @@ lemma ΛₖSplit' (s t ε: ℝ) (k K: ℕ) (kbound: k ≤ K) [PosReal s] [PosRea
       rw [pqeq] at mono
       simp only [lt_self_iff_false] at mono
 
-
 lemma ΛₖtoδNonempty (s t ε: ℝ) (k: ℕ) [PosReal s] [PosReal t] :
 ((Λₖ s t k).toFinset.image (δₚ s (t + ε))).Nonempty := by
   simp only [Finset.image_nonempty, Set.toFinset_nonempty]
@@ -407,7 +411,7 @@ lemma ΛceiledSplit_s (s t ε: ℝ) (k K: ℕ) [PosReal s] [PosReal t] [PosReal 
 
   obtain Λsplit := ΛceiledSplit s t ε k K kBound εbound
   have ΛsplitExt : ∀ (pq: ℕ × ℕ), pq ∈ Λceiled s t (δₖ s t k) ↔ pq ∈ Λceiled s (t + ε) (δₖ s (t + ε) (kSplitMax s t ε k)) := by
-    exact fun pq ↦ Eq.to_iff (congrFun Λsplit pq)
+    exact fun pq ↦ Set.ext_iff.mp Λsplit pq
   unfold Λceiled at ΛsplitExt
   simp only [Set.mem_ofPred_eq] at ΛsplitExt
   exact ΛsplitExt (pq.1 + 1, pq.2)
@@ -576,7 +580,6 @@ lemma δₖSplitBetween (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [Pos
         obtain what := leftLt (p, q) pqmem
         simp only [lt_self_iff_false] at what
   · rfl
-
 
 noncomputable
 def pqOfδₖSplit (s t ε: ℝ) (k K k': ℕ) [PosReal s] [PosReal t] [PosReal ε]
@@ -1245,7 +1248,6 @@ theorem wₘₐₓtSplit (s t n: ℝ) (n2: 2 ≤ n) [PosReal s] [PosReal t]:
   wₘₐₓ s (t + ε) n ≤ wₘₐₓ s t n
 ) := by
   exact generalizeSplit _  wₘₐₓSplit _ _ _ n2
-
 
 /-
 By symmetry, we can also show the behavior of perturbation on s

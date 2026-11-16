@@ -1,5 +1,9 @@
-import BiasedBisect
-import Batteries.Data.Rat.Float
+module
+
+public import BiasedBisect
+public import Batteries.Data.Rat.Float
+
+@[expose] public section
 
 def stringToPNat (str: String): Option ℕ+ :=
   do
